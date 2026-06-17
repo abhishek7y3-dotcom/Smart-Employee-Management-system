@@ -9,14 +9,17 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
 
   // Read value on mount
   useEffect(() => {
-    try {
-      const item = window.localStorage.getItem(key);
-      if (item) {
-        setStoredValue(JSON.parse(item));
+    const read = () => {
+      try {
+        const item = window.localStorage.getItem(key);
+        if (item) {
+          setStoredValue(JSON.parse(item));
+        }
+      } catch (error) {
+        console.warn(`Error reading localStorage key "${key}":`, error);
       }
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-    }
+    };
+    setTimeout(read, 0);
   }, [key]);
 
   // Return a wrapped version of useState's setter function that persists the new value to localStorage.

@@ -9,6 +9,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   return (
     <div className="flex items-center space-x-3 p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
       {employee.avatarUrl ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
         <img
           src={employee.avatarUrl}
           alt={employee.name}

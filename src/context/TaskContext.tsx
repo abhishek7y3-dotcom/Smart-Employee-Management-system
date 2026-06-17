@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Employee, Task, TaskStatus, TaskPriority } from '../types';
-import { mockEmployees, mockTasks } from '../data/mockData';
+import { mockEmployees, mockTasks } from '../constants/mockData';
 
 interface TaskContextType {
   tasks: Task[];
@@ -23,22 +23,26 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Load initial data
   useEffect(() => {
-    const storedTasks = localStorage.getItem('employee_tasks');
-    const storedEmployees = localStorage.getItem('employee_members');
+    const loadData = () => {
+      const storedTasks = localStorage.getItem('employee_tasks');
+      const storedEmployees = localStorage.getItem('employee_members');
 
-    if (storedTasks) {
-      setTasks(JSON.parse(storedTasks));
-    } else {
-      setTasks(mockTasks);
-      localStorage.setItem('employee_tasks', JSON.stringify(mockTasks));
-    }
+      if (storedTasks) {
+        setTasks(JSON.parse(storedTasks));
+      } else {
+        setTasks(mockTasks);
+        localStorage.setItem('employee_tasks', JSON.stringify(mockTasks));
+      }
 
-    if (storedEmployees) {
-      setEmployees(JSON.parse(storedEmployees));
-    } else {
-      setEmployees(mockEmployees);
-      localStorage.setItem('employee_members', JSON.stringify(mockEmployees));
-    }
+      if (storedEmployees) {
+        setEmployees(JSON.parse(storedEmployees));
+      } else {
+        setEmployees(mockEmployees);
+        localStorage.setItem('employee_members', JSON.stringify(mockEmployees));
+      }
+    };
+
+    setTimeout(loadData, 0);
   }, []);
 
   // Helper to persist state

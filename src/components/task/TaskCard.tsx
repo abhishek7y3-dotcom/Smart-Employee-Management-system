@@ -33,7 +33,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange }) => {
       
       <div className="flex justify-between items-center text-xs">
         <span className="text-gray-500">Assigned To ID: {task.assignedTo}</span>
-        <span className="font-medium text-gray-700">{statusLabels[task.status]}</span>
+        {onStatusChange ? (
+          <select
+            value={task.status}
+            onChange={(e) => onStatusChange(task.id, e.target.value as Task['status'])}
+            className="border border-gray-300 rounded px-1 py-0.5 bg-white text-gray-700 focus:outline-none"
+          >
+            <option value="todo">To Do</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        ) : (
+          <span className="font-medium text-gray-700">{statusLabels[task.status]}</span>
+        )}
       </div>
     </div>
   );
