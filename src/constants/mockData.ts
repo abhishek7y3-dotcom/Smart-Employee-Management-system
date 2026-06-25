@@ -1,4 +1,4 @@
-import { Employee, Task } from '../types';
+﻿import { Employee, Task } from '../types';
 
 export const mockEmployees: Employee[] = [
   {
@@ -73,3 +73,4 @@ export const mockTasks: Task[] = [
     createdAt: '2026-06-17',
   },
 ];
+

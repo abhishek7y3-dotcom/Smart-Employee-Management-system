@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -31,7 +31,7 @@ export const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 border-r border-zinc-200 bg-zinc-50 px-4 py-6 dark:border-zinc-800 dark:bg-zinc-950/50 flex flex-col justify-between">
       <div className="space-y-6">
-        <div className="px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-505">
+        <div className="px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
           Workspace Navigation
         </div>
         <nav className="space-y-1">
@@ -44,10 +44,10 @@ export const Sidebar: React.FC = () => {
                 className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
                   isActive
                     ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-450'
-                    : 'text-zinc-650 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-100'
+                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-100'
                 }`}
               >
-                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-650 dark:group-hover:text-zinc-200'}>
+                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200'}>
                   {item.icon}
                 </span>
                 {item.name}
@@ -58,7 +58,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <div className="rounded-lg bg-zinc-100 p-3 text-xs text-zinc-500 dark:bg-zinc-900 dark:text-zinc-450">
+        <div className="rounded-lg bg-zinc-100 p-3 text-xs text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
           <p className="font-semibold text-zinc-700 dark:text-zinc-300">Mode: Local Mock</p>
           <p className="mt-1">Changes are saved to browser local storage.</p>
         </div>
@@ -66,3 +66,4 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
+

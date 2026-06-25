@@ -1,4 +1,4 @@
-export interface Employee {
+﻿export interface Employee {
   id: string;
   name: string;
   email: string;
@@ -6,8 +6,18 @@ export interface Employee {
   avatarUrl?: string;
 }
 
-export type TaskStatus = 'todo' | 'in_progress' | 'completed';
+export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high';
+export type ActivityAction = 'created' | 'updated' | 'status_changed' | 'deleted';
+
+export interface TaskInput {
+  title: string;
+  description: string;
+  status: TaskStatus;
+  priority: TaskPriority;
+  assignedTo: string;
+  dueDate: string;
+}
 
 export interface Task {
   id: string;
@@ -15,7 +25,16 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assignedTo: string; // Employee ID
-  dueDate: string; // ISO Date string
-  createdAt: string; // ISO Date string
+  assignedTo: string;
+  dueDate: string;
+  createdAt: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  taskTitle: string;
+  employeeName: string;
+  action: ActivityAction;
+  createdAt: string;
+  details?: string;
 }
