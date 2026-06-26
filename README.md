@@ -68,6 +68,7 @@ src/
 ├── data/              # Static constants and local mock data files (initial tasks and employees list)
 ├── hooks/             # Custom React hooks (e.g., useLocalStorage)
 ├── types/             # Centralized TypeScript interface and type declarations
+│   └── auth.ts
 └── utils/             # Reusable helper and utility functions (e.g., date formatters)
 ```
 
