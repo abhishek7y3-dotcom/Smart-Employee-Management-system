@@ -4,6 +4,7 @@ import { signToken } from '../utils/jwt';
 import { sendVerificationOtp, sendResetPasswordOtp } from '../utils/mailer';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { encrypt, decrypt } from '../utils/crypto';
 
 export async function register(req: Request, res: Response) {
   const { name, email, password, profilePicture } = req.body as {
@@ -27,7 +28,7 @@ export async function register(req: Request, res: Response) {
     const profilePicUrl = await uploadToCloudinary(profilePicture || '', name);
 
     // Generate 6-Digit OTP Code
-    const verificationOtp = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
     const role = email.toLowerCase().startsWith('admin') ? 'admin' : 'user';
@@ -39,14 +40,14 @@ export async function register(req: Request, res: Response) {
       password,
       profilePicture: profilePicUrl,
       isVerified: false,
-      verificationOtp,
+      verificationOtp: encrypt(verificationOtpPlain), // stored encrypted
       verificationOtpExpires,
       role,
       designation,
     });
 
-    // Trigger Verification OTP Email
-    await sendVerificationOtp(user.email, user.name, verificationOtp);
+    // Trigger Verification OTP Email (send plain OTP to user)
+    await sendVerificationOtp(user.email, user.name, verificationOtpPlain);
 
     return res.status(201).json({
       success: true,
@@ -158,7 +159,18 @@ export async function verifyOtp(req: Request, res: Response) {
       });
     }
 
-    if (user.verificationOtp !== otp) {
+    // Decrypt the stored OTP and compare with what the user submitted
+    let storedOtp: string;
+    try {
+      storedOtp = decrypt(user.verificationOtp!);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code is invalid or corrupted. Please register again.',
+      });
+    }
+
+    if (storedOtp !== otp) {
       return res.status(400).json({
         success: false,
         message: 'Invalid verification code.',
@@ -204,12 +216,12 @@ export async function forgotPassword(req: Request, res: Response) {
     }
 
     // Generate 6-digit OTP code for password reset
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.resetPasswordOtp = otp;
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordOtp = encrypt(otpPlain); // stored encrypted
     user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    await sendResetPasswordOtp(user.email, user.name, otp);
+    await sendResetPasswordOtp(user.email, user.name, otpPlain); // send plain to email
 
     return res.status(200).json({
       success: true,
@@ -254,7 +266,27 @@ export async function resetPassword(req: Request, res: Response) {
       });
     }
 
-    if (!user.resetPasswordOtp || user.resetPasswordOtp !== otp) {
+    if (!user.resetPasswordOtp) {
+      return res.status(400).json({
+        success: false,
+        message: 'No reset code found. Please request a new one.',
+        errors: [],
+      });
+    }
+
+    // Decrypt the stored OTP and compare with what the user submitted
+    let storedResetOtp: string;
+    try {
+      storedResetOtp = decrypt(user.resetPasswordOtp);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset code is invalid or corrupted. Please request a new one.',
+        errors: [],
+      });
+    }
+
+    if (storedResetOtp !== otp) {
       return res.status(400).json({
         success: false,
         message: 'Invalid verification code.',

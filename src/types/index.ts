@@ -7,7 +7,7 @@ export interface Employee {
   designation?: string;
 }
 
-export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
+export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled' | 'overdue';
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type ActivityAction = 'created' | 'updated' | 'status_changed' | 'deleted';
 

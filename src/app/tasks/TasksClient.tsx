@@ -41,6 +41,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskUrlStatus>(initialStatus);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [dateFilter, setDateFilter] = useState<string>('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
@@ -61,9 +62,10 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
         task.description.toLowerCase().includes(query) ||
         employee?.name.toLowerCase().includes(query);
       const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-      return matchesSearch && matchesPriority;
+      const matchesDate = !dateFilter || task.dueDate === dateFilter;
+      return matchesSearch && matchesPriority && matchesDate;
     });
-  }, [employees, priorityFilter, searchTerm, statusFilter, tasks]);
+  }, [employees, priorityFilter, searchTerm, statusFilter, tasks, dateFilter]);
 
   const resetCreateForm = () => {
     setNewTitle(defaultTaskForm.title);
@@ -110,7 +112,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             onClick={() => setShowAddForm((current) => !current)}
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-300 hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
           >
-            <Plus className="h-4 w-4" />
+            {!showAddForm && <Plus className="h-4 w-4" />}
             {showAddForm ? 'Cancel' : 'Add New Task'}
           </button>
         )}
@@ -160,6 +162,21 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50" />
         </div>
         <div className="flex flex-wrap items-center gap-3">
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+            title="Filter by due date"
+          />
+          {dateFilter && (
+            <button
+              onClick={() => setDateFilter('')}
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+            >
+              Clear Date
+            </button>
+          )}
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as TaskUrlStatus)} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
             {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>

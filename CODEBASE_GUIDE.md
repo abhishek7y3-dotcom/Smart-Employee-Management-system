@@ -93,3 +93,28 @@ Built with Node.js, Express, TypeScript, and MongoDB (via Mongoose).
 - **`utils/cloudinary.ts`**: Handles profile picture asset storage in Cloudinary cloud buckets.
 - **`utils/mailer.ts`**: Configures Nodemailer to dispatch verification and recovery verification email templates.
 - **`validators/authValidator.ts` & `validators/taskValidator.ts`**: Input validators checking strings, emails, dates, and schema requirements.
+
+
+
+
+Frontend
+
+↓
+
+Route
+
+↓
+
+Validator
+
+↓
+
+Controller
+
+↓
+
+Model
+
+↓
+
+MongoDB

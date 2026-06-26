@@ -19,7 +19,7 @@ interface ApiTask {
   priority: TaskPriority;
   dueDate: string;
   createdAt: string;
-  assignedTo: ApiUser | string;
+  assignedTo: ApiUser | string | null;
 }
 
 interface ApiTaskResponse {
@@ -41,8 +41,9 @@ interface ApiTasksResponse {
 export type TaskCreatePayload = Omit<Task, 'id' | 'createdAt'>;
 export type TaskUpdatePayload = Partial<TaskCreatePayload>;
 
-const useMockAuth =
-  typeof window !== 'undefined' && window.localStorage.getItem('use_mock_auth') === 'true';
+function isMockAuthEnabled(): boolean {
+  return typeof window !== 'undefined' && window.localStorage.getItem('use_mock_auth') === 'true';
+}
 
 const STORAGE_KEYS = {
   tasks: 'mock_tasks_data',
@@ -88,20 +89,29 @@ function saveMockEmployees(employees: Employee[]) {
 }
 
 function normalizeTask(apiTask: ApiTask): Task {
+  // assignedTo can be null when the referenced user was deleted from the DB
+  const assignedToId =
+    apiTask.assignedTo == null
+      ? ''
+      : typeof apiTask.assignedTo === 'string'
+      ? apiTask.assignedTo
+      : apiTask.assignedTo._id ?? '';
+
   return {
     id: apiTask._id,
     title: apiTask.title,
     description: apiTask.description,
     status: apiTask.status,
     priority: apiTask.priority,
-    assignedTo: typeof apiTask.assignedTo === 'string' ? apiTask.assignedTo : apiTask.assignedTo._id,
+    assignedTo: assignedToId,
     dueDate: new Date(apiTask.dueDate).toISOString().split('T')[0],
     createdAt: new Date(apiTask.createdAt).toISOString().split('T')[0],
   };
 }
 
 function extractEmployee(apiTask: ApiTask): Employee | undefined {
-  if (typeof apiTask.assignedTo === 'string') {
+  // Guard: assignedTo can be null (deleted user) or a plain string ID (not populated)
+  if (apiTask.assignedTo == null || typeof apiTask.assignedTo === 'string') {
     return undefined;
   }
 
@@ -127,7 +137,7 @@ function buildEmployees(apiTasks: ApiTask[]): Employee[] {
 }
 
 export async function getTasks(): Promise<{ tasks: Task[]; employees: Employee[] }> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return {
       tasks: getMockTasks(),
       employees: getMockEmployees(),
@@ -156,7 +166,7 @@ export async function getTasks(): Promise<{ tasks: Task[]; employees: Employee[]
 }
 
 export async function createTask(payload: TaskCreatePayload): Promise<{ task: Task; employee?: Employee }> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     const tasks = getMockTasks();
     const employees = getMockEmployees();
     const newTask: Task = {
@@ -187,7 +197,7 @@ export async function updateTask(
   taskId: string,
   payload: TaskUpdatePayload
 ): Promise<{ task: Task; employee?: Employee }> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     const tasks = getMockTasks();
     const employees = getMockEmployees();
     let updatedTask: Task | null = null;
@@ -220,7 +230,7 @@ export async function updateTask(
 }
 
 export async function deleteTask(taskId: string): Promise<void> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     const tasks = getMockTasks();
     saveMockTasks(tasks.filter(task => task.id !== taskId));
     return;

@@ -90,6 +90,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                       <option value="in_progress">In Progress</option>
                       <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
+                      <option value="overdue">Overdue</option>
                     </select>
                   ) : (
                     <StatusBadge status={task.status} />

@@ -17,13 +17,14 @@ import {
   registerUser as mockRegisterUser,
 } from './mockAuth';
 
-const useMockAuth =
-  typeof window !== 'undefined' && window.localStorage.getItem('use_mock_auth') === 'true';
+function isMockAuthEnabled(): boolean {
+  return typeof window !== 'undefined' && window.localStorage.getItem('use_mock_auth') === 'true';
+}
 
 export async function registerUser(
   payload: RegisterRequest
 ): Promise<RegisterResponse> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return mockRegisterUser(payload);
   }
 
@@ -40,7 +41,7 @@ export async function registerUser(
 }
 
 export async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return mockLoginUser(payload);
   }
 
@@ -62,7 +63,7 @@ export async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
 export async function forgotPassword(
   payload: ForgotPasswordRequest
 ): Promise<ForgotPasswordResponse> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return mockForgotPassword(payload);
   }
 
@@ -79,7 +80,7 @@ export async function forgotPassword(
 export async function resetPassword(
   payload: ResetPasswordRequest
 ): Promise<ResetPasswordResponse> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return { message: 'Mock password reset successful.' };
   }
 
@@ -94,7 +95,7 @@ export async function resetPassword(
 }
 
 export async function verifyOtp(email: string, otp: string): Promise<{ message: string }> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return { message: 'Mock OTP verified successfully.' };
   }
 
@@ -111,7 +112,7 @@ export async function updateUserProfile(
   id: string,
   payload: { role?: string; designation?: string }
 ): Promise<any> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return { id, ...payload };
   }
 
@@ -123,7 +124,7 @@ export async function updateUserProfile(
   }
 }
 export async function removeUser(id: string): Promise<any> {
-  if (useMockAuth) {
+  if (isMockAuthEnabled()) {
     return { success: true };
   }
 

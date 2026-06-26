@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
@@ -16,8 +16,8 @@ export const PieChartCard: React.FC<PieChartCardProps> = ({ tasks, className = '
   const data = getStatusChartData(tasks);
   const isDark = theme === 'dark';
   const colors = isDark
-    ? { todo: '#a1a1aa', in_progress: '#60a5fa', completed: '#4ade80' }
-    : { todo: '#71717a', in_progress: '#2563eb', completed: '#16a34a' };
+    ? { todo: '#a1a1aa', in_progress: '#60a5fa', completed: '#4ade80', cancelled: '#f87171', overdue: '#fbbf24' }
+    : { todo: '#71717a', in_progress: '#2563eb', completed: '#16a34a', cancelled: '#dc2626', overdue: '#d97706' };
 
   return (
     <div className={`rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-950 ${className}`}>

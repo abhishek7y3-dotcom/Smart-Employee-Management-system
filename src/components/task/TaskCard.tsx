@@ -26,6 +26,7 @@ const statuses: Array<{ value: Task['status']; label: string }> = [
   { value: 'in_progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
   { value: 'cancelled', label: 'Cancelled' },
+  { value: 'overdue', label: 'Overdue' },
 ];
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDelete, onEdit }) => {

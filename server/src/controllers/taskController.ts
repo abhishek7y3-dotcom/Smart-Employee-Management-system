@@ -18,10 +18,13 @@ export async function getTasks(req: AuthRequest, res: Response) {
     .populate('assignedTo', 'name email role designation')
     .populate('createdBy', 'name email role designation');
 
+  // Filter out tasks whose assignedTo user has been deleted (populate returns null)
+  const validTasks = tasks.filter((t) => t.assignedTo !== null);
+
   return res.status(200).json({
     success: true,
     message: 'Tasks retrieved successfully.',
-    data: { tasks },
+    data: { tasks: validTasks },
   });
 }
 

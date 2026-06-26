@@ -1,4 +1,4 @@
-﻿import { ActivityLog, Employee, Task, TaskStatus } from '../types';
+import { ActivityLog, Employee, Task, TaskStatus } from '../types';
 import { formatDate } from './format';
 
 export type TaskUrlStatus = 'all' | 'pending' | 'in-progress' | 'completed' | 'overdue' | 'cancelled';
@@ -9,18 +9,24 @@ const todayStart = () => {
 };
 
 export const isOverdueTask = (task: Task) => {
+  if (task.status === 'overdue') return true;
   const due = new Date(`${task.dueDate}T00:00:00`).getTime();
   return due < todayStart() && task.status !== 'completed' && task.status !== 'cancelled';
 };
 
-export const getDashboardMetrics = (tasks: Task[]) => ({
-  totalTasks: tasks.length,
-  pendingTasks: tasks.filter((task) => task.status === 'todo').length,
-  inProgressTasks: tasks.filter((task) => task.status === 'in_progress').length,
-  completedTasks: tasks.filter((task) => task.status === 'completed').length,
-  cancelledTasks: tasks.filter((task) => task.status === 'cancelled').length,
-  overdueTasks: tasks.filter(isOverdueTask).length,
-});
+export const getDashboardMetrics = (tasks: Task[]) => {
+  const overdueTasks = tasks.filter(isOverdueTask);
+  const overdueIds = new Set(overdueTasks.map((t) => t.id));
+
+  return {
+    totalTasks: tasks.length,
+    pendingTasks: tasks.filter((task) => task.status === 'todo' && !overdueIds.has(task.id)).length,
+    inProgressTasks: tasks.filter((task) => task.status === 'in_progress' && !overdueIds.has(task.id)).length,
+    completedTasks: tasks.filter((task) => task.status === 'completed').length,
+    cancelledTasks: tasks.filter((task) => task.status === 'cancelled').length,
+    overdueTasks: overdueTasks.length,
+  };
+};
 
 export const getRecentTasks = (tasks: Task[], limit = 5) =>
   [...tasks]
@@ -28,12 +34,14 @@ export const getRecentTasks = (tasks: Task[], limit = 5) =>
     .slice(0, limit);
 
 export const getStatusChartData = (tasks: Task[]) => {
-  const { pendingTasks, inProgressTasks, completedTasks } = getDashboardMetrics(tasks);
+  const { pendingTasks, inProgressTasks, completedTasks, cancelledTasks, overdueTasks } = getDashboardMetrics(tasks);
 
   return [
     { name: 'To Do', value: pendingTasks, key: 'todo' },
     { name: 'In Progress', value: inProgressTasks, key: 'in_progress' },
     { name: 'Completed', value: completedTasks, key: 'completed' },
+    { name: 'Cancelled', value: cancelledTasks, key: 'cancelled' },
+    { name: 'Overdue', value: overdueTasks, key: 'overdue' },
   ].filter((item) => item.value > 0);
 };
 
@@ -59,9 +67,10 @@ export const getTeamWorkloadData = (tasks: Task[], employees: Employee[]) =>
 
     return {
       name: employee.name.split(' ')[0],
-      todo: employeeTasks.filter((task) => task.status === 'todo').length,
-      inProgress: employeeTasks.filter((task) => task.status === 'in_progress').length,
+      todo: employeeTasks.filter((task) => task.status === 'todo' && !isOverdueTask(task)).length,
+      inProgress: employeeTasks.filter((task) => task.status === 'in_progress' && !isOverdueTask(task)).length,
       completed: employeeTasks.filter((task) => task.status === 'completed').length,
+      overdue: employeeTasks.filter(isOverdueTask).length,
     };
   });
 
@@ -83,7 +92,9 @@ export const toTaskStatus = (status: TaskUrlStatus): TaskStatus | 'all' =>
         ? 'completed'
         : status === 'cancelled'
           ? 'cancelled'
-          : 'all';
+          : status === 'overdue'
+            ? 'overdue'
+            : 'all';
 
 export const getRecentActivities = (activities: ActivityLog[], limit = 10) =>
   [...activities]

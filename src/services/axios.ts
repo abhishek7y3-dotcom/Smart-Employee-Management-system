@@ -54,6 +54,17 @@ axiosInstance.interceptors.response.use(
         message = 'An unexpected error occurred. Please try again.';
       }
 
+      // Auto-logout on 401: stale or invalid token (e.g. user deleted from DB)
+      if (status === 401 && typeof window !== 'undefined') {
+        const currentPath = window.location.pathname;
+        // Only clear and redirect if not already on an auth page
+        if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath)) {
+          window.localStorage.removeItem('auth_token');
+          window.localStorage.removeItem('auth_user');
+          window.location.href = '/login';
+        }
+      }
+
       const normalizedError = new Error(message);
       Object.assign(normalizedError, { status });
       return Promise.reject(normalizedError);

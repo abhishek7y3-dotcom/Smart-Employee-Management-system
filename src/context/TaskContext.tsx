@@ -42,6 +42,7 @@ const statusLabels: Record<TaskStatus, string> = {
   in_progress: 'In Progress',
   completed: 'Completed',
   cancelled: 'Cancelled',
+  overdue: 'Overdue',
 };
 
 const buildChangeDetails = (task: Task, updates: TaskInput, employees: Employee[]) => {
@@ -96,8 +97,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { tasks: fetchedTasks, employees: fetchedEmployees } = await apiGetTasks();
         setTasks(fetchedTasks);
         setEmployees(fetchedEmployees);
-      } catch (err) {
-        toast.error('Failed to load tasks from database');
+      } catch (err: any) {
+        console.error('[TaskContext] fetchTasks failed:', err?.message ?? err);
+        toast.error(`Failed to load data: ${err?.message ?? 'Unknown error'}`);
       }
     } else {
       setTasks([]);

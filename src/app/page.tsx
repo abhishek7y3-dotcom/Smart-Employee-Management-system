@@ -7,7 +7,7 @@ import { useTasks } from '../context/TaskContext';
 import { TaskSummaryCard } from '../components/task/TaskSummaryCard';
 import { EmployeeCard } from '../components/employee/EmployeeCard';
 import { PieChartCard } from '../components/analytics/PieChartCard';
-import { LineChartCard } from '../components/analytics/LineChartCard';
+import { KPICard } from '../components/analytics/KPICard';
 import { BarChartCard } from '../components/analytics/BarChartCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { StatusBadge } from '../components/task/StatusBadge';
@@ -70,7 +70,7 @@ export default function DashboardPage() {
         </div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           <PieChartCard tasks={tasks} />
-          <LineChartCard tasks={tasks} />
+          <KPICard tasks={tasks} />
           <BarChartCard tasks={tasks} employees={employees} className="md:col-span-2 xl:col-span-1" />
         </div>
       </section>

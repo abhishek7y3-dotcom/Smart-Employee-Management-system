@@ -31,7 +31,13 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950">
+        <div className="rounded-xl border border-zinc-200 bg-white px-8 py-6 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900/50">
+          <p className="text-sm font-semibold text-zinc-700 dark:text-zinc-300">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

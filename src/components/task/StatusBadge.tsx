@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { TaskStatus } from '../../types';
 
 interface StatusBadgeProps {
@@ -27,6 +27,10 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
     cancelled: {
       label: 'Cancelled',
       classes: 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200/50 dark:border-red-800/50',
+    },
+    overdue: {
+      label: 'Overdue',
+      classes: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/50',
     },
   };
 

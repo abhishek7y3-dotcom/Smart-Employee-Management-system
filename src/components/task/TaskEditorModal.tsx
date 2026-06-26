@@ -105,6 +105,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                 <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
+                <option value="overdue">Overdue</option>
               </select>
             </label>
             <label>
