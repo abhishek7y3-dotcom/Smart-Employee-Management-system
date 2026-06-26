@@ -1,11 +1,12 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "../styles/globals.css";
 import { TaskProvider } from "../context/TaskContext";
 import { ThemeProvider } from "../context/ThemeContext";
-import { Header } from "../components/Header";
-import { Sidebar } from "../components/Sidebar";
+import { AuthProvider } from "../context/AuthContext";
+import { LayoutGuard } from "../components/LayoutGuard";
+import MockAuthBanner from "../components/MockAuthBanner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,20 +35,17 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full bg-zinc-50 text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-100">
-        <TaskProvider>
-          <ThemeProvider>
-            <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
-              <Header />
-              <div className="flex flex-1 overflow-hidden">
-                <Sidebar />
-                <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 transition-colors duration-300 dark:bg-zinc-950 md:p-8">
-                  {children}
-                </main>
-              </div>
-            </div>
-            <Toaster richColors position="top-right" closeButton />
-          </ThemeProvider>
-        </TaskProvider>
+        <AuthProvider>
+          <TaskProvider>
+            <ThemeProvider>
+              <LayoutGuard>
+                {children}
+              </LayoutGuard>
+              <Toaster richColors position="top-right" closeButton />
+              <MockAuthBanner />
+            </ThemeProvider>
+          </TaskProvider>
+        </AuthProvider>
       </body>
     </html>
   );

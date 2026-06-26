@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -6,6 +6,13 @@ import { usePathname } from 'next/navigation';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
+  const [isMock, setIsMock] = React.useState(false);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMock(window.localStorage.getItem('use_mock_auth') === 'true');
+    }
+  }, []);
 
   const navigation = [
     {
@@ -59,8 +66,14 @@ export const Sidebar: React.FC = () => {
 
       <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
         <div className="rounded-lg bg-zinc-100 p-3 text-xs text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-          <p className="font-semibold text-zinc-700 dark:text-zinc-300">Mode: Local Mock</p>
-          <p className="mt-1">Changes are saved to browser local storage.</p>
+          <p className="font-semibold text-zinc-700 dark:text-zinc-300">
+            Mode: {isMock ? 'Local Mock' : 'Server API'}
+          </p>
+          <p className="mt-1">
+            {isMock
+              ? 'Changes are saved to browser local storage.'
+              : 'Connected to MongoDB backend database.'}
+          </p>
         </div>
       </div>
     </aside>

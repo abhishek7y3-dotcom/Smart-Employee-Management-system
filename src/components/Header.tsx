@@ -1,9 +1,10 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ClipboardCheck } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useTasks } from '../context/TaskContext';
+import { useAuth } from '../context/AuthContext';
 import { getRecentActivities } from '../utils/dashboardUtils';
 
 const activityMessages: Record<string, string> = {
@@ -27,6 +28,7 @@ export const Header: React.FC = () => {
 
   const [isMounted, setIsMounted] = useState(false);
   const { activities } = useTasks();
+  const { user, logout } = useAuth();
 
   const recentActivities = useMemo(() => getRecentActivities(activities, 5), [activities]);
 
@@ -100,10 +102,19 @@ export const Header: React.FC = () => {
 
         <div className="hidden h-6 w-px bg-zinc-200 dark:bg-zinc-800 sm:block" />
         <div className="hidden items-center gap-2 sm:flex">
-          <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150" alt="Diana Prince" className="h-9 w-9 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-zinc-800" />
+          <img
+            src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
+            alt={user?.name || 'Diana Prince'}
+            className="h-9 w-9 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-zinc-800"
+          />
           <div className="hidden text-left md:block">
-            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">Diana Prince</p>
-            <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Project Manager</p>
+            <p className="text-xs font-semibold text-zinc-800 dark:text-zinc-200">{user?.name || 'Diana Prince'}</p>
+            <button
+              onClick={logout}
+              className="block text-[10px] font-bold text-red-500 hover:text-red-650 transition-colors duration-300 bg-transparent border-none p-0 text-left outline-none cursor-pointer"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </div>

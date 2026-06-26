@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React from 'react';
 import Link from 'next/link';
@@ -22,6 +22,8 @@ const activityMessages: Record<ActivityLog['action'], string> = {
   deleted: 'deleted',
 };
 
+import ProtectedRoute from '../components/ProtectedRoute';
+
 export default function DashboardPage() {
   const { tasks, employees, activities } = useTasks();
 
@@ -30,7 +32,8 @@ export default function DashboardPage() {
   const recentActivities = getRecentActivities(activities, 10);
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8 pb-12 transition-colors duration-300">
+    <ProtectedRoute>
+      <div className="mx-auto max-w-7xl space-y-8 pb-12 transition-colors duration-300">
       <section className="rounded-lg border border-blue-200/70 bg-blue-600 p-6 text-white shadow-sm transition-colors duration-300 dark:border-blue-900/60 dark:bg-blue-950 md:p-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
@@ -141,7 +144,8 @@ export default function DashboardPage() {
           <EmptyState title="No activity yet" message="Task updates will appear here as your team works." />
         )}
       </section>
-    </div>
+      </div>
+    </ProtectedRoute>
   );
 }
 

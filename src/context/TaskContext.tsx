@@ -1,10 +1,17 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { formatDate } from '../utils/format';
 import { ActivityAction, ActivityLog, Employee, Task, TaskInput, TaskPriority, TaskStatus } from '../types';
 import { mockEmployees, mockTasks } from '../constants/mockData';
+import { useAuth } from './AuthContext';
+import {
+  getTasks as apiGetTasks,
+  createTask as apiCreateTask,
+  updateTask as apiUpdateTask,
+  deleteTask as apiDeleteTask
+} from '../api/tasks';
 
 interface TaskContextType {
   tasks: Task[];
@@ -19,9 +26,8 @@ interface TaskContextType {
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
 }
 
-const TASKS_KEY = 'employee_tasks';
-const EMPLOYEES_KEY = 'employee_members';
 const ACTIVITIES_KEY = 'employee_activity_log';
+const EMPLOYEES_KEY = 'employee_members';
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
@@ -61,89 +67,46 @@ const buildActivity = (
 });
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize tasks and employees from mock data on both server and initial
-  // client render so server/client HTML matches. Load persisted values from
-  // localStorage after mount and update state if present.
-  const initialTasks: Task[] = mockTasks;
-  const initialEmployees: Employee[] = mockEmployees;
+  const { isAuthenticated, initializing } = useAuth();
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
 
-  // Start activities as empty on both server and initial client render to avoid
-  // hydration mismatches. Load persisted activities from localStorage after mount.
-  const initialActivities: ActivityLog[] = [];
-
-  const [tasks, setTasks] = useState<Task[]>(() => initialTasks);
-  const [employees, setEmployees] = useState<Employee[]>(() => initialEmployees);
-  const [activities, setActivities] = useState<ActivityLog[]>(() => initialActivities);
-  const initialDataRef = useRef({ tasks: initialTasks, employees: initialEmployees, activities: initialActivities });
-
+  // Load activities from localStorage on mount (safe for SSR/hydration)
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    // Ensure defaults exist
-    if (!localStorage.getItem(TASKS_KEY)) localStorage.setItem(TASKS_KEY, JSON.stringify(initialDataRef.current.tasks));
-    if (!localStorage.getItem(EMPLOYEES_KEY)) localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(initialDataRef.current.employees));
-
-    // If persisted tasks exist, load them into state after mount
-    const storedTasks = localStorage.getItem(TASKS_KEY);
-    if (storedTasks) {
-      try {
-        const parsed = JSON.parse(storedTasks) as Task[];
-        if (parsed && parsed.length > 0) {
-          setTasks(parsed);
-        } else {
-          setTasks(initialDataRef.current.tasks);
-          localStorage.setItem(TASKS_KEY, JSON.stringify(initialDataRef.current.tasks));
-        }
-      } catch (err) {
-        setTasks(initialDataRef.current.tasks);
-        localStorage.setItem(TASKS_KEY, JSON.stringify(initialDataRef.current.tasks));
-      }
-    } else {
-      setTasks(initialDataRef.current.tasks);
-      localStorage.setItem(TASKS_KEY, JSON.stringify(initialDataRef.current.tasks));
-    }
-
-    const storedEmployees = localStorage.getItem(EMPLOYEES_KEY);
-    if (storedEmployees) {
-      try {
-        const parsed = JSON.parse(storedEmployees) as Employee[];
-        if (parsed && parsed.length > 0) {
-          setEmployees(parsed);
-        } else {
-          setEmployees(initialDataRef.current.employees);
-          localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(initialDataRef.current.employees));
-        }
-      } catch (err) {
-        setEmployees(initialDataRef.current.employees);
-        localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(initialDataRef.current.employees));
-      }
-    } else {
-      setEmployees(initialDataRef.current.employees);
-      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(initialDataRef.current.employees));
-    }
-
-    // Load persisted activities (if any) and update state after mount to keep
     const storedActivities = localStorage.getItem(ACTIVITIES_KEY);
     if (storedActivities) {
       try {
         const parsed = JSON.parse(storedActivities) as ActivityLog[];
         if (parsed && parsed.length > 0) setActivities(parsed);
       } catch (err) {
-        // ignore parse errors and keep activities empty
+        // ignore parse errors
       }
-    } else {
-      localStorage.setItem(ACTIVITIES_KEY, JSON.stringify(initialDataRef.current.activities));
     }
   }, []);
 
-  const saveTasks = (newTasks: Task[]) => {
-    setTasks(newTasks);
-    localStorage.setItem(TASKS_KEY, JSON.stringify(newTasks));
+  const fetchTasks = async () => {
+    const isMock = typeof window === 'undefined' ? false : localStorage.getItem('use_mock_auth') === 'true';
+    if (isAuthenticated || isMock) {
+      try {
+        const { tasks: fetchedTasks, employees: fetchedEmployees } = await apiGetTasks();
+        setTasks(fetchedTasks);
+        setEmployees(fetchedEmployees);
+      } catch (err) {
+        toast.error('Failed to load tasks from database');
+      }
+    } else {
+      setTasks([]);
+      setEmployees([]);
+    }
   };
 
-  const saveEmployees = (newEmployees: Employee[]) => {
-    setEmployees(newEmployees);
-    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(newEmployees));
-  };
+  useEffect(() => {
+    if (!initializing) {
+      fetchTasks();
+    }
+  }, [isAuthenticated, initializing]);
 
   const recordActivity = (activity: ActivityLog) => {
     setActivities((current) => {
@@ -153,80 +116,140 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  const addTask = (newTaskData: TaskInput) => {
-    const newTask: Task = {
-      ...newTaskData,
-      id: `task-${Date.now()}`,
-      createdAt: new Date().toISOString(),
-    };
-
-    saveTasks([...tasks, newTask]);
-    recordActivity(
-      buildActivity(
-        newTask,
-        employees,
-        'created',
-        `Created task with status ${statusLabels[newTask.status]} and due date ${formatDate(newTask.dueDate)}.`,
-      ),
-    );
-    toast.success('Task created successfully');
+  const addTask = async (newTaskData: TaskInput) => {
+    try {
+      const { task: created, employee } = await apiCreateTask(newTaskData);
+      setTasks((prev) => [...prev, created]);
+      if (employee && !employees.some((e) => e.id === employee.id)) {
+        setEmployees((prev) => [...prev, employee]);
+      }
+      recordActivity(
+        buildActivity(
+          created,
+          employees,
+          'created',
+          `Created task with status ${statusLabels[created.status]} and due date ${formatDate(created.dueDate)}.`,
+        ),
+      );
+      toast.success('Task created successfully');
+    } catch (err) {
+      toast.error('Failed to create task in database');
+    }
   };
 
-  const updateTask = (taskId: string, updates: TaskInput) => {
+  const updateTask = async (taskId: string, updates: TaskInput) => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task) return;
 
-    const updatedTask: Task = { ...task, ...updates };
-    saveTasks(tasks.map((item) => (item.id === taskId ? updatedTask : item)));
-    recordActivity(buildActivity(updatedTask, employees, 'updated', buildChangeDetails(task, updates, employees)));
-    toast.success('Task updated successfully');
+    try {
+      const { task: updated, employee } = await apiUpdateTask(taskId, updates);
+      setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
+      if (employee && !employees.some((e) => e.id === employee.id)) {
+        setEmployees((prev) => [...prev, employee]);
+      }
+      recordActivity(buildActivity(updated, employees, 'updated', buildChangeDetails(task, updates, employees)));
+      toast.success('Task updated successfully');
+    } catch (err) {
+      toast.error('Failed to update task in database');
+    }
   };
 
-  const updateTaskStatus = (taskId: string, status: TaskStatus) => {
+  const updateTaskStatus = async (taskId: string, status: TaskStatus) => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task || task.status === status) return;
 
-    const updatedTask = { ...task, status };
-    saveTasks(tasks.map((item) => (item.id === taskId ? updatedTask : item)));
-    recordActivity(buildActivity(updatedTask, employees, 'status_changed', `Changed status for "${task.title}" to ${statusLabels[status]}.`));
-    toast.success('Status updated successfully');
+    try {
+      const updates = {
+        title: task.title,
+        description: task.description,
+        status,
+        priority: task.priority,
+        assignedTo: task.assignedTo,
+        dueDate: task.dueDate,
+      };
+      const { task: updated } = await apiUpdateTask(taskId, updates);
+      setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
+      recordActivity(buildActivity(updated, employees, 'status_changed', `Changed status for "${task.title}" to ${statusLabels[status]}.`));
+      toast.success('Status updated successfully');
+    } catch (err) {
+      toast.error('Failed to update task status in database');
+    }
   };
 
-  const updateTaskPriority = (taskId: string, priority: TaskPriority) => {
+  const updateTaskPriority = async (taskId: string, priority: TaskPriority) => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task || task.priority === priority) return;
 
-    const updatedTask = { ...task, priority };
-    saveTasks(tasks.map((item) => (item.id === taskId ? updatedTask : item)));
-    recordActivity(buildActivity(updatedTask, employees, 'updated', `Changed priority for "${task.title}" to ${priority}.`));
-    toast.success('Task updated successfully');
+    try {
+      const updates = {
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority,
+        assignedTo: task.assignedTo,
+        dueDate: task.dueDate,
+      };
+      const { task: updated } = await apiUpdateTask(taskId, updates);
+      setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
+      recordActivity(buildActivity(updated, employees, 'updated', `Changed priority for "${task.title}" to ${priority}.`));
+      toast.success('Task updated successfully');
+    } catch (err) {
+      toast.error('Failed to update task priority in database');
+    }
   };
 
-  const assignTask = (taskId: string, employeeId: string) => {
+  const assignTask = async (taskId: string, employeeId: string) => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task || task.assignedTo === employeeId) return;
 
-    const updatedTask = { ...task, assignedTo: employeeId };
-    saveTasks(tasks.map((item) => (item.id === taskId ? updatedTask : item)));
-    recordActivity(buildActivity(updatedTask, employees, 'updated', `Assigned "${task.title}" to ${getEmployeeName(employees, employeeId)}.`));
-    toast.success('Task updated successfully');
+    try {
+      const updates = {
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        assignedTo: employeeId,
+        dueDate: task.dueDate,
+      };
+      const { task: updated } = await apiUpdateTask(taskId, updates);
+      setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
+      recordActivity(buildActivity(updated, employees, 'updated', `Assigned "${task.title}" to ${getEmployeeName(employees, employeeId)}.`));
+      toast.success('Task updated successfully');
+    } catch (err) {
+      toast.error('Failed to assign task in database');
+    }
   };
 
-  const deleteTask = (taskId: string) => {
+  const deleteTask = async (taskId: string) => {
     const task = tasks.find((item) => item.id === taskId);
     if (!task) return;
 
-    saveTasks(tasks.filter((item) => item.id !== taskId));
-    recordActivity(buildActivity(task, employees, 'deleted', 'Task removed from the list.'));
-    toast.success('Task deleted successfully');
+    try {
+      await apiDeleteTask(taskId);
+      setTasks((prev) => prev.filter((item) => item.id !== taskId));
+      recordActivity(buildActivity(task, employees, 'deleted', 'Task removed from the list.'));
+      toast.success('Task deleted successfully');
+    } catch (err) {
+      toast.error('Failed to delete task from database');
+    }
   };
 
   const addEmployee = (newEmployeeData: Omit<Employee, 'id'>) => {
-    const newEmployee: Employee = {
-      ...newEmployeeData,
-      id: `emp-${Date.now()}`,
-    };
-    saveEmployees([...employees, newEmployee]);
+    const isMock = typeof window === 'undefined' ? false : localStorage.getItem('use_mock_auth') === 'true';
+    if (isMock) {
+      const newEmployee: Employee = {
+        ...newEmployeeData,
+        id: `emp-${Date.now()}`,
+      };
+      setEmployees((prev) => {
+        const next = [...prev, newEmployee];
+        localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(next));
+        return next;
+      });
+      toast.success('Mock team member added');
+    } else {
+      toast.info('Team members are managed via database user registrations in production mode');
+    }
   };
 
   return (
