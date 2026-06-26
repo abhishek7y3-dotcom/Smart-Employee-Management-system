@@ -14,7 +14,7 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
   const pathname = usePathname();
   const { isAuthenticated, initializing, loading } = useAuth();
 
-  const isAuthPage = ['/login', '/register', '/forgot-password'].includes(pathname);
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
 
   if (isAuthPage) {
     return <>{children}</>;

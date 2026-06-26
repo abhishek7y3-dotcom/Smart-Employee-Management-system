@@ -1,9 +1,10 @@
-﻿export interface Employee {
+export interface Employee {
   id: string;
   name: string;
   email: string;
   role: string;
   avatarUrl?: string;
+  designation?: string;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';

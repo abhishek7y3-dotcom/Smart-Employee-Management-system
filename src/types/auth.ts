@@ -40,3 +40,14 @@ export interface ForgotPasswordRequest {
 export interface ForgotPasswordResponse {
   message: string;
 }
+
+export interface ResetPasswordRequest {
+  email: string;
+  otp: string;
+  password?: string;
+}
+
+export interface ResetPasswordResponse {
+  message: string;
+}
+

@@ -23,9 +23,11 @@ const activityMessages: Record<ActivityLog['action'], string> = {
 };
 
 import ProtectedRoute from '../components/ProtectedRoute';
+import { useAuth } from '../context/AuthContext';
 
 export default function DashboardPage() {
   const { tasks, employees, activities } = useTasks();
+  const { user } = useAuth();
 
   const metrics = getDashboardMetrics(tasks);
   const recentTasks = getRecentTasks(tasks, 5);
@@ -38,7 +40,7 @@ export default function DashboardPage() {
         <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold text-blue-100">Team operations overview</p>
-            <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Welcome Back, Diana</h2>
+            <h2 className="mt-2 text-3xl font-bold tracking-tight md:text-4xl">Welcome Back, {user?.name || 'User'}</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100 md:text-base">
               {metrics.inProgressTasks} tasks are moving, {metrics.cancelledTasks} are cancelled, and the latest team activity is ready for review.
             </p>

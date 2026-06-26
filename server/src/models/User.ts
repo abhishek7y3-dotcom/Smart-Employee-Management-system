@@ -10,6 +10,9 @@ export interface IUser extends Document {
   isVerified: boolean;
   verificationOtp?: string;
   verificationOtpExpires?: Date;
+  resetPasswordOtp?: string;
+  resetPasswordOtpExpires?: Date;
+  designation?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -43,6 +46,10 @@ const userSchema = new Schema<IUser>(
       enum: ['user', 'admin'],
       default: 'user',
     },
+    designation: {
+      type: String,
+      default: 'Employee',
+    },
     profilePicture: {
       type: String,
       default: '',
@@ -56,6 +63,14 @@ const userSchema = new Schema<IUser>(
       select: false,
     },
     verificationOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    resetPasswordOtp: {
+      type: String,
+      select: false,
+    },
+    resetPasswordOtpExpires: {
       type: Date,
       select: false,
     },

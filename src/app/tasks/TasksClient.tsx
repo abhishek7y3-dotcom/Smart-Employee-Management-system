@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useMemo, useState } from 'react';
 import { Plus, Search } from 'lucide-react';
@@ -9,6 +9,7 @@ import { TaskTable } from '../../components/task/TaskTable';
 import { TaskEditorModal } from '../../components/task/TaskEditorModal';
 import { Task, TaskInput, TaskPriority } from '../../types';
 import { getFilteredTasksByUrlStatus, TaskUrlStatus } from '../../utils/dashboardUtils';
+import { useAuth } from '../../context/AuthContext';
 
 const getTodayString = () => new Date().toISOString().split('T')[0];
 
@@ -35,6 +36,8 @@ const defaultTaskForm: Omit<TaskInput, 'status'> & { status?: TaskInput['status'
 
 export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const { tasks, employees, addTask, updateTask, updateTaskStatus, deleteTask } = useTasks();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskUrlStatus>(initialStatus);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -101,17 +104,19 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50">Tasks</h2>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">Review, create, and update task tracking logs assigned to employees.</p>
         </div>
-        <button
-          type="button"
-          onClick={() => setShowAddForm((current) => !current)}
-          className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-300 hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
-        >
-          <Plus className="h-4 w-4" />
-          {showAddForm ? 'Cancel' : 'Add New Task'}
-        </button>
+        {isAdmin && (
+          <button
+            type="button"
+            onClick={() => setShowAddForm((current) => !current)}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-300 hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+          >
+            <Plus className="h-4 w-4" />
+            {showAddForm ? 'Cancel' : 'Add New Task'}
+          </button>
+        )}
       </div>
 
-      {showAddForm && (
+      {showAddForm && isAdmin && (
         <form onSubmit={handleAddTask} className="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-950">
           <h3 className="font-bold text-zinc-950 dark:text-zinc-50">Create Task</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -135,7 +140,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               <span className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">Assignee</span>
               <select required value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50">
                 <option value="">Select Employee</option>
-                {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.role})</option>)}
+                {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.designation || 'Employee'})</option>)}
               </select>
             </label>
             <label>
@@ -168,7 +173,13 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       </div>
 
       {filteredTasks.length > 0 ? (
-        <TaskTable tasks={filteredTasks} employees={employees} onDeleteTask={setTaskToDelete} />
+        <TaskTable
+          tasks={filteredTasks}
+          employees={employees}
+          onDeleteTask={setTaskToDelete}
+          onEditTask={setTaskToEdit}
+          onStatusChange={updateTaskStatus}
+        />
       ) : (
         <EmptyState title="No tasks found" message="Try adjusting your filters or search terms." />
       )}

@@ -8,6 +8,8 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
+  ResetPasswordResponse,
 } from '../types/auth';
 import {
   forgotPassword as mockForgotPassword,
@@ -74,6 +76,23 @@ export async function forgotPassword(
   }
 }
 
+export async function resetPassword(
+  payload: ResetPasswordRequest
+): Promise<ResetPasswordResponse> {
+  if (useMockAuth) {
+    return { message: 'Mock password reset successful.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/reset-password', payload);
+    return {
+      message: response.data.message || 'Password has been reset successfully.'
+    };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 export async function verifyOtp(email: string, otp: string): Promise<{ message: string }> {
   if (useMockAuth) {
     return { message: 'Mock OTP verified successfully.' };
@@ -88,6 +107,34 @@ export async function verifyOtp(email: string, otp: string): Promise<{ message: 
     throw normalizeApiError(error);
   }
 }
+export async function updateUserProfile(
+  id: string,
+  payload: { role?: string; designation?: string }
+): Promise<any> {
+  if (useMockAuth) {
+    return { id, ...payload };
+  }
+
+  try {
+    const response = await axiosInstance.put<any>(`/auth/users/${id}`, payload);
+    return response.data.data.user;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+export async function removeUser(id: string): Promise<any> {
+  if (useMockAuth) {
+    return { success: true };
+  }
+
+  try {
+    const response = await axiosInstance.delete<any>(`/auth/users/${id}`);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 
 function normalizeApiError(error: unknown): Error {
   if (error instanceof Error) {

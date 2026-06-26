@@ -134,11 +134,24 @@ export async function getTasks(): Promise<{ tasks: Task[]; employees: Employee[]
     };
   }
 
-  const response = await axiosInstance.get<ApiTasksResponse>('/tasks');
-  const apiTasks = response.data.data.tasks;
+  const tasksResponse = await axiosInstance.get<ApiTasksResponse>('/tasks');
+  const apiTasks = tasksResponse.data.data.tasks;
+
+  const usersResponse = await axiosInstance.get<{ success: boolean; data: { users: any[] } }>('/auth/users');
+  const apiUsers = usersResponse.data.data.users;
+
+  const employees = apiUsers.map((user) => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role ?? 'user',
+    designation: user.designation || 'Employee',
+    avatarUrl: user.profilePicture,
+  }));
+
   return {
     tasks: apiTasks.map(normalizeTask),
-    employees: buildEmployees(apiTasks),
+    employees,
   };
 }
 

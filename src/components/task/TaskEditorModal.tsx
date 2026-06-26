@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
@@ -121,7 +121,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                 <option value="">Select Employee</option>
                 {employees.map((employee) => (
                   <option key={employee.id} value={employee.id}>
-                    {employee.name} ({employee.role})
+                    {employee.name} ({employee.designation || 'Employee'})
                   </option>
                 ))}
               </select>

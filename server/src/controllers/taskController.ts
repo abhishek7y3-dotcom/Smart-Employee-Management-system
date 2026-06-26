@@ -5,9 +5,18 @@ import Task from '../models/Task';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export async function getTasks(req: AuthRequest, res: Response) {
-  const tasks = await Task.find({ createdBy: req.user?._id })
-    .populate('assignedTo', 'name email role')
-    .populate('createdBy', 'name email role');
+  const query = req.user?.role === 'admin'
+    ? {}
+    : {
+        $or: [
+          { createdBy: req.user?._id },
+          { assignedTo: req.user?._id }
+        ]
+      };
+
+  const tasks = await Task.find(query)
+    .populate('assignedTo', 'name email role designation')
+    .populate('createdBy', 'name email role designation');
 
   return res.status(200).json({
     success: true,
@@ -17,7 +26,17 @@ export async function getTasks(req: AuthRequest, res: Response) {
 }
 
 export async function getTaskById(req: AuthRequest, res: Response) {
-  const task = await Task.findOne({ _id: req.params.id, createdBy: req.user?._id })
+  const query = req.user?.role === 'admin'
+    ? { _id: req.params.id }
+    : {
+        _id: req.params.id,
+        $or: [
+          { createdBy: req.user?._id },
+          { assignedTo: req.user?._id }
+        ]
+      };
+
+  const task = await Task.findOne(query)
     .populate('assignedTo', 'name email role')
     .populate('createdBy', 'name email role');
 
@@ -65,8 +84,18 @@ export async function createTask(req: AuthRequest, res: Response) {
 
 export async function updateTask(req: AuthRequest, res: Response) {
   const updates = req.body;
+  const query = req.user?.role === 'admin'
+    ? { _id: req.params.id }
+    : {
+        _id: req.params.id,
+        $or: [
+          { createdBy: req.user?._id },
+          { assignedTo: req.user?._id }
+        ]
+      };
+
   const task = await Task.findOneAndUpdate(
-    { _id: req.params.id, createdBy: req.user?._id },
+    query,
     updates,
     { new: true }
   )
@@ -89,7 +118,11 @@ export async function updateTask(req: AuthRequest, res: Response) {
 }
 
 export async function deleteTask(req: AuthRequest, res: Response) {
-  const task = await Task.findOneAndDelete({ _id: req.params.id, createdBy: req.user?._id });
+  const query = req.user?.role === 'admin'
+    ? { _id: req.params.id }
+    : { _id: req.params.id, createdBy: req.user?._id };
+
+  const task = await Task.findOneAndDelete(query);
 
   if (!task) {
     return res.status(404).json({

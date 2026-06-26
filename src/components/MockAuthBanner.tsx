@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 
 export default function MockAuthBanner() {
   const [mockEnabled, setMockEnabled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -11,6 +13,7 @@ export default function MockAuthBanner() {
     }
 
     setMockEnabled(window.localStorage.getItem('use_mock_auth') === 'true');
+    setIsVisible(window.localStorage.getItem('hide_mock_auth_banner') !== 'true');
   }, []);
 
   const toggleMockAuth = () => {
@@ -24,9 +27,29 @@ export default function MockAuthBanner() {
     window.location.reload();
   };
 
+  const handleDismiss = () => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+    window.localStorage.setItem('hide_mock_auth_banner', 'true');
+    setIsVisible(false);
+  };
+
+  if (!isVisible) {
+    return null;
+  }
+
   return (
-    <div className="fixed bottom-4 right-4 z-50 rounded-3xl border border-zinc-200 bg-white px-4 py-3 shadow-lg">
-      <div className="flex items-center gap-3">
+    <div className="fixed bottom-4 right-4 z-50 rounded-3xl border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+      <button
+        type="button"
+        onClick={handleDismiss}
+        className="absolute top-2 right-2 p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+        aria-label="Dismiss auth stub banner"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+      <div className="flex items-center gap-3 pr-4">
         <span className="text-xs font-medium uppercase tracking-[0.28em] text-zinc-500">
           Auth stub
         </span>
@@ -38,7 +61,7 @@ export default function MockAuthBanner() {
           {mockEnabled ? 'Disable' : 'Enable'}
         </button>
       </div>
-      <p className="mt-2 max-w-xs text-[11px] text-zinc-600">
+      <p className="mt-2 max-w-xs text-[11px] text-zinc-600 dark:text-zinc-400">
         {mockEnabled
           ? 'Mock authentication is enabled for local testing.'
           : 'Enable mock auth to use local registration/login without a backend.'}

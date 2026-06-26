@@ -13,6 +13,7 @@ import {
   forgotPassword as forgotPasswordApi,
   loginUser,
   registerUser,
+  resetPassword as resetPasswordApi,
 } from '../api/auth';
 import {
   AuthUser,
@@ -21,6 +22,7 @@ import {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
+  ResetPasswordRequest,
 } from '../types/auth';
 
 interface AuthState {
@@ -37,6 +39,7 @@ interface AuthContextType extends AuthState {
   logout: () => void;
   register: (data: RegisterRequest) => Promise<string>;
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<string>;
+  resetPassword: (payload: ResetPasswordRequest) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -136,6 +139,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  const resetPassword = useCallback(async (payload: ResetPasswordRequest) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await resetPasswordApi(payload);
+      return response.message;
+    } catch (apiError) {
+      setError(getFriendlyErrorMessage(apiError));
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const logout = useCallback(() => {
     clearAuth();
     router.push('/login');
@@ -156,6 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         register,
         forgotPassword,
+        resetPassword,
       }}
     >
       {children}</AuthContext.Provider>
@@ -173,6 +192,10 @@ export const useAuth = (): AuthContextType => {
 function getFriendlyErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     const errorWithStatus = error as Error & { status?: number };
+    // If the error message is a specific message from the server, use it
+    if (error.message && error.message !== 'An unexpected error occurred. Please try again.') {
+      return error.message;
+    }
     if (typeof errorWithStatus.status === 'number') {
       switch (errorWithStatus.status) {
         case 400:

@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { CalendarDays, ChevronDown, Pencil, Trash2, UserRound } from 'lucide-react';
@@ -6,6 +6,7 @@ import { Task } from '../../types';
 import { formatDate } from '../../utils/format';
 import { useTasks } from '../../context/TaskContext';
 import { StatusBadge } from './StatusBadge';
+import { useAuth } from '../../context/AuthContext';
 
 interface TaskCardProps {
   task: Task;
@@ -29,6 +30,8 @@ const statuses: Array<{ value: Task['status']; label: string }> = [
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDelete, onEdit }) => {
   const { employees } = useTasks();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const employee = employees.find((emp) => emp.id === task.assignedTo);
   const employeeName = employee ? employee.name : 'Unassigned';
@@ -58,7 +61,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
         <div className="grid gap-3 rounded-lg bg-zinc-50 p-3 text-xs text-zinc-500 transition-colors duration-300 dark:bg-zinc-900/70 dark:text-zinc-400">
           <div className="flex items-center gap-2">
             <UserRound className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-            <span className="font-semibold text-zinc-700 dark:text-zinc-300">{employeeName}</span>
+            <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+              {employeeName}{employee?.designation ? ` (${employee.designation})` : ''}
+            </span>
           </div>
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
@@ -100,7 +105,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
             </div>
           )}
 
-          {onEdit && (
+          {isAdmin && onEdit && (
             <button
               type="button"
               onClick={() => onEdit(task)}
@@ -111,7 +116,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
             </button>
           )}
 
-          {onDelete && (
+          {isAdmin && onDelete && (
             <button
               type="button"
               onClick={() => onDelete(task)}

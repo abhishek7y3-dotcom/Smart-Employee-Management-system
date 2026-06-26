@@ -12,6 +12,7 @@ import {
   updateTask as apiUpdateTask,
   deleteTask as apiDeleteTask
 } from '../api/tasks';
+import { updateUserProfile, removeUser } from '../api/auth';
 
 interface TaskContextType {
   tasks: Task[];
@@ -24,6 +25,8 @@ interface TaskContextType {
   assignTask: (taskId: string, employeeId: string) => void;
   deleteTask: (taskId: string) => void;
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
+  updateEmployeeDesignation: (employeeId: string, designation: string) => Promise<void>;
+  removeEmployee: (employeeId: string) => Promise<void>;
 }
 
 const ACTIVITIES_KEY = 'employee_activity_log';
@@ -120,15 +123,18 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const { task: created, employee } = await apiCreateTask(newTaskData);
       setTasks((prev) => [...prev, created]);
+      const currentEmployees = employee && !employees.some((e) => e.id === employee.id)
+        ? [...employees, employee]
+        : employees;
       if (employee && !employees.some((e) => e.id === employee.id)) {
         setEmployees((prev) => [...prev, employee]);
       }
       recordActivity(
         buildActivity(
           created,
-          employees,
+          currentEmployees,
           'created',
-          `Created task with status ${statusLabels[created.status]} and due date ${formatDate(created.dueDate)}.`,
+          `has been assigned the task '${created.title}' with status '${statusLabels[created.status] || created.status}' and due date '${formatDate(created.dueDate)}'.`,
         ),
       );
       toast.success('Task created successfully');
@@ -252,6 +258,28 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateEmployeeDesignation = async (employeeId: string, designation: string) => {
+    try {
+      await updateUserProfile(employeeId, { designation });
+      setEmployees((prev) =>
+        prev.map((emp) => (emp.id === employeeId ? { ...emp, designation } : emp))
+      );
+      toast.success('Designation updated successfully');
+    } catch (err) {
+      toast.error('Failed to update designation');
+    }
+  };
+
+  const removeEmployee = async (employeeId: string) => {
+    try {
+      await removeUser(employeeId);
+      setEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
+      toast.success('Team member removed successfully');
+    } catch (err) {
+      toast.error('Failed to remove team member');
+    }
+  };
+
   return (
     <TaskContext.Provider
       value={{
@@ -265,6 +293,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         assignTask,
         deleteTask,
         addEmployee,
+        updateEmployeeDesignation,
+        removeEmployee,
       }}
     >
       {children}
