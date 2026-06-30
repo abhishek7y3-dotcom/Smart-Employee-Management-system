@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
+import { resendResetOtp } from '../../api/auth';
 
 function ResetPasswordForm() {
   const { resetPassword, loading, error } = useAuth();
@@ -15,6 +16,9 @@ function ResetPasswordForm() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
     const emailParam = searchParams.get('email');
@@ -22,6 +26,33 @@ function ResetPasswordForm() {
       setEmail(emailParam);
     }
   }, [searchParams]);
+
+  const handleResendOtp = async () => {
+    if (!email.trim()) {
+      setResendMessage('Please enter your email first.');
+      return;
+    }
+    setResendMessage(null);
+    setResendLoading(true);
+    try {
+      const result = await resendResetOtp(email);
+      setResendMessage(result.message || 'A new reset code has been sent.');
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      setResendMessage(err.message || 'Failed to resend code. Please try again.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -151,6 +182,21 @@ function ResetPasswordForm() {
           className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3.5 text-xs font-bold text-white shadow-md shadow-blue-500/15 transition duration-300 hover:bg-blue-700 hover:shadow-blue-500/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-blue-300 dark:disabled:bg-blue-900/40 dark:disabled:text-blue-200/50 cursor-pointer"
         >
           {loading ? 'Resetting Password...' : 'Reset Password'}
+        </button>
+
+        {resendMessage && (
+          <div className={`rounded-xl px-4 py-3 text-xs ${resendMessage.includes('Failed') || resendMessage.includes('error') || resendMessage.includes('enter your email') ? 'bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 text-red-700 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'}`}>
+            {resendMessage}
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={handleResendOtp}
+          disabled={resendCooldown > 0 || resendLoading}
+          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-xs font-bold text-zinc-700 transition duration-200 hover:bg-zinc-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 cursor-pointer"
+        >
+          {resendLoading ? 'Sending...' : resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend reset code'}
         </button>
       </form>
 

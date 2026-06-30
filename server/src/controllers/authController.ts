@@ -46,8 +46,13 @@ export async function register(req: Request, res: Response) {
       designation,
     });
 
-    // Trigger Verification OTP Email (send plain OTP to user)
-    await sendVerificationOtp(user.email, user.name, verificationOtpPlain);
+    // Log OTP to terminal for development/testing
+    console.log(`\n🔑 [REGISTER] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 10 min)\n`);
+
+    // Trigger Verification OTP Email (fire-and-forget; don't block registration on email failure)
+    sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
+      console.error('authController.ts: Failed to send verification OTP email:', emailErr);
+    });
 
     return res.status(201).json({
       success: true,
@@ -221,7 +226,13 @@ export async function forgotPassword(req: Request, res: Response) {
     user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     await user.save();
 
-    await sendResetPasswordOtp(user.email, user.name, otpPlain); // send plain to email
+    // Log OTP to terminal for development/testing
+    console.log(`\n🔑 [FORGOT PASSWORD] Reset OTP for ${user.email}: ${otpPlain} (expires in 10 min)\n`);
+
+    // Fire-and-forget: don't block the response on email delivery
+    sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
+      console.error('authController.ts: Failed to send reset password OTP email:', emailErr);
+    });
 
     return res.status(200).json({
       success: true,
@@ -318,6 +329,132 @@ export async function resetPassword(req: Request, res: Response) {
       success: false,
       message: 'An error occurred during password reset. Please try again.',
       errors: [],
+    });
+  }
+}
+
+export async function resendVerificationOtp(req: Request, res: Response) {
+  const { email } = req.body as { email: string };
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required.',
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+verificationOtp +verificationOtpExpires');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with that email.',
+      });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account is already verified. You can log in.',
+      });
+    }
+
+    // Rate limit: prevent resend if last OTP was generated less than 60 seconds ago
+    if (user.verificationOtpExpires && user.verificationOtpExpires.getTime() > Date.now() - 9 * 60 * 1000) {
+      // OTP was created less than 1 minute ago (10min - 9min = 1min)
+      const secondsLeft = Math.ceil((user.verificationOtpExpires.getTime() - (Date.now() - 9 * 60 * 1000)) / 1000);
+      if (secondsLeft > 540) {
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${secondsLeft - 540} seconds before requesting a new code.`,
+        });
+      }
+    }
+
+    // Generate new 6-digit OTP
+    const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.verificationOtp = encrypt(verificationOtpPlain);
+    user.verificationOtpExpires = verificationOtpExpires;
+    await user.save();
+
+    // Log OTP to terminal for development/testing
+    console.log(`\n🔑 [RESEND VERIFY] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 10 min)\n`);
+
+    // Send the new OTP via email (fire-and-forget)
+    sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
+      console.error('authController.ts: Failed to resend verification OTP email:', emailErr);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'A new verification code has been sent to your email.',
+    });
+  } catch (error) {
+    console.error('authController.ts: resendVerificationOtp error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred. Please try again.',
+    });
+  }
+}
+
+export async function resendResetOtp(req: Request, res: Response) {
+  const { email } = req.body as { email: string };
+
+  if (!email) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email is required.',
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'No account found with that email.',
+      });
+    }
+
+    // Rate limit: prevent resend if last OTP was generated less than 60 seconds ago
+    if (user.resetPasswordOtpExpires && user.resetPasswordOtpExpires.getTime() > Date.now() - 9 * 60 * 1000) {
+      const secondsLeft = Math.ceil((user.resetPasswordOtpExpires.getTime() - (Date.now() - 9 * 60 * 1000)) / 1000);
+      if (secondsLeft > 540) {
+        return res.status(429).json({
+          success: false,
+          message: `Please wait ${secondsLeft - 540} seconds before requesting a new code.`,
+        });
+      }
+    }
+
+    // Generate new 6-digit OTP
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    user.resetPasswordOtp = encrypt(otpPlain);
+    user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    await user.save();
+
+    // Log OTP to terminal for development/testing
+    console.log(`\n🔑 [RESEND RESET] Reset OTP for ${user.email}: ${otpPlain} (expires in 10 min)\n`);
+
+    // Send the new OTP via email (fire-and-forget)
+    sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
+      console.error('authController.ts: Failed to resend reset OTP email:', emailErr);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'A new password reset code has been sent to your email.',
+    });
+  } catch (error) {
+    console.error('authController.ts: resendResetOtp error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred. Please try again.',
     });
   }
 }

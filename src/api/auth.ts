@@ -108,6 +108,36 @@ export async function verifyOtp(email: string, otp: string): Promise<{ message: 
     throw normalizeApiError(error);
   }
 }
+export async function resendVerificationOtp(email: string): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock verification OTP resent.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/resend-verification-otp', { email });
+    return {
+      message: response.data.message || 'A new verification code has been sent.',
+    };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function resendResetOtp(email: string): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock reset OTP resent.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/resend-reset-otp', { email });
+    return {
+      message: response.data.message || 'A new reset code has been sent.',
+    };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 export async function updateUserProfile(
   id: string,
   payload: { role?: string; designation?: string }

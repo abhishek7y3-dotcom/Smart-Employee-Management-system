@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { AlertTriangle, BarChart3, CheckCircle2, CircleDashed, Clock3, ClipboardList, ListTodo, TimerReset, Users } from 'lucide-react';
+import { AlertTriangle, BarChart3, CheckCircle2, CircleDashed, Clock3, ClipboardList, ListTodo, TimerReset, Users, MessageSquare, Megaphone, Inbox } from 'lucide-react';
 import { useTasks } from '../context/TaskContext';
 import { TaskSummaryCard } from '../components/task/TaskSummaryCard';
 import { EmployeeCard } from '../components/employee/EmployeeCard';
@@ -13,6 +13,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { StatusBadge } from '../components/task/StatusBadge';
 import { formatDate } from '../utils/format';
 import { getDashboardMetrics, getRecentActivities, getRecentTasks } from '../utils/dashboardUtils';
+import { useCommunication } from '../context/CommunicationContext';
 import { ActivityLog } from '../types';
 
 const activityMessages: Record<ActivityLog['action'], string> = {
@@ -28,6 +29,7 @@ import { useAuth } from '../context/AuthContext';
 export default function DashboardPage() {
   const { tasks, employees, activities } = useTasks();
   const { user } = useAuth();
+  const { conversations, announcements, unreadMessageCount, unreadNotificationCount } = useCommunication();
 
   const metrics = getDashboardMetrics(tasks);
   const recentTasks = getRecentTasks(tasks, 5);
@@ -121,6 +123,48 @@ export default function DashboardPage() {
           </div>
 
           <div className="space-y-8">
+            {/* Communication Quick Access */}
+            <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
+                  <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Communication</h3>
+                </div>
+                <Link href="/communication" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Open Hub</Link>
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <Link href="/communication" className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/40 p-3 transition-all duration-300 hover:shadow-sm hover:scale-[1.01] dark:border-zinc-900 dark:bg-zinc-900/25">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-950/30">
+                    <Inbox className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-900 dark:text-zinc-50">Inbox</p>
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{unreadMessageCount} unread</p>
+                  </div>
+                </Link>
+                <Link href="/communication" className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/40 p-3 transition-all duration-300 hover:shadow-sm hover:scale-[1.01] dark:border-zinc-900 dark:bg-zinc-900/25">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-950/30">
+                    <Megaphone className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-zinc-900 dark:text-zinc-50">Announcements</p>
+                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{announcements.length} active</p>
+                  </div>
+                </Link>
+              </div>
+              {conversations.length > 0 && (
+                <div className="mt-3 space-y-1.5 max-h-40 overflow-y-auto">
+                  {conversations.slice(0, 3).map((conv) => (
+                    <Link key={conv.id} href="/communication" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/30">
+                      <div className={`h-2 w-2 rounded-full shrink-0 ${conv.unreadCount > 0 ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-600'}`} />
+                      <span className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{conv.subject}</span>
+                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-auto shrink-0">{conv.participantNames[0]}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+
             <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">

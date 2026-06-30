@@ -1,14 +1,14 @@
 import nodemailer from 'nodemailer';
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-const SMTP_FROM = process.env.SMTP_FROM || 'noreply@employeemanager.com';
-
 let testAccountTransporter: nodemailer.Transporter | null = null;
 
 async function getTransporter(): Promise<nodemailer.Transporter> {
+  // Read env vars lazily (after dotenv.config() has run)
+  const SMTP_HOST = process.env.SMTP_HOST;
+  const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+  const SMTP_USER = process.env.SMTP_USER;
+  const SMTP_PASS = process.env.SMTP_PASS;
+
   // Use custom SMTP credentials if configured
   if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
     return nodemailer.createTransport({
@@ -49,6 +49,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
 export async function sendVerificationOtp(email: string, name: string, otp: string): Promise<void> {
   try {
     const transporter = await getTransporter();
+    const SMTP_FROM = process.env.SMTP_FROM || 'noreply@employeemanager.com';
 
     const mailOptions = {
       from: SMTP_FROM,
@@ -102,6 +103,7 @@ export async function sendVerificationOtp(email: string, name: string, otp: stri
 export async function sendResetPasswordOtp(email: string, name: string, otp: string): Promise<void> {
   try {
     const transporter = await getTransporter();
+    const SMTP_FROM = process.env.SMTP_FROM || 'noreply@employeemanager.com';
 
     const mailOptions = {
       from: SMTP_FROM,

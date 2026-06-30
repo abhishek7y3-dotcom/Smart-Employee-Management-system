@@ -10,6 +10,7 @@ interface EmployeeCardProps {
 
 const DESIGNATIONS = [
   'CEO',
+  'Employee',
   'Software Developer',
   'Senior Developer',
   'Product Designer',

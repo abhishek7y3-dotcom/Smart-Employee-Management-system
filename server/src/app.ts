@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import { json, urlencoded } from 'express';
 import authRoutes from './routes/authRoutes';
 import taskRoutes from './routes/taskRoutes';
+import communicationRoutes from './routes/communicationRoutes';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -19,6 +20,7 @@ app.use(urlencoded({ extended: true }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/communication', communicationRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

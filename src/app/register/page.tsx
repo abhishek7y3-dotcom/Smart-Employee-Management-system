@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { verifyOtp } from '../../api/auth';
+import { verifyOtp, resendVerificationOtp } from '../../api/auth';
 
 export default function RegisterPage() {
   const { register, loading, error } = useAuth();
@@ -20,6 +20,9 @@ export default function RegisterPage() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpSuccess, setOtpSuccess] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -61,6 +64,29 @@ export default function RegisterPage() {
       setSuccessMessage(message || 'Registration successful! Please verify using the 6-digit code.');
     } catch {
       // Context error is displayed.
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendMessage(null);
+    setResendLoading(true);
+    try {
+      const result = await resendVerificationOtp(email);
+      setResendMessage(result.message || 'A new code has been sent.');
+      setResendCooldown(60);
+      const interval = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      setResendMessage(err.message || 'Failed to resend code. Please try again.');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -168,8 +194,23 @@ export default function RegisterPage() {
                   {otpLoading ? 'Verifying...' : 'Verify Code'}
                 </button>
 
+                {resendMessage && (
+                  <div className={`rounded-xl px-4 py-3 text-xs ${resendMessage.includes('Failed') || resendMessage.includes('error') ? 'bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 text-red-700 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'}`}>
+                    {resendMessage}
+                  </div>
+                )}
+
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resendCooldown > 0 || resendLoading}
+                  className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-xs font-bold text-zinc-700 transition duration-200 hover:bg-zinc-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 cursor-pointer"
+                >
+                  {resendLoading ? 'Sending...' : resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend verification code'}
+                </button>
+
                 <p className="text-center text-[11px] text-zinc-450 dark:text-zinc-500">
-                  Didn't receive the email? Check your spam folder or register again.
+                  Didn't receive the email? Check your spam folder or try resending the code.
                 </p>
               </form>
             )}

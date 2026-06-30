@@ -6,6 +6,8 @@ import {
   resetPassword,
   profile,
   verifyOtp,
+  resendVerificationOtp,
+  resendResetOtp,
   getAllUsers,
   updateUser,
   deleteUser,
@@ -19,6 +21,8 @@ const router = Router();
 router.post('/register', registerValidation, validateRequest, register);
 router.post('/login', loginValidation, validateRequest, login);
 router.post('/verify-otp', verifyOtp);
+router.post('/resend-verification-otp', resendVerificationOtp);
+router.post('/resend-reset-otp', resendResetOtp);
 router.post('/forgot-password', forgotPasswordValidation, validateRequest, forgotPassword);
 router.post('/reset-password', resetPasswordValidation, validateRequest, resetPassword);
 router.get('/profile', authenticate, profile);
