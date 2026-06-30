@@ -103,14 +103,14 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50">Tasks</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Review, create, and update task tracking logs assigned to employees.</p>
+          <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Tasks</h2>
+          <p className="text-xs text-zinc-450 dark:text-zinc-500">Review, create, and update task tracking logs assigned to employees.</p>
         </div>
         {isAdmin && (
           <button
             type="button"
             onClick={() => setShowAddForm((current) => !current)}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-300 hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4.5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-98 cursor-pointer"
           >
             {!showAddForm && <Plus className="h-4 w-4" />}
             {showAddForm ? 'Cancel' : 'Add New Task'}
@@ -119,68 +119,68 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       </div>
 
       {showAddForm && isAdmin && (
-        <form onSubmit={handleAddTask} className="space-y-4 rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-950">
-          <h3 className="font-bold text-zinc-950 dark:text-zinc-50">Create Task</h3>
+        <form onSubmit={handleAddTask} className="space-y-5 rounded-2xl border border-zinc-200/80 bg-white/90 p-6 shadow-xl dark:border-zinc-800/80 dark:bg-zinc-950/40 backdrop-blur-sm transition-all duration-300">
+          <h3 className="font-bold text-zinc-950 dark:text-zinc-50 font-outfit text-sm">Create Task</h3>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="md:col-span-2">
-              <span className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">Title</span>
-              <input required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Title</span>
+              <input required value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
             </label>
             <label className="md:col-span-2">
-              <span className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">Description</span>
-              <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Description</span>
+              <textarea value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
             </label>
             <label>
-              <span className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">Priority</span>
-              <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</span>
+              <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-955 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
             </label>
             <label>
-              <span className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">Assignee</span>
-              <select required value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Assignee</span>
+              <select required value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-955 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="">Select Employee</option>
                 {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.designation || 'Employee'})</option>)}
               </select>
             </label>
             <label>
-              <span className="text-xs font-bold uppercase text-zinc-500 dark:text-zinc-400">Due Date</span>
-              <input required min={getTodayString()} type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50" />
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Due Date</span>
+              <input required min={getTodayString()} type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
             </label>
           </div>
-          <button type="submit" className="inline-flex w-full items-center justify-center rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors duration-300 hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 sm:w-auto">
+          <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-all duration-300 hover:bg-blue-700 active:scale-[0.98] sm:w-auto cursor-pointer">
             Create Task
           </button>
         </form>
       )}
 
-      <div className="flex flex-col gap-4 rounded-lg border border-zinc-200 bg-white p-4 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-950 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200/80 bg-white/90 p-4.5 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/45 backdrop-blur-sm transition-colors duration-300 md:flex-row md:items-center md:justify-between">
         <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-2.5 h-4.5 w-4.5 text-zinc-400 dark:text-zinc-500" />
-          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-lg border border-zinc-300 bg-white py-2 pl-10 pr-3 text-sm text-zinc-950 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50" />
+          <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-xl border border-zinc-350 bg-white py-2.5 pl-11 pr-4 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+            className="rounded-xl border border-zinc-350 bg-white px-3.5 py-2.5 text-xs font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300"
             title="Filter by due date"
           />
           {dateFilter && (
             <button
               onClick={() => setDateFilter('')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
             >
               Clear Date
             </button>
           )}
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as TaskUrlStatus)} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as TaskUrlStatus)} className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
             {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 outline-none transition-colors focus:border-blue-500 focus:ring-1 focus:ring-blue-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200">
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
             <option value="all">All Priorities</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>

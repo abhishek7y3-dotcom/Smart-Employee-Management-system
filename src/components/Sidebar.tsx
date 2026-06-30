@@ -33,28 +33,37 @@ export const Sidebar: React.FC = () => {
         </svg>
       ),
     },
+    {
+      name: 'Team Members',
+      href: '/employees',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
-    <aside className="w-64 border-r border-zinc-200 bg-zinc-50 px-4 py-6 dark:border-zinc-800 dark:bg-zinc-950/50 flex flex-col justify-between">
+    <aside className="w-64 border-r border-zinc-200/50 bg-zinc-50/40 px-4 py-6 dark:border-zinc-900/40 dark:bg-zinc-950/40 flex flex-col justify-between backdrop-blur-sm">
       <div className="space-y-6">
-        <div className="px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+        <div className="px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
           Workspace Navigation
         </div>
-        <nav className="space-y-1">
+        <nav className="space-y-1.5">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+                className={`group flex items-center gap-3 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 relative border-l-4 ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-450'
-                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-100'
+                    ? 'bg-gradient-to-r from-blue-50/80 to-transparent text-blue-700 border-blue-600 dark:from-blue-950/30 dark:text-blue-450 dark:border-blue-500 shadow-sm'
+                    : 'text-zinc-600 hover:bg-zinc-100/60 hover:text-zinc-950 border-transparent dark:text-zinc-450 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-50'
                 }`}
               >
-                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-600 dark:group-hover:text-zinc-200'}>
+                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-405 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}>
                   {item.icon}
                 </span>
                 {item.name}
@@ -64,12 +73,12 @@ export const Sidebar: React.FC = () => {
         </nav>
       </div>
 
-      <div className="border-t border-zinc-200 pt-4 dark:border-zinc-800">
-        <div className="rounded-lg bg-zinc-100 p-3 text-xs text-zinc-500 dark:bg-zinc-900 dark:text-zinc-400">
-          <p className="font-semibold text-zinc-700 dark:text-zinc-300">
-            Mode: {isMock ? 'Local Mock' : 'Server API'}
+      <div className="border-t border-zinc-200/60 pt-4 dark:border-zinc-800/60">
+        <div className="rounded-2xl border border-zinc-200/60 bg-zinc-100/50 p-4 text-[11px] text-zinc-550 dark:border-zinc-800/40 dark:bg-zinc-900/30 dark:text-zinc-400">
+          <p className="font-bold text-zinc-750 dark:text-zinc-300">
+            Mode: <span className="text-blue-600 dark:text-blue-400">{isMock ? 'Local Mock' : 'Server API'}</span>
           </p>
-          <p className="mt-1">
+          <p className="mt-1 leading-relaxed">
             {isMock
               ? 'Changes are saved to browser local storage.'
               : 'Connected to MongoDB backend database.'}

@@ -9,7 +9,7 @@ interface EmployeeCardProps {
 }
 
 const DESIGNATIONS = [
-  'Employee',
+  'CEO',
   'Software Developer',
   'Senior Developer',
   'Product Designer',
@@ -21,10 +21,11 @@ const DESIGNATIONS = [
 
 export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   const { user } = useAuth();
-  const { updateEmployeeDesignation, removeEmployee } = useTasks();
+  const { updateEmployeeDesignation, updateEmployeeRole, removeEmployee } = useTasks();
 
   const isAdmin = user?.role === 'admin';
   const canEditDesignation = isAdmin && (employee.role !== 'admin' || employee.id === user?.id);
+  const canEditRole = isAdmin && employee.id !== user?.id;
 
   const handleDesignationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateEmployeeDesignation(employee.id, e.target.value);
@@ -37,40 +38,40 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   };
 
   return (
-    <div className="flex items-center justify-between p-3 border border-zinc-100 dark:border-zinc-800/80 rounded-lg bg-zinc-50/50 dark:bg-zinc-900/30 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/40 transition-all duration-300">
+    <div className="flex flex-col gap-3 p-3.5 border border-zinc-200/60 dark:border-zinc-800/65 rounded-xl bg-zinc-50/40 dark:bg-zinc-900/25 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/35 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-300 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center space-x-3">
         {employee.avatarUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
             src={employee.avatarUrl}
             alt={employee.name}
-            className="w-10 h-10 rounded-full object-cover ring-1 ring-zinc-200/50 dark:ring-zinc-800/50"
+            className="w-10 h-10 rounded-full object-cover ring-2 ring-zinc-200/60 dark:ring-zinc-800/60 hover:scale-105 transition-all duration-300"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full bg-blue-500 text-white flex items-center justify-center font-bold">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold shadow-sm shadow-blue-500/10 hover:scale-105 transition-all duration-300 shrink-0">
             {employee.name.charAt(0)}
           </div>
         )}
-        <div>
-          <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm">{employee.name}</h4>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <h4 className="font-bold text-zinc-900 dark:text-zinc-200 text-sm truncate">{employee.name}</h4>
             {employee.role === 'admin' && (
-              <span className="text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 font-bold px-1.5 py-0.5 rounded border border-blue-100 dark:border-blue-900/40">
-                Admin
+              <span className="flex items-center gap-1 text-[9px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-200/40 dark:border-amber-900/40 shadow-sm shrink-0">
+                👑 Admin
               </span>
             )}
           </div>
-          <p className="text-zinc-400 dark:text-zinc-500 text-[10px]">{employee.email}</p>
+          <p className="text-zinc-400 dark:text-zinc-500 text-[10px] truncate">{employee.email}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {canEditDesignation ? (
           <div className="relative">
             <select
               value={employee.designation || 'Employee'}
               onChange={handleDesignationChange}
-              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-250 dark:border-zinc-850 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500"
+              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
             >
               {DESIGNATIONS.map((des) => (
                 <option key={des} value={des}>
@@ -80,16 +81,29 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
             </select>
           </div>
         ) : (
-          <span className="text-zinc-500 dark:text-zinc-400 text-xs font-medium px-2 py-1 rounded bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/30 dark:border-zinc-800/30">
+          <span className="text-zinc-600 dark:text-zinc-400 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-800/40">
             {employee.designation || (employee.role === 'admin' ? 'Admin' : 'Employee')}
           </span>
+        )}
+
+        {canEditRole && (
+          <div className="relative">
+            <select
+              value={employee.role}
+              onChange={(e) => updateEmployeeRole(employee.id, e.target.value)}
+              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+            >
+              <option value="employee">Employee</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
         )}
 
         {isAdmin && employee.id !== user?.id && (
           <button
             type="button"
             onClick={handleRemoveUser}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer shrink-0"
             title={`Remove ${employee.name}`}
           >
             <Trash2 className="w-4 h-4" />

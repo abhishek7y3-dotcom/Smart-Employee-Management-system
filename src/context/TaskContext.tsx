@@ -26,6 +26,7 @@ interface TaskContextType {
   deleteTask: (taskId: string) => void;
   addEmployee: (employee: Omit<Employee, 'id'>) => void;
   updateEmployeeDesignation: (employeeId: string, designation: string) => Promise<void>;
+  updateEmployeeRole: (employeeId: string, role: string) => Promise<void>;
   removeEmployee: (employeeId: string) => Promise<void>;
 }
 
@@ -272,6 +273,18 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateEmployeeRole = async (employeeId: string, role: string) => {
+    try {
+      await updateUserProfile(employeeId, { role });
+      setEmployees((prev) =>
+        prev.map((emp) => (emp.id === employeeId ? { ...emp, role } : emp))
+      );
+      toast.success('Role updated successfully');
+    } catch (err) {
+      toast.error('Failed to update role');
+    }
+  };
+
   const removeEmployee = async (employeeId: string) => {
     try {
       await removeUser(employeeId);
@@ -296,6 +309,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         deleteTask,
         addEmployee,
         updateEmployeeDesignation,
+        updateEmployeeRole,
         removeEmployee,
       }}
     >

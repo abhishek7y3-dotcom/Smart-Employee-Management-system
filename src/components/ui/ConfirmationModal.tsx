@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useRef } from 'react';
 import { AlertTriangle } from 'lucide-react';
@@ -77,7 +77,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-zinc-950/40 backdrop-blur-sm transition-opacity duration-300 dark:bg-zinc-950/70 cursor-pointer"
+        className="fixed inset-0 bg-zinc-950/60 backdrop-blur-md transition-opacity duration-300 cursor-pointer"
         onClick={onCancel}
       ></div>
 
@@ -87,21 +87,21 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative w-full max-w-md scale-100 rounded-2xl border border-zinc-200 bg-white p-6 shadow-xl transition-all duration-300 dark:border-zinc-800 dark:bg-zinc-950"
+        className="relative w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/95 transition-all duration-300 animate-in fade-in zoom-in-95"
       >
         <div className="flex items-start gap-4">
           {/* Warning Icon Badge */}
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-red-50/80 border border-red-100/50 text-red-650 dark:bg-red-950/30 dark:text-red-400 dark:border-red-905/30">
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div className="space-y-1">
             <h3
               id="modal-title"
-              className="text-lg font-bold text-zinc-900 dark:text-zinc-50"
+              className="text-lg font-bold text-zinc-900 dark:text-zinc-50 font-outfit"
             >
               {title}
             </h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
               {message}
             </p>
           </div>
@@ -111,13 +111,13 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <div className="mt-6 flex justify-end gap-3">
           <button
             onClick={onCancel}
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 cursor-pointer"
+            className="rounded-xl border border-zinc-200/80 bg-white px-5 py-2.5 text-xs font-bold text-zinc-700 hover:bg-zinc-50 hover:text-zinc-950 transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800 dark:hover:text-zinc-100 cursor-pointer"
           >
             {cancelLabel}
           </button>
           <button
             onClick={onConfirm}
-            className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 transition-colors duration-300 dark:bg-red-700 dark:hover:bg-red-800 cursor-pointer"
+            className="rounded-xl bg-red-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-red-500/10 hover:bg-red-700 transition-colors duration-300 active:scale-[0.98] cursor-pointer"
           >
             {confirmLabel}
           </button>
