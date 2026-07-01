@@ -35,7 +35,7 @@ export const CommunicationHub: React.FC = () => {
     setFilters, resetFilters, selectConversation, openCompose, closeCompose,
     sendMessage, replyToConversation, saveDraft, deleteDraft,
     archiveConversation, unarchiveConversation, pinConversation, unpinConversation,
-    createAnnouncement, pinAnnouncement, deleteAnnouncement, sendBroadcast,
+    createAnnouncement, updateAnnouncement, pinAnnouncement, deleteAnnouncement, sendBroadcast,
     markNotificationRead, markAllNotificationsRead, setMobileListOpen,
     inboxConversations, sentConversations, archivedConversations,
     unreadNotificationCount, unreadMessageCount,
@@ -49,6 +49,7 @@ export const CommunicationHub: React.FC = () => {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [hasViewedNotifications, setHasViewedNotifications] = useState(false);
   const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<any | null>(null);
   const [announcementForm, setAnnouncementForm] = useState({
     title: '', description: '', priority: 'medium' as const, publishDate: new Date().toISOString().split('T')[0], expiryDate: '',
   });
@@ -71,7 +72,6 @@ export const CommunicationHub: React.FC = () => {
     { id: 'announcements', label: 'Announcements', icon: <Megaphone className="h-4 w-4" /> },
     { id: 'archived', label: 'Archived', icon: <Archive className="h-4 w-4" /> },
     ...(isAdmin ? [
-      { id: 'broadcast' as TabId, label: 'Broadcast', icon: <Radio className="h-4 w-4" />, adminOnly: true },
       { id: 'analytics' as TabId, label: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, adminOnly: true },
     ] : []),
   ];
@@ -84,15 +84,41 @@ export const CommunicationHub: React.FC = () => {
     setReplyText('');
   };
 
-  const handleCreateAnnouncement = () => {
-    createAnnouncement({
+  const handleSaveAnnouncement = () => {
+    const data = {
       title: announcementForm.title,
       description: announcementForm.description,
       priority: announcementForm.priority,
       publishDate: new Date(announcementForm.publishDate).toISOString(),
       expiryDate: announcementForm.expiryDate ? new Date(announcementForm.expiryDate).toISOString() : undefined,
-    });
+    };
+
+    if (editingAnnouncement) {
+      updateAnnouncement(editingAnnouncement.id, data);
+    } else {
+      createAnnouncement(data);
+    }
+
     setAnnouncementForm({ title: '', description: '', priority: 'medium', publishDate: new Date().toISOString().split('T')[0], expiryDate: '' });
+    setEditingAnnouncement(null);
+    setShowAnnouncementForm(false);
+  };
+
+  const handleStartEditAnnouncement = (ann: any) => {
+    setEditingAnnouncement(ann);
+    setAnnouncementForm({
+      title: ann.title,
+      description: ann.description,
+      priority: ann.priority,
+      publishDate: ann.publishDate ? new Date(ann.publishDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      expiryDate: ann.expiryDate ? new Date(ann.expiryDate).toISOString().split('T')[0] : '',
+    });
+    setShowAnnouncementForm(true);
+  };
+
+  const handleCancelAnnouncementEdit = () => {
+    setAnnouncementForm({ title: '', description: '', priority: 'medium', publishDate: new Date().toISOString().split('T')[0], expiryDate: '' });
+    setEditingAnnouncement(null);
     setShowAnnouncementForm(false);
   };
 
@@ -269,7 +295,11 @@ export const CommunicationHub: React.FC = () => {
               </div>
               {isAdmin && (
                 <button
-                  onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
+                  onClick={() => {
+                    setEditingAnnouncement(null);
+                    setAnnouncementForm({ title: '', description: '', priority: 'medium', publishDate: new Date().toISOString().split('T')[0], expiryDate: '' });
+                    setShowAnnouncementForm(!showAnnouncementForm);
+                  }}
                   className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -281,7 +311,9 @@ export const CommunicationHub: React.FC = () => {
             {/* Announcement Form */}
             {showAnnouncementForm && isAdmin && (
               <div className="rounded-2xl border border-blue-200/60 bg-blue-50/30 p-5 dark:border-blue-900/40 dark:bg-blue-950/10 backdrop-blur-sm space-y-3">
-                <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">Create Announcement</h3>
+                <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">
+                  {editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}
+                </h3>
                 <input
                   type="text"
                   placeholder="Title"
@@ -310,6 +342,7 @@ export const CommunicationHub: React.FC = () => {
                   <input
                     type="date"
                     value={announcementForm.publishDate}
+                    min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setAnnouncementForm({ ...announcementForm, publishDate: e.target.value })}
                     className="rounded-xl border border-zinc-200/60 bg-white px-3 py-2 text-xs dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
@@ -317,19 +350,20 @@ export const CommunicationHub: React.FC = () => {
                     type="date"
                     placeholder="Expiry (optional)"
                     value={announcementForm.expiryDate}
+                    min={new Date().toISOString().split('T')[0]}
                     onChange={(e) => setAnnouncementForm({ ...announcementForm, expiryDate: e.target.value })}
                     className="rounded-xl border border-zinc-200/60 bg-white px-3 py-2 text-xs dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-300 focus:outline-none focus:ring-2 focus:ring-blue-100"
                   />
                 </div>
                 <div className="flex items-center gap-2 justify-end">
-                  <button onClick={() => setShowAnnouncementForm(false)} className="rounded-xl px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">Cancel</button>
+                  <button onClick={handleCancelAnnouncementEdit} className="rounded-xl px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">Cancel</button>
                   <button
-                    onClick={handleCreateAnnouncement}
+                    onClick={handleSaveAnnouncement}
                     disabled={!announcementForm.title.trim() || !announcementForm.description.trim()}
                     className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Megaphone className="h-3.5 w-3.5" />
-                    Publish
+                    {editingAnnouncement ? 'Save Changes' : 'Publish'}
                   </button>
                 </div>
               </div>
@@ -343,6 +377,7 @@ export const CommunicationHub: React.FC = () => {
                     key={ann.id}
                     announcement={ann}
                     onPin={() => pinAnnouncement(ann.id)}
+                    onEdit={() => handleStartEditAnnouncement(ann)}
                     onDelete={() => deleteAnnouncement(ann.id)}
                     isAdmin={isAdmin}
                   />
@@ -350,30 +385,6 @@ export const CommunicationHub: React.FC = () => {
               ) : (
                 <EmptyState title="No announcements" message="Announcements from your team leads will appear here." />
               )}
-            </div>
-          </div>
-        );
-
-      case 'broadcast':
-        if (!isAdmin) return null;
-        return (
-          <div className="p-4 md:p-6 space-y-6">
-            <div>
-              <h2 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">📢 Broadcast</h2>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Send messages to all team members at once</p>
-            </div>
-            <div className="rounded-2xl border border-zinc-200/60 bg-white p-6 dark:border-zinc-800/60 dark:bg-zinc-950/40 backdrop-blur-sm">
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                Use broadcast to send important updates, reminders, or announcements to all team members simultaneously.
-                All team members will receive a notification.
-              </p>
-              <button
-                onClick={() => openCompose()}
-                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 transition-all hover:shadow-lg"
-              >
-                <Radio className="h-3.5 w-3.5" />
-                Compose Broadcast
-              </button>
             </div>
           </div>
         );
@@ -479,9 +490,8 @@ export const CommunicationHub: React.FC = () => {
       <ComposeModal
         isOpen={isComposeOpen}
         onClose={closeCompose}
-        onSend={activeTab === 'broadcast' ? sendBroadcast : sendMessage}
+        onSend={sendMessage}
         onSaveDraft={saveDraft}
-        isBroadcast={activeTab === 'broadcast'}
       />
 
       {/* Floating Compose Button (mobile) */}

@@ -89,6 +89,17 @@ export async function createAnnouncement(data: {
   return res.data.data.announcement;
 }
 
+export async function updateAnnouncement(id: string, data: {
+  title?: string;
+  description?: string;
+  priority?: string;
+  publishDate?: string;
+  expiryDate?: string | null;
+}): Promise<Announcement> {
+  const res = await axiosInstance.put(`/communication/announcements/${id}`, data);
+  return res.data.data.announcement;
+}
+
 export async function togglePinAnnouncement(id: string): Promise<Announcement> {
   const res = await axiosInstance.patch(`/communication/announcements/${id}/pin`);
   return res.data.data.announcement;

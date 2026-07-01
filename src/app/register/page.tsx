@@ -16,6 +16,11 @@ export default function RegisterPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+
   const [otp, setOtp] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
@@ -43,27 +48,55 @@ export default function RegisterPage() {
     event.preventDefault();
     setFormError(null);
     setSuccessMessage(null);
+    setNameError(null);
+    setEmailError(null);
+    setPasswordError(null);
+    setConfirmPasswordError(null);
 
-    if (!name.trim() || !email.trim() || !password.trim() || !confirmPassword.trim()) {
-      setFormError('Please complete all fields.');
-      return;
+    const strictEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
+    let hasError = false;
+
+    if (!name.trim()) {
+      setNameError('Name is required.');
+      hasError = true;
     }
 
-    if (password.length < 8) {
-      setFormError('Password must be at least 8 characters.');
-      return;
+    if (!email.trim()) {
+      setEmailError('Email is required.');
+      hasError = true;
+    } else if (!strictEmailRegex.test(email)) {
+      setEmailError('Please enter a valid email address.');
+      hasError = true;
     }
 
-    if (password !== confirmPassword) {
-      setFormError('Passwords must match.');
-      return;
+    if (!password.trim()) {
+      setPasswordError('Password is required.');
+      hasError = true;
+    } else if (password.length < 8) {
+      setPasswordError('Password must be at least 8 characters.');
+      hasError = true;
     }
+
+    if (!confirmPassword.trim()) {
+      setConfirmPasswordError('Please confirm your password.');
+      hasError = true;
+    } else if (password !== confirmPassword) {
+      setConfirmPasswordError('Passwords must match.');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     try {
       const message = await register({ name, email, password, profilePicture });
       setSuccessMessage(message || 'Registration successful! Please verify using the 6-digit code.');
-    } catch {
-      // Context error is displayed.
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Registration failed.';
+      if (msg.toLowerCase().includes('email')) {
+        setEmailError(msg);
+      } else {
+        setFormError(msg);
+      }
     }
   };
 
@@ -231,11 +264,21 @@ export default function RegisterPage() {
                   id="name"
                   type="text"
                   value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  onChange={(event) => {
+                    setName(event.target.value);
+                    setNameError(null);
+                  }}
                   placeholder="John Doe"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-300 bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+                  className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 ${
+                    nameError
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/80'
+                      : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:focus:border-blue-500'
+                  } dark:bg-zinc-950 dark:text-zinc-50`}
                 />
               </div>
+              {nameError && (
+                <p className="mt-1 text-[10px] text-red-500 font-semibold">{nameError}</p>
+              )}
             </div>
 
             <div>
@@ -252,11 +295,21 @@ export default function RegisterPage() {
                   id="email"
                   type="email"
                   value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  onChange={(event) => {
+                    setEmail(event.target.value);
+                    setEmailError(null);
+                  }}
                   placeholder="name@company.com"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-300 bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+                  className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 ${
+                    emailError
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/80'
+                      : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:focus:border-blue-500'
+                  } dark:bg-zinc-950 dark:text-zinc-50`}
                 />
               </div>
+              {emailError && (
+                <p className="mt-1 text-[10px] text-red-500 font-semibold">{emailError}</p>
+              )}
             </div>
 
             <div>
@@ -301,11 +354,21 @@ export default function RegisterPage() {
                   id="password"
                   type="password"
                   value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  onChange={(event) => {
+                    setPassword(event.target.value);
+                    setPasswordError(null);
+                  }}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-300 bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+                  className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 ${
+                    passwordError
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/80'
+                      : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:focus:border-blue-500'
+                  } dark:bg-zinc-950 dark:text-zinc-50`}
                 />
               </div>
+              {passwordError && (
+                <p className="mt-1 text-[10px] text-red-500 font-semibold">{passwordError}</p>
+              )}
             </div>
 
             <div>
@@ -322,16 +385,26 @@ export default function RegisterPage() {
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  onChange={(event) => {
+                    setConfirmPassword(event.target.value);
+                    setConfirmPasswordError(null);
+                  }}
                   placeholder="••••••••"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-300 bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+                  className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 ${
+                    confirmPasswordError
+                      ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/80'
+                      : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:focus:border-blue-500'
+                  } dark:bg-zinc-950 dark:text-zinc-50`}
                 />
               </div>
+              {confirmPasswordError && (
+                <p className="mt-1 text-[10px] text-red-500 font-semibold">{confirmPasswordError}</p>
+              )}
             </div>
 
-            {(formError || error) && (
+            {formError && (
               <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
-                {formError || error}
+                {formError}
               </div>
             )}
 

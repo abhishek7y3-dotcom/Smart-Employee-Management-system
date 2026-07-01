@@ -370,6 +370,25 @@ export async function createAnnouncement(req: AuthRequest, res: Response) {
       });
     }
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    if (publishDate && new Date(publishDate) < todayStart) {
+      return res.status(400).json({
+        success: false,
+        message: 'Publish date cannot be set in the past.',
+        errors: [],
+      });
+    }
+
+    if (expiryDate && new Date(expiryDate) < todayStart) {
+      return res.status(400).json({
+        success: false,
+        message: 'Expiry date cannot be set in the past.',
+        errors: [],
+      });
+    }
+
     const sender = req.user;
 
     const announcement = await Announcement.create({
@@ -395,6 +414,79 @@ export async function createAnnouncement(req: AuthRequest, res: Response) {
     return res.status(500).json({
       success: false,
       message: 'An error occurred while creating the announcement.',
+      errors: [],
+    });
+  }
+}
+
+export async function updateAnnouncement(req: AuthRequest, res: Response) {
+  try {
+    const { id } = req.params;
+    const { title, description, priority, publishDate, expiryDate } = req.body;
+
+    if (req.user?.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. Admin privileges required.',
+        errors: [],
+      });
+    }
+
+    const announcement = await Announcement.findById(id);
+    if (!announcement) {
+      return res.status(404).json({
+        success: false,
+        message: 'Announcement not found.',
+        errors: [],
+      });
+    }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    if (publishDate) {
+      const newPubDate = new Date(publishDate);
+      if (newPubDate.getTime() !== new Date(announcement.publishDate).getTime() && newPubDate < todayStart) {
+        return res.status(400).json({
+          success: false,
+          message: 'Publish date cannot be set in the past.',
+          errors: [],
+        });
+      }
+      announcement.publishDate = newPubDate;
+    }
+
+    if (expiryDate) {
+      const newExpDate = new Date(expiryDate);
+      const currentExpTime = announcement.expiryDate ? new Date(announcement.expiryDate).getTime() : 0;
+      if (newExpDate.getTime() !== currentExpTime && newExpDate < todayStart) {
+        return res.status(400).json({
+          success: false,
+          message: 'Expiry date cannot be set in the past.',
+          errors: [],
+        });
+      }
+      announcement.expiryDate = newExpDate;
+    } else if (expiryDate === null) {
+      announcement.expiryDate = undefined;
+    }
+
+    if (title !== undefined) announcement.title = title;
+    if (description !== undefined) announcement.description = description;
+    if (priority !== undefined) announcement.priority = priority;
+
+    await announcement.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Announcement updated successfully.',
+      data: { announcement: formatAnnouncement(announcement) },
+    });
+  } catch (error) {
+    console.error('communicationController: updateAnnouncement error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while updating the announcement.',
       errors: [],
     });
   }

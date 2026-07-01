@@ -86,7 +86,7 @@ export async function login(req: Request, res: Response) {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.',
+        message: 'Email address not registered.',
         errors: [],
       });
     }
@@ -104,7 +104,7 @@ export async function login(req: Request, res: Response) {
     if (!passwordMatches) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.',
+        message: 'Incorrect password.',
         errors: [],
       });
     }

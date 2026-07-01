@@ -10,6 +10,7 @@ import {
   sendMessage,
   getAnnouncements,
   createAnnouncement,
+  updateAnnouncement,
   togglePinAnnouncement,
   deleteAnnouncement,
   sendBroadcast,
@@ -39,6 +40,7 @@ router.post('/conversations/:conversationId/messages', sendMessage);
 // Announcements
 router.get('/announcements', getAnnouncements);
 router.post('/announcements', createAnnouncement);
+router.put('/announcements/:id', updateAnnouncement);
 router.patch('/announcements/:id/pin', togglePinAnnouncement);
 router.delete('/announcements/:id', deleteAnnouncement);
 

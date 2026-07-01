@@ -73,6 +73,7 @@ interface CommunicationContextType {
   pinConversation: (conversationId: string) => void;
   unpinConversation: (conversationId: string) => void;
   createAnnouncement: (data: Omit<Announcement, 'id' | 'authorId' | 'authorName' | 'authorAvatar' | 'isPinned' | 'readBy' | 'createdAt'>) => void;
+  updateAnnouncement: (id: string, data: Partial<Omit<Announcement, 'id' | 'authorId' | 'authorName' | 'authorAvatar' | 'isPinned' | 'readBy' | 'createdAt'>>) => void;
   pinAnnouncement: (announcementId: string) => void;
   deleteAnnouncement: (announcementId: string) => void;
   sendBroadcast: (data: ComposeFormData) => void;
@@ -559,6 +560,32 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     [userId, user]
   );
 
+  const updateAnnouncement = useCallback(
+    async (id: string, data: Partial<Omit<Announcement, 'id' | 'authorId' | 'authorName' | 'authorAvatar' | 'isPinned' | 'readBy' | 'createdAt'>>) => {
+      try {
+        const updated = await commApi.updateAnnouncement(id, {
+          title: data.title,
+          description: data.description,
+          priority: data.priority,
+          publishDate: data.publishDate,
+          expiryDate: data.expiryDate,
+        });
+
+        setAnnouncements((prev) =>
+          prev.map((a) => (a.id === id ? updated : a))
+        );
+        toast.success('Announcement updated');
+      } catch {
+        // Fallback to local-only
+        setAnnouncements((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, ...data } : a))
+        );
+        toast.success('Announcement updated locally (server unavailable)');
+      }
+    },
+    []
+  );
+
   const pinAnnouncement = useCallback(async (announcementId: string) => {
     try {
       const updated = await commApi.togglePinAnnouncement(announcementId);
@@ -783,6 +810,7 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
         pinConversation,
         unpinConversation,
         createAnnouncement,
+        updateAnnouncement,
         pinAnnouncement,
         deleteAnnouncement,
         sendBroadcast,

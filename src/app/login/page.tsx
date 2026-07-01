@@ -7,21 +7,50 @@ export default function LoginPage() {
   const { login, loading, error } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
+    setEmailError(null);
+    setPasswordError(null);
 
-    if (!email.trim() || !password.trim()) {
-      setFormError('Email and password are required.');
-      return;
+    const strictEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
+    let hasError = false;
+
+    if (!email.trim()) {
+      setEmailError('Email is required.');
+      hasError = true;
+    } else if (!strictEmailRegex.test(email)) {
+      setEmailError('Please enter a valid email address.');
+      hasError = true;
     }
+
+    if (!password.trim()) {
+      setPasswordError('Password is required.');
+      hasError = true;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters.');
+      hasError = true;
+    }
+
+    if (hasError) return;
 
     try {
       await login({ email, password });
-    } catch {
-      // Error state handled in context
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Invalid email or password.';
+      if (msg.toLowerCase().includes('email')) {
+        setEmailError(msg);
+      } else if (msg.toLowerCase().includes('password')) {
+        setPasswordError(msg);
+      } else {
+        setEmailError('Invalid email or password.');
+        setPasswordError('Invalid email or password.');
+        setFormError(msg);
+      }
     }
   };
 
@@ -61,11 +90,22 @@ export default function LoginPage() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setEmailError(null);
+                  setFormError(null);
+                }}
                 placeholder="name@company.com"
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-300 bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+                className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 ${
+                  emailError
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/80'
+                    : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:focus:border-blue-500'
+                } dark:bg-zinc-950 dark:text-zinc-50`}
               />
             </div>
+            {emailError && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{emailError}</p>
+            )}
           </div>
 
           <div>
@@ -82,16 +122,27 @@ export default function LoginPage() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) => {
+                  setPassword(event.target.value);
+                  setPasswordError(null);
+                  setFormError(null);
+                }}
                 placeholder="••••••••"
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-zinc-300 bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+                className={`w-full pl-11 pr-4 py-3 rounded-xl border bg-white text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 ${
+                  passwordError
+                    ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10 dark:border-red-500/80'
+                    : 'border-zinc-300 focus:border-blue-500 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:focus:border-blue-500'
+                } dark:bg-zinc-950 dark:text-zinc-50`}
               />
             </div>
+            {passwordError && (
+              <p className="mt-1 text-[10px] text-red-500 font-semibold">{passwordError}</p>
+            )}
           </div>
 
-          {(formError || error) && (
+          {formError && (
             <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400 transition-colors">
-              {formError || error}
+              {formError}
             </div>
           )}
 

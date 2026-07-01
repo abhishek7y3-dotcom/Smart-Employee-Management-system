@@ -1,18 +1,19 @@
 'use client';
 
 import React from 'react';
-import { Pin, Trash2, Megaphone, Clock, Eye } from 'lucide-react';
+import { Pin, Trash2, Megaphone, Clock, Eye, Edit2 } from 'lucide-react';
 import { Announcement } from '../../types/communication';
 import { formatRelativeTime, getPriorityColor } from '../../utils/communicationUtils';
 
 interface AnnouncementCardProps {
   announcement: Announcement;
   onPin?: () => void;
+  onEdit?: () => void;
   onDelete?: () => void;
   isAdmin?: boolean;
 }
 
-export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPin, onDelete, isAdmin }) => {
+export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement, onPin, onEdit, onDelete, isAdmin }) => {
   return (
     <div className={`group rounded-2xl border bg-white p-5 transition-all duration-300 hover:shadow-md dark:bg-zinc-950/40 backdrop-blur-sm ${
       announcement.isPinned ? 'border-blue-200/60 dark:border-blue-900/40 ring-1 ring-blue-100/50 dark:ring-blue-950/30' : 'border-zinc-200/60 dark:border-zinc-800/60'
@@ -51,6 +52,11 @@ export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement
             {onPin && (
               <button onClick={onPin} className={`rounded-lg p-1.5 transition-colors ${announcement.isPinned ? 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`} title={announcement.isPinned ? 'Unpin' : 'Pin'}>
                 <Pin className="h-3.5 w-3.5" />
+              </button>
+            )}
+            {onEdit && (
+              <button onClick={onEdit} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" title="Edit">
+                <Edit2 className="h-3.5 w-3.5" />
               </button>
             )}
             {onDelete && (
