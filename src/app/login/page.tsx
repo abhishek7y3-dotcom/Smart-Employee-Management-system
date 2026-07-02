@@ -10,7 +10,7 @@ type LoginTab = 'password' | 'otp';
 type OtpStep = 'email' | 'code';
 
 export default function LoginPage() {
-  const { login, loading, error, persistAuth } = useAuth();
+  const { login, loading, error, persistAuth } = useAuth() as any;
   const router = useRouter();
   const [tab, setTab] = useState<LoginTab>('password');
 
@@ -43,10 +43,10 @@ export default function LoginPage() {
     setPasswordError(null);
 
     let hasError = false;
-    if (!email.trim()) { setEmailError('Email is required.'); hasError = true; }
+    if (!email.trim()) { setEmailError('Please enter an email address.'); hasError = true; }
     else if (!emailRegex.test(email)) { setEmailError('Please enter a valid email address.'); hasError = true; }
-    if (!password.trim()) { setPasswordError('Password is required.'); hasError = true; }
-    else if (password.length < 6) { setPasswordError('Password must be at least 6 characters.'); hasError = true; }
+    if (!password.trim()) { setPasswordError('Please enter your password.'); hasError = true; }
+    else if (password.length < 6) { setPasswordError('Please enter a password that is at least 6 characters long.'); hasError = true; }
     if (hasError) return;
 
     try {
@@ -63,7 +63,7 @@ export default function LoginPage() {
   const handleRequestOtp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setOtpEmailError(null);
-    if (!otpEmail.trim()) { setOtpEmailError('Email is required.'); return; }
+    if (!otpEmail.trim()) { setOtpEmailError('Please enter an email address.'); return; }
     if (!emailRegex.test(otpEmail)) { setOtpEmailError('Please enter a valid email address.'); return; }
 
     setOtpSending(true);
@@ -113,35 +113,31 @@ export default function LoginPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm mb-5">
             <ClipboardCheck className="h-5 w-5" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
+          <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
             Employee Task Manager
           </h1>
-          <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">
-            Sign in to your workspace
-          </p>
+          <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Sign in to your workspace</p>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-1 mb-7">
+        <div className="flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-905 p-1 mb-7">
           <button
             type="button"
             onClick={() => { setTab('password'); setFormError(null); setEmailError(null); setPasswordError(null); }}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${
-              tab === 'password'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-            }`}
+            className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer ${tab === 'password'
+              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm'
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+              }`}
           >
             Password
           </button>
           <button
             type="button"
             onClick={() => { setTab('otp'); setOtpEmailError(null); setOtpCodeError(null); setOtpSuccessMsg(null); setOtpStep('email'); setOtpCode(''); }}
-            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all duration-200 cursor-pointer ${
-              tab === 'otp'
-                ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm'
-                : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
-            }`}
+            className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer ${tab === 'otp'
+              ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm'
+              : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200'
+              }`}
           >
             OTP
           </button>
@@ -149,9 +145,9 @@ export default function LoginPage() {
 
         {/* ── PASSWORD TAB ─────────────────────────────────────────────────── */}
         {tab === 'password' && (
-          <form onSubmit={handlePasswordSubmit} className="space-y-5">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="email">Email</label>
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">Email</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                 <input
@@ -160,20 +156,19 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setEmailError(null); setFormError(null); }}
                   placeholder="name@company.com"
-                  className={`w-full pl-10 pr-4 py-3 rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${
-                    emailError
-                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                      : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${emailError
+                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
+                    : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                    }`}
                 />
               </div>
-              {emailError && <p className="text-sm text-red-500">{emailError}</p>}
+              {emailError && <p className="text-sm text-red-500 dark:text-red-400 font-medium">{emailError}</p>}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="password">Password</label>
-                <a href="/forgot-password" className="text-sm text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">Password</label>
+                <a href="/forgot-password" className="text-sm font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
                   Forgot password?
                 </a>
               </div>
@@ -185,33 +180,23 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
-                  className={`w-full pl-10 pr-10 py-3 rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${
-                    passwordError
-                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                      : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
-                  }`}
+                  className={`w-full pl-10 pr-10 py-3 rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${passwordError
+                    ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
+                    : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                    }`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 dark:hover:text-zinc-200 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
+              {passwordError && <p className="text-sm text-red-500 dark:text-red-400 font-medium">{passwordError}</p>}
             </div>
 
-            {formError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-3 text-sm text-red-600 dark:text-red-400">
-                {formError}
-              </div>
-            )}
-            {error && !formError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-3 text-sm text-red-600 dark:text-red-400">
-                {error}
-              </div>
-            )}
+
 
             <button
               type="submit"
@@ -223,16 +208,16 @@ export default function LoginPage() {
           </form>
         )}
 
-        {/* ── OTP TAB ───────────────────────────────────────────────── */}
+        {/* ── MAGIC CODE TAB ───────────────────────────────────────────────── */}
         {tab === 'otp' && (
           <>
             {otpStep === 'email' ? (
-              <form onSubmit={handleRequestOtp} className="space-y-5">
-                <p className="text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              <form onSubmit={handleRequestOtp} className="space-y-4">
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
                   We'll send a 6-digit login code to your email. No password needed.
                 </p>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="otp-email">Email</label>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="otp-email">Email</label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                     <input
@@ -241,32 +226,31 @@ export default function LoginPage() {
                       value={otpEmail}
                       onChange={(e) => { setOtpEmail(e.target.value); setOtpEmailError(null); }}
                       placeholder="name@company.com"
-                      className={`w-full pl-10 pr-4 py-3 rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${
-                        otpEmailError
-                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
-                      }`}
+                      className={`w-full pl-10 pr-4 py-3 rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${otpEmailError
+                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
+                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                        }`}
                     />
                   </div>
-                  {otpEmailError && <p className="text-sm text-red-500">{otpEmailError}</p>}
+                  {otpEmailError && <p className="text-sm text-red-500 dark:text-red-400 font-medium">{otpEmailError}</p>}
                 </div>
                 <button
                   type="submit"
                   disabled={otpSending}
                   className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-base font-semibold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {otpSending ? 'Sending OTP…' : 'Send OTP'} <ArrowRight className="h-4 w-4" />
+                  {otpSending ? 'Sending code…' : 'Send login code'} <ArrowRight className="h-4 w-4" />
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleOtpVerify} className="space-y-5">
+              <form onSubmit={handleOtpVerify} className="space-y-4">
                 {otpSuccessMsg && (
-                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-400">
                     {otpSuccessMsg}
                   </div>
                 )}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300 text-center block" htmlFor="login-otp">
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 text-center block" htmlFor="login-otp">
                     Enter the 6-digit code sent to <span className="font-semibold text-zinc-700 dark:text-zinc-300">{otpEmail}</span>
                   </label>
                   <input
@@ -277,11 +261,10 @@ export default function LoginPage() {
                     value={otpCode}
                     onChange={(e) => { setOtpCode(e.target.value.replace(/\D/g, '')); setOtpCodeError(null); }}
                     placeholder="000000"
-                    className={`w-full rounded-lg border px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 ${
-                      otpCodeError
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
-                    }`}
+                    className={`w-full rounded-lg border px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 ${otpCodeError
+                      ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
+                      : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                      }`}
                   />
                   {otpCodeError && <p className="text-sm text-red-500 text-center">{otpCodeError}</p>}
                 </div>
@@ -294,11 +277,11 @@ export default function LoginPage() {
                   {otpVerifying ? 'Verifying…' : 'Sign in'} <ArrowRight className="h-4 w-4" />
                 </button>
 
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-xs">
                   <button
                     type="button"
                     onClick={() => { setOtpStep('email'); setOtpCode(''); setOtpCodeError(null); setOtpSuccessMsg(null); }}
-                    className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors cursor-pointer"
                   >
                     ← Change email
                   </button>
@@ -306,7 +289,7 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => { setOtpStep('email'); setOtpCode(''); }}
                     disabled={otpCooldown > 0}
-                    className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors disabled:opacity-40 cursor-pointer"
+                    className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors disabled:opacity-40 cursor-pointer"
                   >
                     {otpCooldown > 0 ? `Resend in ${otpCooldown}s` : 'Resend code'}
                   </button>
@@ -317,9 +300,9 @@ export default function LoginPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
-          Don't have an account?{' '}
-          <a href="/register" className="font-medium text-zinc-700 dark:text-zinc-200 hover:underline transition-colors">
+        <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
+          Don&apos;t have an account?{' '}
+          <a href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
             Create account
           </a>
         </div>

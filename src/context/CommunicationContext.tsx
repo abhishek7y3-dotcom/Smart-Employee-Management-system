@@ -455,7 +455,6 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const markAllNotificationsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    toast.success('All notifications marked as read');
   }, []);
 
   const archiveConversation = useCallback(async (conversationId: string) => {
@@ -698,7 +697,12 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Computed values
   const filteredConversations = React.useMemo(() => {
-    let result = [...conversations];
+    let result = conversations.filter((c) => 
+      c.type === 'broadcast' ||
+      c.participants.includes(userId) ||
+      (user?.name && c.participantNames.includes(user.name)) ||
+      c.lastMessageSender === (user?.name || 'You')
+    );
 
     if (filters.search) {
       const searchLower = filters.search.toLowerCase();
@@ -752,7 +756,7 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     });
 
     return result;
-  }, [conversations, filters]);
+  }, [conversations, filters, userId, user]);
 
   const inboxConversations = React.useMemo(
     () => filteredConversations.filter((c) => !c.isArchived),
@@ -775,8 +779,12 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const unreadMessageCount = React.useMemo(
-    () => conversations.filter((c) => !c.isRead && !c.isArchived).length,
-    [conversations]
+    () => conversations.filter((c) => 
+      !c.isRead && 
+      !c.isArchived && 
+      (c.type === 'broadcast' || c.participants.includes(userId) || (user?.name && c.participantNames.includes(user.name)) || c.lastMessageSender === (user?.name || 'You'))
+    ).length,
+    [conversations, userId, user]
   );
 
   return (

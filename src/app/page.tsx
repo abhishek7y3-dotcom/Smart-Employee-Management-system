@@ -120,6 +120,36 @@ export default function DashboardPage() {
                 )}
               </div>
             </section>
+
+            <section className="enterprise-card rounded-2xl p-6">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Recent Activity</h3>
+                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Latest team actions across tasks.</p>
+                </div>
+                <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400">Latest 10</span>
+              </div>
+              {recentActivities.length > 0 ? (
+                <div className="mt-6 max-h-80 overflow-y-auto pr-2 relative">
+                  <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-zinc-200 dark:bg-zinc-800"></div>
+                  <div className="space-y-5">
+                    {recentActivities.map((activity) => (
+                      <div key={activity.id} className="relative pl-8 text-sm transition-colors duration-300">
+                        <div className="absolute left-3 top-2 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-zinc-950"></div>
+                        <div>
+                          <span className="font-extrabold text-zinc-950 dark:text-zinc-50">{activity.employeeName}</span>{' '}
+                          <span className="text-zinc-700 dark:text-zinc-300 font-semibold leading-relaxed">
+                            {activity.details ?? `${activityMessages[activity.action]} ${activity.taskTitle}`}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <EmptyState title="No activity yet" message="Task updates will appear here as your team works." />
+              )}
+            </section>
           </div>
 
           <div className="space-y-8">
@@ -173,7 +203,7 @@ export default function DashboardPage() {
                 </div>
                 <Link href="/employees" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">View All</Link>
               </div>
-              <div className="mt-5 max-h-[440px] space-y-3 overflow-y-auto pr-1">
+              <div className="mt-5 max-h-[595px] space-y-3 overflow-y-auto pr-1">
                 {employees.length > 0 ? (
                   employees.map((employee) => (
                     <div key={employee.id} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/60 bg-zinc-50/20 p-3.5 transition-all duration-300 hover:scale-[1.01] hover:shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/10">
@@ -194,36 +224,6 @@ export default function DashboardPage() {
             </section>
           </div>
         </div>
-
-        <section className="enterprise-card rounded-2xl p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Recent Activity</h3>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Latest team actions across tasks.</p>
-            </div>
-            <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400">Latest 10</span>
-          </div>
-          {recentActivities.length > 0 ? (
-            <div className="mt-6 max-h-80 overflow-y-auto pr-2 relative">
-              <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-zinc-200 dark:bg-zinc-800"></div>
-              <div className="space-y-5">
-                {recentActivities.map((activity) => (
-                  <div key={activity.id} className="relative pl-8 text-xs transition-colors duration-300">
-                    <div className="absolute left-3 top-1.5 w-1.5 h-1.5 rounded-full bg-emerald-500 ring-4 ring-white dark:ring-zinc-950"></div>
-                    <div>
-                      <span className="font-bold text-zinc-900 dark:text-zinc-100">{activity.employeeName}</span>{' '}
-                      <span className="text-zinc-500 dark:text-zinc-405 leading-relaxed">
-                        {activity.details ?? `${activityMessages[activity.action]} ${activity.taskTitle}`}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <EmptyState title="No activity yet" message="Task updates will appear here as your team works." />
-          )}
-        </section>
       </div>
     </ProtectedRoute>
   );

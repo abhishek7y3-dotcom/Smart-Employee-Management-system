@@ -6,7 +6,7 @@ import { formatDate } from '../../utils/format';
 import { StatusBadge } from './StatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { LoadingState } from '../ui/LoadingState';
-import { Trash2, Pencil } from 'lucide-react';
+import { Trash2, Pencil, Eye } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface TaskTableProps {
@@ -14,6 +14,7 @@ interface TaskTableProps {
   employees: Employee[];
   onDeleteTask: (task: Task) => void;
   onEditTask?: (task: Task) => void;
+  onViewTask?: (task: Task) => void;
   onStatusChange?: (taskId: string, status: Task['status']) => void;
   isLoading?: boolean;
 }
@@ -35,9 +36,15 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   employees,
   onDeleteTask,
   onEditTask,
+  onViewTask,
   onStatusChange,
   isLoading = false
 }) => {
+  const truncateDescription = (desc: string) => {
+    if (!desc) return '';
+    if (desc.length <= 25) return desc;
+    return desc.slice(0, 25) + '...';
+  };
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   if (isLoading) {
@@ -55,25 +62,25 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   return (
     <div className="enterprise-card overflow-hidden rounded-2xl shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left text-sm text-zinc-550 dark:text-zinc-405">
-          <thead className="bg-zinc-50/50 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-400 border-b border-zinc-200/60 dark:bg-zinc-900/20 dark:text-zinc-500 dark:border-zinc-800/60">
+        <table className="w-full border-collapse text-left text-base text-zinc-800 dark:text-zinc-200">
+          <thead className="bg-zinc-50/50 text-[13px] font-bold uppercase tracking-[0.1em] text-zinc-950 border-b border-zinc-200/60 dark:bg-zinc-900/20 dark:text-zinc-50 dark:border-zinc-800/60">
             <tr>
-              <th className="px-6 py-4">Task</th>
-              <th className="px-6 py-4">Assigned To</th>
+              <th className="pl-6 pr-2 py-4">Task</th>
+              <th className="pl-2 pr-6 py-4">Assigned To</th>
               <th className="px-6 py-4">Priority</th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4">Due Date</th>
-              {isAdmin && <th className="px-6 py-4 text-right">Actions</th>}
+              <th className="px-6 py-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
             {tasks.map((task) => (
               <tr key={task.id} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-900/10 transition-colors duration-300">
-                <td className="px-6 py-4">
-                  <div className="font-bold text-zinc-900 dark:text-zinc-100">{task.title}</div>
-                  <div className="text-xs text-zinc-400 dark:text-zinc-505 mt-1">{task.description}</div>
+                <td className="pl-6 pr-2 py-4 max-w-xs">
+                  <div className="font-extrabold text-zinc-950 dark:text-zinc-50 text-base break-words">{task.title}</div>
+                  <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1.5 leading-relaxed break-words">{truncateDescription(task.description)}</div>
                 </td>
-                <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">{getEmployeeDisplayName(employees, task.assignedTo)}</td>
+                <td className="pl-2 pr-6 py-4 text-sm font-bold text-zinc-900 dark:text-zinc-100">{getEmployeeDisplayName(employees, task.assignedTo)}</td>
                 <td className="px-6 py-4">
                   <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-bold ${priorityColors[task.priority]}`}>
                     {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
@@ -84,7 +91,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                     <select
                       value={task.status}
                       onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
-                      className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-750 dark:text-zinc-250 rounded-lg px-2.5 py-1 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+                      className="text-sm bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold cursor-pointer"
                     >
                       <option value="todo">To Do</option>
                       <option value="in_progress">In Progress</option>
@@ -96,29 +103,41 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                     <StatusBadge status={task.status} />
                   )}
                 </td>
-                <td className="px-6 py-4 text-zinc-500 dark:text-zinc-400">{formatDate(task.dueDate)}</td>
-                {isAdmin && (
-                  <td className="px-6 py-4 text-right space-x-2">
-                    {onEditTask && (
+                <td className="px-6 py-4 text-sm font-bold text-zinc-700 dark:text-zinc-300">{formatDate(task.dueDate)}</td>
+                <td className="px-6 py-4 text-right whitespace-nowrap">
+                  <div className="inline-flex items-center gap-1.5">
+                    {onViewTask && (
+                      <button
+                        type="button"
+                        onClick={() => onViewTask(task)}
+                        className="rounded-xl p-2 text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 hover:scale-105 transition-all dark:text-emerald-450 dark:hover:bg-emerald-950/20 dark:hover:text-emerald-300 cursor-pointer"
+                        title="View Details"
+                      >
+                        <Eye className="h-4.5 w-4.5" />
+                      </button>
+                    )}
+                    {isAdmin && onEditTask && (
                       <button
                         type="button"
                         onClick={() => onEditTask(task)}
-                        className="rounded-xl p-2 text-zinc-400 hover:bg-zinc-100/60 hover:text-zinc-800 hover:scale-105 transition-all dark:text-zinc-500 dark:hover:bg-zinc-900/60 dark:hover:text-zinc-200"
+                        className="rounded-xl p-2 text-blue-500 hover:bg-blue-50 hover:text-blue-600 hover:scale-105 transition-all dark:text-blue-400 dark:hover:bg-blue-950/20 dark:hover:text-blue-300 cursor-pointer"
                         title="Edit Task"
                       >
                         <Pencil className="h-4.5 w-4.5" />
                       </button>
                     )}
-                    <button
-                      type="button"
-                      onClick={() => onDeleteTask(task)}
-                      className="rounded-xl p-2 text-zinc-400 hover:bg-red-50 hover:text-red-600 hover:scale-105 transition-all dark:text-zinc-500 dark:hover:bg-red-950/20 dark:hover:text-red-400"
-                      title="Delete Task"
-                    >
-                      <Trash2 className="h-4.5 w-4.5" />
-                    </button>
-                  </td>
-                )}
+                    {isAdmin && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteTask(task)}
+                        className="rounded-xl p-2 text-red-500 hover:bg-red-50 hover:text-red-600 hover:scale-105 transition-all dark:text-red-400 dark:hover:bg-red-950/20 dark:hover:text-red-300 cursor-pointer"
+                        title="Delete Task"
+                      >
+                        <Trash2 className="h-4.5 w-4.5" />
+                      </button>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>

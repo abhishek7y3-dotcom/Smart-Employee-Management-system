@@ -117,7 +117,7 @@ function ResetPasswordForm() {
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400" htmlFor="email">
+          <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
             Email
           </label>
           <div className="relative">
@@ -134,7 +134,7 @@ function ResetPasswordForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400 text-center block" htmlFor="otp">
+          <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 text-center block" htmlFor="otp">
             Enter the 6-digit code sent to{' '}
             {email ? (
               <span className="font-semibold text-zinc-700 dark:text-zinc-300">{email}</span>
@@ -155,7 +155,7 @@ function ResetPasswordForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400" htmlFor="password">
+          <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">
             New password
           </label>
           <div className="relative">
@@ -179,7 +179,7 @@ function ResetPasswordForm() {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400" htmlFor="confirmPassword">
+          <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="confirmPassword">
             Confirm new password
           </label>
           <div className="relative">
@@ -232,7 +232,7 @@ function ResetPasswordForm() {
             type="button"
             onClick={handleResendOtp}
             disabled={resendCooldown > 0 || resendLoading}
-            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors disabled:opacity-40 cursor-pointer"
+            className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors disabled:opacity-40 cursor-pointer"
           >
             {resendLoading ? 'Sending…' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
           </button>
@@ -244,9 +244,9 @@ function ResetPasswordForm() {
       </form>
 
       {/* Footer */}
-      <div className="mt-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
+      <div className="mt-8 text-center text-xs text-zinc-555 dark:text-zinc-400">
         Remember your password?{' '}
-        <a href="/login" className="font-medium text-zinc-700 dark:text-zinc-200 hover:underline transition-colors">
+        <a href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
           Sign in
         </a>
       </div>

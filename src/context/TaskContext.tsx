@@ -12,7 +12,7 @@ import {
   updateTask as apiUpdateTask,
   deleteTask as apiDeleteTask
 } from '../api/tasks';
-import { updateUserProfile, removeUser } from '../api/auth';
+import { updateUserProfile, removeUser, registerUser } from '../api/auth';
 
 interface TaskContextType {
   tasks: Task[];
@@ -24,7 +24,7 @@ interface TaskContextType {
   updateTaskPriority: (taskId: string, priority: TaskPriority) => void;
   assignTask: (taskId: string, employeeId: string) => void;
   deleteTask: (taskId: string) => void;
-  addEmployee: (employee: Omit<Employee, 'id'>) => void;
+  addEmployee: (employee: Omit<Employee, 'id'> & { password?: string }) => void | Promise<void>;
   updateEmployeeDesignation: (employeeId: string, designation: string) => Promise<void>;
   updateEmployeeRole: (employeeId: string, role: string) => Promise<void>;
   removeEmployee: (employeeId: string) => Promise<void>;
@@ -59,20 +59,20 @@ const buildChangeDetails = (task: Task, updates: TaskInput, employees: Employee[
 
 const buildActivity = (
   task: Task,
-  employees: Employee[],
   action: ActivityAction,
+  userName: string,
   details?: string,
 ): ActivityLog => ({
   id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
   taskTitle: task.title,
-  employeeName: getEmployeeName(employees, task.assignedTo),
+  employeeName: userName,
   action,
   details,
   createdAt: new Date().toISOString(),
 });
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, initializing } = useAuth();
+  const { isAuthenticated, initializing, user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
@@ -135,9 +135,9 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       recordActivity(
         buildActivity(
           created,
-          currentEmployees,
           'created',
-          `has been assigned the task '${created.title}' with status '${statusLabels[created.status] || created.status}' and due date '${formatDate(created.dueDate)}'.`,
+          user?.name || 'Employee',
+          `created task '${created.title}' and assigned it to ${getEmployeeName(currentEmployees, created.assignedTo)}.`,
         ),
       );
       toast.success('Task created successfully');
@@ -156,7 +156,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (employee && !employees.some((e) => e.id === employee.id)) {
         setEmployees((prev) => [...prev, employee]);
       }
-      recordActivity(buildActivity(updated, employees, 'updated', buildChangeDetails(task, updates, employees)));
+      recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', buildChangeDetails(task, updates, employees)));
       toast.success('Task updated successfully');
     } catch (err) {
       toast.error('Failed to update task in database');
@@ -178,7 +178,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       const { task: updated } = await apiUpdateTask(taskId, updates);
       setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
-      recordActivity(buildActivity(updated, employees, 'status_changed', `Changed status for "${task.title}" to ${statusLabels[status]}.`));
+      recordActivity(buildActivity(updated, 'status_changed', user?.name || 'Employee', `changed status for "${task.title}" to ${statusLabels[status]}.`));
       toast.success('Status updated successfully');
     } catch (err) {
       toast.error('Failed to update task status in database');
@@ -200,7 +200,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       const { task: updated } = await apiUpdateTask(taskId, updates);
       setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
-      recordActivity(buildActivity(updated, employees, 'updated', `Changed priority for "${task.title}" to ${priority}.`));
+      recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', `changed priority for "${task.title}" to ${priority}.`));
       toast.success('Task updated successfully');
     } catch (err) {
       toast.error('Failed to update task priority in database');
@@ -222,7 +222,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       const { task: updated } = await apiUpdateTask(taskId, updates);
       setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
-      recordActivity(buildActivity(updated, employees, 'updated', `Assigned "${task.title}" to ${getEmployeeName(employees, employeeId)}.`));
+      recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', `assigned "${task.title}" to ${getEmployeeName(employees, employeeId)}.`));
       toast.success('Task updated successfully');
     } catch (err) {
       toast.error('Failed to assign task in database');
@@ -236,18 +236,22 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await apiDeleteTask(taskId);
       setTasks((prev) => prev.filter((item) => item.id !== taskId));
-      recordActivity(buildActivity(task, employees, 'deleted', 'Task removed from the list.'));
+      recordActivity(buildActivity(task, 'deleted', user?.name || 'Employee', `deleted task "${task.title}".`));
       toast.success('Task deleted successfully');
     } catch (err) {
       toast.error('Failed to delete task from database');
     }
   };
 
-  const addEmployee = (newEmployeeData: Omit<Employee, 'id'>) => {
+  const addEmployee = async (newEmployeeData: Omit<Employee, 'id'> & { password?: string }) => {
     const isMock = typeof window === 'undefined' ? false : localStorage.getItem('use_mock_auth') === 'true';
     if (isMock) {
       const newEmployee: Employee = {
-        ...newEmployeeData,
+        name: newEmployeeData.name,
+        email: newEmployeeData.email,
+        role: newEmployeeData.role || 'user',
+        designation: newEmployeeData.designation || 'Specialist',
+        avatarUrl: newEmployeeData.avatarUrl,
         id: `emp-${Date.now()}`,
       };
       setEmployees((prev) => {
@@ -257,7 +261,34 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       toast.success('Mock team member added');
     } else {
-      toast.info('Team members are managed via database user registrations in production mode');
+      try {
+        const regResult = await registerUser({
+          name: newEmployeeData.name,
+          email: newEmployeeData.email,
+          password: newEmployeeData.password || 'TempPassword123!',
+          profilePicture: newEmployeeData.avatarUrl,
+        });
+
+        const userId = regResult.user.id || (regResult.user as any)._id;
+        await updateUserProfile(userId, {
+          designation: newEmployeeData.designation || 'Employee',
+          role: newEmployeeData.role || 'user',
+        });
+
+        const newEmp: Employee = {
+          id: userId,
+          name: newEmployeeData.name,
+          email: newEmployeeData.email,
+          role: newEmployeeData.role || 'user',
+          designation: newEmployeeData.designation || 'Employee',
+          avatarUrl: newEmployeeData.avatarUrl,
+        };
+        setEmployees((prev) => [...prev, newEmp]);
+        toast.success('Team member registered successfully');
+      } catch (err: any) {
+        toast.error(err.message || 'Failed to register team member');
+        throw err;
+      }
     }
   };
 

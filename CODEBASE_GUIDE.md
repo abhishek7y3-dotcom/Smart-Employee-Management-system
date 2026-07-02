@@ -97,24 +97,25 @@ Built with Node.js, Express, TypeScript, and MongoDB (via Mongoose).
 
 
 
-Frontend
-
-↓
-
+Client Request
+      │
+      ▼
 Route
-
-↓
-
+      │
+      ▼
+Middleware (JWT, etc.)
+      │
+      ▼
 Validator
-
-↓
-
+      │
+      ▼
 Controller
-
-↓
-
+      │
+      ▼
 Model
-
-↓
-
+      │
+      ▼
 MongoDB
+      │
+      ▼
+Response

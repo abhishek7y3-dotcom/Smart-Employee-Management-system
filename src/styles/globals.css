@@ -47,16 +47,20 @@ body {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.25);
   border-radius: 9999px;
 }
+
 .dark ::-webkit-scrollbar-thumb {
   background: rgba(75, 85, 99, 0.3);
 }
+
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.45);
 }
@@ -90,6 +94,7 @@ body {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+
 .dark .gradient-text-blue {
   background: linear-gradient(135deg, #60a5fa, #93c5fd, #bfdbfe);
   -webkit-background-clip: text;
@@ -105,6 +110,7 @@ body {
   pointer-events: none;
   z-index: 0;
 }
+
 .dark .ambient-glow {
   opacity: 0.08;
 }
@@ -139,13 +145,16 @@ body {
   width: 5px;
   height: 5px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
   background: rgba(156, 163, 175, 0.2);
   border-radius: 9999px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(156, 163, 175, 0.35);
 }
@@ -153,7 +162,7 @@ body {
 /* Animated mesh background for authentication pages */
 .mesh-gradient {
   background-color: #0c0a09;
-  background-image: 
+  background-image:
     radial-gradient(at 10% 20%, rgba(59, 130, 246, 0.18) 0px, transparent 50%),
     radial-gradient(at 90% 10%, rgba(99, 102, 241, 0.18) 0px, transparent 50%),
     radial-gradient(at 50% 80%, rgba(139, 92, 246, 0.15) 0px, transparent 50%),
@@ -163,7 +172,15 @@ body {
 }
 
 @keyframes waveGlow {
-  0% { background-position: 0% 50% }
-  50% { background-position: 100% 50% }
-  100% { background-position: 0% 50% }
+  0% {
+    background-position: 0% 50%
+  }
+
+  50% {
+    background-position: 100% 50%
+  }
+
+  100% {
+    background-position: 0% 50%
+  }
 }

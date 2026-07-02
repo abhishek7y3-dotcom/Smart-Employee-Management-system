@@ -7,6 +7,7 @@ import { ConfirmationModal } from '../../components/ui/ConfirmationModal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { TaskTable } from '../../components/task/TaskTable';
 import { TaskEditorModal } from '../../components/task/TaskEditorModal';
+import { TaskDetailsModal } from '../../components/task/TaskDetailsModal';
 import { Task, TaskInput, TaskPriority } from '../../types';
 import { getFilteredTasksByUrlStatus, TaskUrlStatus } from '../../utils/dashboardUtils';
 import { useAuth } from '../../context/AuthContext';
@@ -45,6 +46,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
   const [newTitle, setNewTitle] = useState(defaultTaskForm.title);
   const [newDescription, setNewDescription] = useState(defaultTaskForm.description);
   const [newPriority, setNewPriority] = useState<TaskPriority>(defaultTaskForm.priority);
@@ -158,29 +160,29 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
 
       <div className="enterprise-card flex flex-col gap-4 rounded-2xl p-4.5 md:flex-row md:items-center md:justify-between">
         <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3.5 top-3 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
-          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-xl border border-zinc-200 bg-white py-2 pl-11 pr-4 text-xs text-zinc-900 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+          <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-11 pr-4 text-sm text-zinc-900 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50" />
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <input
             type="date"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
-            className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+            className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
             title="Filter by due date"
           />
           {dateFilter && (
             <button
               onClick={() => setDateFilter('')}
-              className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+              className="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
             >
               Clear Date
             </button>
           )}
-          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as TaskUrlStatus)} className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
+          <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as TaskUrlStatus)} className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
             {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
-          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2 text-xs font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
+          <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
             <option value="all">All Priorities</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -195,6 +197,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           employees={employees}
           onDeleteTask={setTaskToDelete}
           onEditTask={setTaskToEdit}
+          onViewTask={setViewingTask}
           onStatusChange={updateTaskStatus}
         />
       ) : (
@@ -218,6 +221,13 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
         cancelLabel="Cancel"
         onConfirm={confirmDelete}
         onCancel={() => setTaskToDelete(null)}
+      />
+
+      <TaskDetailsModal
+        isOpen={viewingTask !== null}
+        task={viewingTask}
+        employees={employees}
+        onClose={() => setViewingTask(null)}
       />
     </div>
   );

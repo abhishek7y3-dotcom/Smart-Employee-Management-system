@@ -70,12 +70,12 @@ export default function RegisterPage() {
     let hasError = false;
 
     if (!name.trim()) {
-      setNameError('Name is required.');
+      setNameError('Please enter your Name.');
       hasError = true;
     }
 
     if (!email.trim()) {
-      setEmailError('Email is required.');
+      setEmailError('Please enter an email address.');
       hasError = true;
     } else if (!emailRegex.test(email)) {
       setEmailError('Please enter a valid email address.');
@@ -83,7 +83,7 @@ export default function RegisterPage() {
     }
 
     if (!password.trim()) {
-      setPasswordError('Password is required.');
+      setPasswordError('Please enter your password.');
       hasError = true;
     } else if (password.length < 8) {
       setPasswordError('Password must be at least 8 characters.');
@@ -197,7 +197,7 @@ export default function RegisterPage() {
               )}
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300 text-center block" htmlFor="otp">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 text-center block" htmlFor="otp">
                   Enter the 6-digit code sent to{' '}
                   <span className="font-semibold text-zinc-700 dark:text-zinc-300">{email}</span>
                 </label>
@@ -209,9 +209,8 @@ export default function RegisterPage() {
                   value={otp}
                   onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '')); setOtpError(null); }}
                   placeholder="000000"
-                  className={`${inputBase} px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center ${
-                    otpError ? inputError : inputNormal
-                  }`}
+                  className={`${inputBase} px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center ${otpError ? inputError : inputNormal
+                    }`}
                 />
                 {otpError && <p className="text-sm text-red-500 text-center">{otpError}</p>}
               </div>
@@ -243,7 +242,7 @@ export default function RegisterPage() {
         ) : (
           <form className="space-y-5" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="name">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="name">
                 Full name
               </label>
               <div className="relative">
@@ -261,7 +260,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="email">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
                 Email
               </label>
               <div className="relative">
@@ -279,7 +278,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="password">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">
                 Password
               </label>
               <div className="relative">
@@ -304,7 +303,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="confirmPassword">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="confirmPassword">
                 Confirm password
               </label>
               <div className="relative">
@@ -329,12 +328,11 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="profile-pic">
+              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="profile-pic">
                 Profile picture <span className="text-zinc-400 dark:text-zinc-600">(optional)</span>
               </label>
-              <div className={`flex items-center gap-3 rounded-lg border px-3 py-3 bg-white dark:bg-zinc-900 transition duration-150 ${
-                formError?.includes('Image') ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'
-              }`}>
+              <div className={`flex items-center gap-3 rounded-lg border px-3 py-3 bg-white dark:bg-zinc-900 transition duration-150 ${formError?.includes('Image') ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'
+                }`}>
                 {profilePicture ? (
                   <img src={profilePicture} alt="Profile preview" className="h-8 w-8 shrink-0 rounded-full object-cover" />
                 ) : (
@@ -374,9 +372,9 @@ export default function RegisterPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
+        <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
           Already have an account?{' '}
-          <a href="/login" className="font-medium text-zinc-700 dark:text-zinc-200 hover:underline transition-colors">
+          <a href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
             Sign in
           </a>
         </div>

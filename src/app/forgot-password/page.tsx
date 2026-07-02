@@ -75,7 +75,7 @@ export default function ForgotPasswordPage() {
           </p>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-zinc-600 dark:text-zinc-300" htmlFor="email">
+            <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
               Email
             </label>
             <div className="relative">
@@ -123,9 +123,9 @@ export default function ForgotPasswordPage() {
         </form>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-zinc-400 dark:text-zinc-500">
+        <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
           Remember your password?{' '}
-          <a href="/login" className="font-medium text-zinc-700 dark:text-zinc-200 hover:underline transition-colors">
+          <a href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
             Sign in
           </a>
         </div>

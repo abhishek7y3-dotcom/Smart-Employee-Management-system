@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { signToken } from '../utils/jwt';
+import { signToken, verifyToken } from '../utils/jwt';
 import { sendVerificationOtp, sendResetPasswordOtp } from '../utils/mailer';
 import { uploadToCloudinary } from '../utils/cloudinary';
 import { AuthRequest } from '../middleware/authMiddleware';
@@ -27,6 +27,25 @@ export async function register(req: Request, res: Response) {
     // Upload image to Cloudinary (falls back to placeholder if Cloudinary not config'd)
     const profilePicUrl = await uploadToCloudinary(profilePicture || '', name);
 
+    // Check if the request is made by an Admin (who should automatically verify new users)
+    let isCreatedByAdmin = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const token = authHeader.split(' ')[1];
+        const decoded = verifyToken(token);
+        const userId = decoded.id as string;
+        if (userId) {
+          const reqUser = await User.findById(userId);
+          if (reqUser && (reqUser.role === 'admin' || reqUser.role === 'Admin' || reqUser.role === 'Project Manager')) {
+            isCreatedByAdmin = true;
+          }
+        }
+      } catch (err) {
+        // ignore decoding errors, treat as standard user signup
+      }
+    }
+
     // Generate 6-Digit OTP Code
     const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -39,24 +58,28 @@ export async function register(req: Request, res: Response) {
       email: email.toLowerCase(),
       password,
       profilePicture: profilePicUrl,
-      isVerified: false,
-      verificationOtp: encrypt(verificationOtpPlain), // stored encrypted
-      verificationOtpExpires,
+      isVerified: isCreatedByAdmin, // verified automatically if created by admin
+      verificationOtp: isCreatedByAdmin ? undefined : encrypt(verificationOtpPlain),
+      verificationOtpExpires: isCreatedByAdmin ? undefined : verificationOtpExpires,
       role,
       designation,
     });
 
-    // Log OTP to terminal for development/testing
-    console.log(`\n🔑 [REGISTER] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 10 min)\n`);
+    if (!isCreatedByAdmin) {
+      // Log OTP to terminal for development/testing
+      console.log(`\n🔑 [REGISTER] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 10 min)\n`);
 
-    // Trigger Verification OTP Email (fire-and-forget; don't block registration on email failure)
-    sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
-      console.error('authController.ts: Failed to send verification OTP email:', emailErr);
-    });
+      // Trigger Verification OTP Email (fire-and-forget; don't block registration on email failure)
+      sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
+        console.error('authController.ts: Failed to send verification OTP email:', emailErr);
+      });
+    }
 
     return res.status(201).json({
       success: true,
-      message: 'Registration successful! Please verify using the 6-digit code sent to your email.',
+      message: isCreatedByAdmin
+        ? 'Employee registered successfully!'
+        : 'Registration successful! Please verify using the 6-digit code sent to your email.',
       data: {
         user: {
           id: user._id,

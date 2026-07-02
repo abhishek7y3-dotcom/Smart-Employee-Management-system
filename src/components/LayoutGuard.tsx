@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { usePathname } from 'next/navigation';
+import React, { useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
@@ -12,9 +12,16 @@ interface LayoutGuardProps {
 
 export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { isAuthenticated, initializing, loading } = useAuth();
 
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
+
+  useEffect(() => {
+    if (!initializing && !loading && !isAuthenticated && !isAuthPage) {
+      router.replace('/login');
+    }
+  }, [isAuthenticated, initializing, loading, isAuthPage, router]);
 
   if (isAuthPage) {
     return <>{children}</>;
