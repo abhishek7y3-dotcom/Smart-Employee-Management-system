@@ -125,6 +125,7 @@ function ResetPasswordForm() {
             <input
               id="email"
               type="email"
+              maxLength={254}
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="name@company.com"
@@ -163,6 +164,7 @@ function ResetPasswordForm() {
             <input
               id="password"
               type={showPassword ? 'text' : 'password'}
+              maxLength={128}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               placeholder="••••••••"
@@ -187,6 +189,7 @@ function ResetPasswordForm() {
             <input
               id="confirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
+              maxLength={128}
               value={confirmPassword}
               onChange={(event) => setConfirmPassword(event.target.value)}
               placeholder="••••••••"

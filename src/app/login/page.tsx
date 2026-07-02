@@ -153,6 +153,7 @@ export default function LoginPage() {
                 <input
                   id="email"
                   type="email"
+                  maxLength={254}
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setEmailError(null); setFormError(null); }}
                   placeholder="name@company.com"
@@ -177,6 +178,7 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  maxLength={128}
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
@@ -223,6 +225,7 @@ export default function LoginPage() {
                     <input
                       id="otp-email"
                       type="email"
+                      maxLength={254}
                       value={otpEmail}
                       onChange={(e) => { setOtpEmail(e.target.value); setOtpEmailError(null); }}
                       placeholder="name@company.com"

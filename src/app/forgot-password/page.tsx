@@ -83,6 +83,7 @@ export default function ForgotPasswordPage() {
               <input
                 id="email"
                 type="email"
+                maxLength={254}
                 value={email}
                 onChange={(event) => {
                   setEmail(event.target.value);

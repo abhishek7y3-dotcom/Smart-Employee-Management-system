@@ -207,6 +207,7 @@ export default function EmployeesPage() {
                     <input
                       id="name"
                       type="text"
+                      maxLength={100}
                       value={formData.name}
                       onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setErrors({ ...errors, name: '' }); }}
                       placeholder="Jane Doe"
@@ -228,6 +229,7 @@ export default function EmployeesPage() {
                     <input
                       id="email"
                       type="email"
+                      maxLength={254}
                       value={formData.email}
                       onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors({ ...errors, email: '' }); }}
                       placeholder="jane@company.com"
@@ -249,6 +251,7 @@ export default function EmployeesPage() {
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
+                      maxLength={128}
                       value={formData.password}
                       onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
                       placeholder="Enter credentials"

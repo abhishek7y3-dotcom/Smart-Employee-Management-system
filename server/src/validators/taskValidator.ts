@@ -14,8 +14,8 @@ export const taskCreateValidation = [
     .trim()
     .notEmpty()
     .withMessage('Description is required')
-    .isLength({ max: 1000 })
-    .withMessage('Description cannot exceed 1000 characters'),
+    .isLength({ max: 500 })
+    .withMessage('Description cannot exceed 500 characters'),
   body('status')
     .optional()
     .isIn(statusValues)
@@ -49,8 +49,8 @@ export const taskUpdateValidation = [
     .trim()
     .notEmpty()
     .withMessage('Description cannot be empty')
-    .isLength({ max: 1000 })
-    .withMessage('Description cannot exceed 1000 characters'),
+    .isLength({ max: 500 })
+    .withMessage('Description cannot exceed 500 characters'),
   body('status')
     .optional()
     .isIn(statusValues)

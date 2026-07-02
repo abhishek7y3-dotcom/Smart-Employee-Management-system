@@ -250,6 +250,7 @@ export default function RegisterPage() {
                 <input
                   id="name"
                   type="text"
+                  maxLength={100}
                   value={name}
                   onChange={(event) => { setName(event.target.value); setNameError(null); setFormError(null); }}
                   placeholder="John Doe"
@@ -268,6 +269,7 @@ export default function RegisterPage() {
                 <input
                   id="email"
                   type="email"
+                  maxLength={254}
                   value={email}
                   onChange={(event) => { setEmail(event.target.value); setEmailError(null); setFormError(null); }}
                   placeholder="name@company.com"
@@ -286,6 +288,7 @@ export default function RegisterPage() {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  maxLength={128}
                   value={password}
                   onChange={(event) => { setPassword(event.target.value); setPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
@@ -311,6 +314,7 @@ export default function RegisterPage() {
                 <input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
+                  maxLength={128}
                   value={confirmPassword}
                   onChange={(event) => { setConfirmPassword(event.target.value); setConfirmPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
