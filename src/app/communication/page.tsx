@@ -5,7 +5,7 @@ import { CommunicationHub } from '../../components/communication/CommunicationHu
 
 export default function CommunicationPage() {
   return (
-    <div className="h-full">
+    <div className="h-full font-lucid">
       <CommunicationHub />
     </div>
   );

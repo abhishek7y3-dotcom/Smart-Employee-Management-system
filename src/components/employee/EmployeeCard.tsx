@@ -39,7 +39,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   };
 
   return (
-    <div className="flex flex-col gap-3 p-3.5 border border-zinc-200/60 dark:border-zinc-800/65 rounded-xl bg-zinc-50/40 dark:bg-zinc-900/25 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/35 hover:-translate-y-0.5 hover:shadow-sm transition-all duration-300 sm:flex-row sm:items-center sm:justify-between">
+    <div className="enterprise-card flex flex-col gap-3 p-3.5 rounded-xl transition-all duration-300 sm:flex-row sm:items-center sm:justify-between hover:-translate-y-0.5 hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700">
       <div className="flex items-center space-x-3">
         {employee.avatarUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */

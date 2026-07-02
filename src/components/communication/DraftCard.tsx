@@ -18,14 +18,14 @@ export const DraftCard: React.FC<DraftCardProps> = ({ draft, onEdit, onDelete, o
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Draft</span>
-            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold ${getPriorityColor(draft.priority)}`}>
+            <span className="text-xs font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Draft</span>
+            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-bold ${getPriorityColor(draft.priority)}`}>
               {draft.priority}
             </span>
           </div>
-          <h3 className="mt-1.5 text-sm font-bold text-zinc-950 dark:text-zinc-50 truncate">{draft.subject || 'Untitled'}</h3>
-          <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{draft.content || 'No content yet...'}</p>
-          <div className="mt-2 flex items-center gap-3 text-[10px] text-zinc-400 dark:text-zinc-500">
+          <h3 className="mt-1.5 text-base font-bold text-zinc-950 dark:text-zinc-50 truncate">{draft.subject || 'Untitled'}</h3>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{draft.content || 'No content yet...'}</p>
+          <div className="mt-2 flex items-center gap-3 text-xs text-zinc-400 dark:text-zinc-500">
             <span className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatRelativeTime(draft.updatedAt)}

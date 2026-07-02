@@ -22,20 +22,20 @@ export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
             {announcement.isPinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-600 dark:bg-blue-950/30 dark:text-blue-400">
+              <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-600 dark:bg-blue-950/30 dark:text-blue-400">
                 <Pin className="h-2.5 w-2.5" /> Pinned
               </span>
             )}
-            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold ${getPriorityColor(announcement.priority)}`}>
+            <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-bold ${getPriorityColor(announcement.priority)}`}>
               {announcement.priority}
             </span>
-            <span className="flex items-center gap-1 text-[10px] text-zinc-400 dark:text-zinc-500">
+            <span className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
               <Eye className="h-3 w-3" /> {announcement.readBy.length} views
             </span>
           </div>
-          <h3 className="mt-2 text-sm font-bold text-zinc-950 dark:text-zinc-50">{announcement.title}</h3>
-          <p className="mt-1.5 text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">{announcement.description}</p>
-          <div className="mt-3 flex items-center gap-3 text-[10px] text-zinc-400 dark:text-zinc-500">
+          <h3 className="mt-2 text-base font-bold text-zinc-950 dark:text-zinc-50">{announcement.title}</h3>
+          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">{announcement.description}</p>
+          <div className="mt-3 flex items-center gap-3 text-xs text-zinc-400 dark:text-zinc-500">
             <span className="flex items-center gap-1">
               <Megaphone className="h-3 w-3" />
               {announcement.authorName}

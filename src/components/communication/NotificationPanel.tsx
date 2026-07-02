@@ -60,7 +60,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       {/* Backdrop to close on outside click */}
       <div className="fixed inset-0 z-[9998]" onClick={onClose} />
       <div
-        className="fixed z-[9999] w-80 sm:w-96 rounded-2xl border border-zinc-200/60 bg-white shadow-2xl dark:border-zinc-800/60 dark:bg-zinc-950 max-h-[70vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+        className="fixed z-[9999] w-80 sm:w-96 rounded-2xl border border-zinc-200/60 bg-white shadow-2xl dark:border-zinc-800/60 dark:bg-zinc-950 max-h-[70vh] flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200 font-sans"
         style={{ top: `${position.top}px`, right: `${position.right}px` }}
       >
         {/* Header */}
@@ -69,14 +69,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             <Bell className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
             <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">Notifications</h3>
             {unreadCount > 0 && (
-              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[9px] font-bold text-white">
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
                 {unreadCount}
               </span>
             )}
           </div>
           <div className="flex items-center gap-1">
             {unreadCount > 0 && (
-              <button onClick={onMarkAllRead} className="flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30 transition-colors">
+              <button onClick={onMarkAllRead} className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30 transition-colors">
                 <CheckCheck className="h-3 w-3" /> Mark all read
               </button>
             )}
@@ -93,8 +93,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900/60">
                 <Bell className="h-6 w-6 text-zinc-300 dark:text-zinc-600" />
               </div>
-              <p className="mt-3 text-xs font-bold text-zinc-500 dark:text-zinc-400">No notifications</p>
-              <p className="mt-1 text-[10px] text-zinc-400 dark:text-zinc-500">You're all caught up!</p>
+              <p className="mt-3 text-sm font-bold text-zinc-500 dark:text-zinc-400">No notifications</p>
+              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">You're all caught up!</p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
@@ -113,15 +113,15 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className={`text-xs font-bold truncate ${!notif.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                      <p className={`text-sm font-bold truncate ${!notif.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-500 dark:text-zinc-400'}`}>
                         {notif.title}
                       </p>
                       {!notif.isRead && (
                         <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{notif.message}</p>
-                    <p className="mt-1 text-[9px] text-zinc-400 dark:text-zinc-500">{formatRelativeTime(notif.createdAt)}</p>
+                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{notif.message}</p>
+                    <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">{formatRelativeTime(notif.createdAt)}</p>
                   </div>
                 </div>
               ))}

@@ -40,6 +40,7 @@ interface AuthContextType extends AuthState {
   register: (data: RegisterRequest) => Promise<string>;
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<string>;
   resetPassword: (payload: ResetPasswordRequest) => Promise<string>;
+  persistAuth: (authUser: AuthUser, authToken: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -175,6 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         forgotPassword,
         resetPassword,
+        persistAuth,
       }}
     >
       {children}</AuthContext.Provider>

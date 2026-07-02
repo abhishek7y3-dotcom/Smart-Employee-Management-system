@@ -147,11 +147,11 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm font-lucid">
       <div className="w-full max-w-2xl rounded-2xl border border-zinc-200/60 bg-white shadow-2xl dark:border-zinc-800/60 dark:bg-zinc-950 max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-200/60 dark:border-zinc-800/60 px-6 py-4">
-          <h2 className="text-sm font-bold text-zinc-950 dark:text-zinc-50 font-outfit">
+          <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50 font-outfit">
             {isBroadcast ? '📢 Broadcast Message' : 'Compose Message'}
           </h2>
           <button onClick={onClose} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
@@ -164,10 +164,10 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
           {/* To (hidden for broadcast) */}
           {!isBroadcast && (
             <div ref={dropdownRef} className="relative">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">To</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">To</label>
               <div className="mt-1 flex flex-wrap gap-1.5 rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-3 py-2 dark:border-zinc-800/60 dark:bg-zinc-900/30 focus-within:border-blue-500 transition-colors">
                 {form.to.map((id) => (
-                  <span key={id} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
+                  <span key={id} className="inline-flex items-center gap-1.5 rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-bold text-blue-700 dark:bg-blue-950/30 dark:text-blue-400">
                     {getEmployeeAvatar(id) && (
                       <img src={getEmployeeAvatar(id)} alt="" className="h-3.5 w-3.5 rounded-full object-cover" />
                     )}
@@ -197,7 +197,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
                       }
                     }}
                     placeholder={form.to.length === 0 ? 'Search employees by name, email, or role...' : ''}
-                    className="w-full bg-transparent text-xs text-zinc-900 outline-none dark:text-zinc-100 placeholder:text-zinc-400"
+                    className="w-full bg-transparent text-sm text-zinc-900 outline-none dark:text-zinc-100 placeholder:text-zinc-400"
                   />
                 </div>
                 <button
@@ -254,17 +254,17 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
 
           {/* Subject */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Subject</label>
-            <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Enter subject..." className="mt-1 w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-3 py-2.5 text-xs text-zinc-900 outline-none focus:border-blue-500 dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100" />
-            {errors.subject && <p className="mt-1 flex items-center gap-1 text-[10px] text-red-500"><AlertCircle className="h-3 w-3" />{errors.subject}</p>}
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Subject</label>
+            <input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Enter subject..." className="mt-1 w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-blue-500 dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100" />
+            {errors.subject && <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle className="h-3 w-3" />{errors.subject}</p>}
           </div>
 
           {/* Priority */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</label>
+            <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</label>
             <div className="mt-1 flex gap-2">
               {priorityOptions.map((opt) => (
-                <button key={opt.value} onClick={() => setForm({ ...form, priority: opt.value })} className={`rounded-lg border px-3 py-1.5 text-[10px] font-bold transition-all ${form.priority === opt.value ? `${opt.color} border-current/20 ring-2 ring-current/10` : 'border-zinc-200/60 text-zinc-500 dark:border-zinc-800/60 dark:text-zinc-400'}`}>
+                <button key={opt.value} onClick={() => setForm({ ...form, priority: opt.value })} className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all ${form.priority === opt.value ? `${opt.color} border-current/20 ring-2 ring-current/10` : 'border-zinc-200/60 text-zinc-500 dark:border-zinc-800/60 dark:text-zinc-400'}`}>
                   {opt.label}
                 </button>
               ))}
@@ -274,7 +274,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
           {/* Content */}
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Message</label>
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Message</label>
               <div className="flex items-center gap-1">
                 <button className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"><Bold className="h-3 w-3" /></button>
                 <button className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"><Italic className="h-3 w-3" /></button>
@@ -282,15 +282,15 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
                 <button className="rounded p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"><AtSign className="h-3 w-3" /></button>
               </div>
             </div>
-            <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} placeholder="Write your message..." className="mt-1 w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-3 py-2.5 text-xs text-zinc-900 outline-none focus:border-blue-500 resize-none dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100" />
-            {errors.content && <p className="mt-1 flex items-center gap-1 text-[10px] text-red-500"><AlertCircle className="h-3 w-3" />{errors.content}</p>}
+            <textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={8} placeholder="Write your message..." className="mt-1 w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-3 py-2.5 text-sm text-zinc-900 outline-none focus:border-blue-500 resize-none dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100" />
+            {errors.content && <p className="mt-1 flex items-center gap-1 text-xs text-red-500"><AlertCircle className="h-3 w-3" />{errors.content}</p>}
           </div>
 
           {/* Attachments */}
           <div>
             <div className="flex items-center justify-between">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Attachments</label>
-              <button onClick={handleAddAttachment} className="flex items-center gap-1 text-[10px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors">
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Attachments</label>
+              <button onClick={handleAddAttachment} className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors">
                 <Paperclip className="h-3 w-3" /> Add File
               </button>
             </div>
@@ -306,10 +306,10 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
 
         {/* Footer */}
         <div className="flex items-center justify-between border-t border-zinc-200/60 dark:border-zinc-800/60 px-6 py-4">
-          <button onClick={handleSaveDraft} className="flex items-center gap-1.5 rounded-xl border border-zinc-200/60 px-4 py-2 text-xs font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800/60 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors">
+          <button onClick={handleSaveDraft} className="flex items-center gap-1.5 rounded-xl border border-zinc-200/60 px-4 py-2 text-sm font-bold text-zinc-600 hover:bg-zinc-50 dark:border-zinc-800/60 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors">
             <Save className="h-3.5 w-3.5" /> Save Draft
           </button>
-          <button onClick={handleSend} className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20">
+          <button onClick={handleSend} className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-sm font-bold text-white hover:bg-blue-700 transition-colors shadow-md shadow-blue-500/20">
             <Send className="h-3.5 w-3.5" /> {isBroadcast ? 'Send Broadcast' : 'Send Message'}
           </button>
         </div>

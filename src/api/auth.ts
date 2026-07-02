@@ -167,6 +167,39 @@ export async function removeUser(id: string): Promise<any> {
 }
 
 
+export async function requestLoginOtp(email: string): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock login OTP sent to your email.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/request-login-otp', { email });
+    return { message: response.data.message || 'Login code sent to your email.' };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function loginWithOtp(email: string, otp: string): Promise<LoginResponse> {
+  if (isMockAuthEnabled()) {
+    return mockLoginUser({ email, password: '' });
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/login-with-otp', { email, otp });
+    const apiData = response.data.data;
+    return {
+      user: apiData.user,
+      token: {
+        accessToken: apiData.token,
+        expiresIn: 3600,
+      },
+    };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 function normalizeApiError(error: unknown): Error {
   if (error instanceof Error) {
     return error;

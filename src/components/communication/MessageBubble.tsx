@@ -20,13 +20,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, on
       </div>
       <div className={`max-w-[75%] space-y-1 ${isOwn ? 'items-end' : 'items-start'}`}>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] font-bold text-zinc-700 dark:text-zinc-300">{message.senderName}</span>
-          <span className="flex items-center gap-1 text-[9px] text-zinc-400 dark:text-zinc-500">
+          <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{message.senderName}</span>
+          <span className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500">
             <Clock className="h-2.5 w-2.5" />
             {formatRelativeTime(message.timestamp)}
           </span>
         </div>
-        <div className={`rounded-2xl px-4 py-2.5 text-xs leading-relaxed ${
+        <div className={`rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
           isOwn
             ? 'bg-blue-600 text-white dark:bg-blue-700 rounded-br-md'
             : 'bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-200 rounded-bl-md'
@@ -47,7 +47,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, on
             </span>
           )}
           {onReply && (
-            <button onClick={onReply} className="text-[9px] text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5">
+            <button onClick={onReply} className="text-xs text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5">
               <Reply className="h-2.5 w-2.5" /> Reply
             </button>
           )}

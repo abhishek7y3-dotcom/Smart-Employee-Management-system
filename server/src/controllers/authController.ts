@@ -459,6 +459,102 @@ export async function resendResetOtp(req: Request, res: Response) {
   }
 }
 
+export async function requestLoginOtp(req: Request, res: Response) {
+  const { email } = req.body as { email: string };
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email is required.' });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No account found with that email.' });
+    }
+    if (!user.isVerified) {
+      return res.status(400).json({ success: false, message: 'Your email is not verified yet. Please verify your account first.' });
+    }
+
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    user.loginOtp = encrypt(otpPlain);
+    user.loginOtpExpires = otpExpires;
+    await user.save();
+
+    console.log(`\n🔑 [LOGIN OTP] OTP for ${user.email}: ${otpPlain} (expires in 10 min)\n`);
+
+    sendVerificationOtp(user.email, user.name, otpPlain).catch((err) => {
+      console.error('authController.ts: Failed to send login OTP email:', err);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'A login code has been sent to your email.',
+    });
+  } catch (error) {
+    console.error('authController.ts: requestLoginOtp error:', error);
+    return res.status(500).json({ success: false, message: 'An error occurred. Please try again.' });
+  }
+}
+
+export async function loginWithOtp(req: Request, res: Response) {
+  const { email, otp } = req.body as { email: string; otp: string };
+
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and OTP code are required.' });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+loginOtp +loginOtpExpires');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'No account found with that email.' });
+    }
+    if (!user.loginOtp) {
+      return res.status(400).json({ success: false, message: 'No login code found. Please request a new one.' });
+    }
+
+    let storedOtp: string;
+    try {
+      storedOtp = decrypt(user.loginOtp);
+    } catch {
+      return res.status(400).json({ success: false, message: 'Login code is invalid or corrupted. Please request a new one.' });
+    }
+
+    if (storedOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid login code.' });
+    }
+    if (user.loginOtpExpires && user.loginOtpExpires.getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'Login code has expired. Please request a new one.' });
+    }
+
+    // Clear OTP after successful verification
+    user.loginOtp = undefined;
+    user.loginOtpExpires = undefined;
+    await user.save();
+
+    const token = signToken({ id: user._id, email: user.email });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful.',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          profilePicture: user.profilePicture,
+        },
+        token,
+      },
+    });
+  } catch (error) {
+    console.error('authController.ts: loginWithOtp error:', error);
+    return res.status(500).json({ success: false, message: 'An error occurred. Please try again.' });
+  }
+}
+
 export async function profile(req: Request, res: Response) {
   const user = (req as any).user;
   if (!user) {

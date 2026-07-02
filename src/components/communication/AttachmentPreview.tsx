@@ -32,7 +32,7 @@ const colorMap: Record<string, string> = {
 export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachment, onRemove, compact }) => {
   if (compact) {
     return (
-      <div className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-[10px] font-medium border ${colorMap[attachment.type] || colorMap.other} border-current/10`}>
+      <div className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium border ${colorMap[attachment.type] || colorMap.other} border-current/10`}>
         {iconMap[attachment.type] || iconMap.other}
         <span className="truncate max-w-[100px]">{attachment.name}</span>
         {onRemove && <button onClick={onRemove} className="ml-1 hover:text-red-500 transition-colors"><X className="h-2.5 w-2.5" /></button>}
@@ -43,8 +43,8 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachment
     <div className="flex items-center gap-3 rounded-xl border border-zinc-200/60 bg-white p-3 transition-all duration-300 hover:shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/40">
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colorMap[attachment.type] || colorMap.other}`}>{iconMap[attachment.type] || iconMap.other}</div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xs font-bold text-zinc-900 dark:text-zinc-100">{attachment.name}</p>
-        <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{formatFileSize(attachment.size)}</p>
+        <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">{attachment.name}</p>
+        <p className="text-xs text-zinc-400 dark:text-zinc-500">{formatFileSize(attachment.size)}</p>
       </div>
       {onRemove && <button onClick={onRemove} className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><X className="h-3.5 w-3.5" /></button>}
     </div>

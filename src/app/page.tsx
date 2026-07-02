@@ -42,7 +42,7 @@ export default function DashboardPage() {
         <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-blue-500/5 blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
 
-        <section className="rounded-3xl border border-blue-500/20 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 p-6 text-white shadow-xl shadow-blue-500/5 transition-colors duration-300 dark:border-blue-500/10 dark:from-zinc-900 dark:via-indigo-950/40 dark:to-zinc-900 md:p-8 relative overflow-hidden group">
+        <section className="relative rounded-3xl border border-zinc-200/20 bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-700 p-6 text-white shadow-xl dark:border-zinc-800/40 dark:from-zinc-900/90 dark:via-zinc-950/80 dark:to-indigo-950/40 md:p-8 overflow-hidden backdrop-blur-sm group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none transform translate-x-10 -translate-y-10 group-hover:scale-110 transition-all duration-700"></div>
           <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-white/5 rounded-full blur-2xl pointer-events-none group-hover:scale-110 transition-all duration-700"></div>
 
@@ -72,7 +72,7 @@ export default function DashboardPage() {
           <TaskSummaryCard title="Cancelled Tasks" value={metrics.cancelledTasks} href="/tasks?status=cancelled" color="red" icon={<AlertTriangle className="h-5 w-5" />} />
         </section>
 
-        <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm relative z-10">
+        <section className="enterprise-card rounded-2xl p-6 relative z-10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
@@ -89,7 +89,7 @@ export default function DashboardPage() {
         <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <div className="space-y-8">
 
-            <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm">
+            <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
@@ -99,10 +99,10 @@ export default function DashboardPage() {
               </div>
               <div className="mt-5">
                 {recentTasks.length > 0 ? (
-                  <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/40 backdrop-blur-sm">
+                  <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-zinc-50/20 dark:border-zinc-850 dark:bg-zinc-900/5 backdrop-blur-sm shadow-sm">
                     <div className="divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
                       {recentTasks.map((task) => (
-                        <div key={task.id} className="grid gap-3 p-4.5 transition-all duration-300 hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 md:grid-cols-[1fr_auto] md:items-center">
+                        <div key={task.id} className="grid gap-3 p-4.5 transition-all duration-300 hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30 md:grid-cols-[1fr_auto] md:items-center">
                           <div>
                             <h4 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">{task.title}</h4>
                             <p className="mt-1 line-clamp-1 text-xs text-zinc-400 dark:text-zinc-500">{task.description || 'No description provided.'}</p>
@@ -124,7 +124,7 @@ export default function DashboardPage() {
 
           <div className="space-y-8">
             {/* Communication Quick Access */}
-            <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm">
+            <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
@@ -165,7 +165,7 @@ export default function DashboardPage() {
               )}
             </section>
 
-            <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm">
+            <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
@@ -176,7 +176,7 @@ export default function DashboardPage() {
               <div className="mt-5 max-h-[440px] space-y-3 overflow-y-auto pr-1">
                 {employees.length > 0 ? (
                   employees.map((employee) => (
-                    <div key={employee.id} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-100 bg-zinc-50/40 p-3 transition-all duration-300 hover:scale-[1.01] hover:shadow-sm dark:border-zinc-900 dark:bg-zinc-900/25">
+                    <div key={employee.id} className="flex items-center justify-between gap-3 rounded-xl border border-zinc-200/60 bg-zinc-50/20 p-3.5 transition-all duration-300 hover:scale-[1.01] hover:shadow-sm dark:border-zinc-800/60 dark:bg-zinc-900/10">
                       <div className="flex items-center gap-3">
                         <img src={employee.avatarUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'} alt={employee.name} className="h-9 w-9 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-800" />
                         <div>
@@ -195,7 +195,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <section className="rounded-2xl border border-zinc-200/60 bg-white p-6 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm">
+        <section className="enterprise-card rounded-2xl p-6">
           <div className="flex items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Recent Activity</h3>

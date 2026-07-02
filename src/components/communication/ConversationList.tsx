@@ -39,9 +39,9 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       {/* Header */}
       <div className="shrink-0 border-b border-zinc-200/60 px-4 py-3 dark:border-zinc-800/60">
         <div className="flex items-center justify-between gap-2">
-          <h2 className="text-sm font-bold text-zinc-950 dark:text-zinc-50 font-outfit">{title}</h2>
+          <h2 className="text-base font-bold text-zinc-950 dark:text-zinc-50 font-outfit">{title}</h2>
           <div className="flex items-center gap-1">
-            <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
+            <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-2 py-0.5 text-xs font-bold text-blue-600 dark:text-blue-400">
               {conversations.length}
             </span>
           </div>
@@ -56,7 +56,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               placeholder="Search messages..."
               value={filters.search}
               onChange={(e) => onFilterChange({ search: e.target.value })}
-              className="w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 py-2 pl-9 pr-9 text-xs text-zinc-900 placeholder-zinc-400 transition-colors focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-blue-800 dark:focus:ring-blue-950/50"
+              className="w-full rounded-xl border border-zinc-200/60 bg-zinc-50/50 py-2 pl-9 pr-9 text-sm text-zinc-900 placeholder-zinc-400 transition-colors focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-blue-800 dark:focus:ring-blue-950/50"
             />
             <button
               onClick={() => setShowFilters(!showFilters)}
@@ -73,8 +73,8 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         {showFilters && (
           <div className="mt-2.5 space-y-2 rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-3 dark:border-zinc-800/60 dark:bg-zinc-900/30">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Filters</span>
-              <button onClick={onResetFilters} className="text-[10px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Filters</span>
+              <button onClick={onResetFilters} className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                 Reset All
               </button>
             </div>
@@ -82,7 +82,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               <select
                 value={filters.priority}
                 onChange={(e) => onFilterChange({ priority: e.target.value as any })}
-                className="rounded-lg border border-zinc-200/60 bg-white px-2 py-1.5 text-[10px] font-medium text-zinc-700 dark:border-zinc-800/60 dark:bg-zinc-900 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="rounded-lg border border-zinc-200/60 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-800/60 dark:bg-zinc-900 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
               >
                 <option value="all">All Priority</option>
                 <option value="urgent">Urgent</option>
@@ -93,7 +93,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               <select
                 value={filters.dateRange}
                 onChange={(e) => onFilterChange({ dateRange: e.target.value as any })}
-                className="rounded-lg border border-zinc-200/60 bg-white px-2 py-1.5 text-[10px] font-medium text-zinc-700 dark:border-zinc-800/60 dark:bg-zinc-900 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
+                className="rounded-lg border border-zinc-200/60 bg-white px-2 py-1.5 text-xs font-medium text-zinc-700 dark:border-zinc-800/60 dark:bg-zinc-900 dark:text-zinc-300 focus:outline-none focus:ring-1 focus:ring-blue-400"
               >
                 <option value="all">All Time</option>
                 <option value="today">Today</option>
@@ -101,7 +101,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 <option value="month">This Month</option>
               </select>
             </div>
-            <label className="flex items-center gap-2 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 cursor-pointer">
+            <label className="flex items-center gap-2 text-xs font-medium text-zinc-600 dark:text-zinc-400 cursor-pointer">
               <input
                 type="checkbox"
                 checked={filters.unreadOnly}

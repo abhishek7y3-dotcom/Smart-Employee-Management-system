@@ -67,7 +67,7 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200/60 bg-white/75 px-4 shadow-sm backdrop-blur-md transition-colors duration-300 dark:border-zinc-800/60 dark:bg-zinc-950/75 md:px-6">
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200/80 bg-white px-4 shadow-sm transition-colors duration-300 dark:border-zinc-800/80 dark:bg-zinc-950 md:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-md shadow-blue-500/20 hover:scale-105 transition-all duration-300">
           <ClipboardCheck className="h-5 w-5" />
@@ -84,7 +84,7 @@ export const Header: React.FC = () => {
         <button
           type="button"
           onClick={handleToggleNotifications}
-          className="relative rounded-xl p-2 text-zinc-500 transition-colors duration-300 hover:bg-zinc-100 hover:text-zinc-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 dark:text-zinc-400 dark:hover:bg-zinc-900 dark:hover:text-zinc-100 cursor-pointer"
+          className="relative rounded-xl border border-zinc-200 bg-white p-2 text-zinc-700 shadow-sm transition-colors duration-300 hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:hover:text-blue-400 cursor-pointer"
           aria-label="Notifications"
         >
           <Bell className="h-5 w-5" />
@@ -94,8 +94,8 @@ export const Header: React.FC = () => {
         </button>
 
         {isNotificationsOpen && (
-          <div className="absolute right-0 top-14 z-50 w-80 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white/95 shadow-2xl backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/95 transition-all duration-300 animate-in fade-in slide-in-from-top-2">
-            <div className="border-b border-zinc-200/80 px-4 py-3 dark:border-zinc-800/80">
+          <div className="absolute right-0 top-14 z-50 w-80 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 dark:border-zinc-800/80 dark:bg-zinc-950">
+            <div className="border-b border-zinc-200/60 px-4 py-3 dark:border-zinc-800/60">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-sm font-bold text-zinc-950 dark:text-zinc-100 font-outfit">Recent activity</p>
                 <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-2.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">

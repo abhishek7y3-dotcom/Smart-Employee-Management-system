@@ -57,27 +57,27 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className={`truncate text-xs font-bold ${!conversation.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>
+            <span className={`truncate text-sm font-bold ${!conversation.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>
               {name}
             </span>
             {conversation.isPinned && (
               <Pin className="h-3 w-3 text-blue-500 shrink-0" />
             )}
           </div>
-          <span className="shrink-0 text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">
+          <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500 font-medium">
             {formatRelativeTime(conversation.lastMessageTime)}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 mt-0.5">
           <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${getPriorityDot(conversation.priority)}`} />
-          <p className={`truncate text-[11px] ${!conversation.isRead ? 'font-semibold text-zinc-800 dark:text-zinc-200' : 'text-zinc-500 dark:text-zinc-400'}`}>
+          <p className={`truncate text-xs ${!conversation.isRead ? 'font-semibold text-zinc-800 dark:text-zinc-200' : 'text-zinc-500 dark:text-zinc-400'}`}>
             {conversation.subject}
           </p>
         </div>
 
         <div className="flex items-center justify-between gap-2 mt-1">
-          <p className="truncate text-[10px] text-zinc-400 dark:text-zinc-500 leading-relaxed">
+          <p className="truncate text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed">
             <span className="font-medium text-zinc-500 dark:text-zinc-400">{conversation.lastMessageSender}:</span>{' '}
             {conversation.lastMessage}
           </p>
@@ -86,7 +86,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
               <Paperclip className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
             )}
             {conversation.unreadCount > 0 && (
-              <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[9px] font-bold text-white">
+              <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
                 {conversation.unreadCount}
               </span>
             )}
@@ -97,7 +97,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         {conversation.relatedTaskTitle && (
           <div className="mt-1.5 flex items-center gap-1">
             <ArrowUp className="h-2.5 w-2.5 text-indigo-500" />
-            <span className="text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 truncate">
+            <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 truncate">
               {conversation.relatedTaskTitle}
             </span>
           </div>

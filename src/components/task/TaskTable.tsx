@@ -53,10 +53,10 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-zinc-200/60 bg-white shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/30 backdrop-blur-sm transition-colors duration-300">
+    <div className="enterprise-card overflow-hidden rounded-2xl shadow-sm">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left text-sm text-zinc-500 dark:text-zinc-400">
-          <thead className="bg-zinc-50/70 text-[10px] font-extrabold uppercase tracking-[0.15em] text-zinc-400 border-b border-zinc-200/60 dark:bg-zinc-900/40 dark:text-zinc-500 dark:border-zinc-800/60">
+        <table className="w-full border-collapse text-left text-sm text-zinc-550 dark:text-zinc-405">
+          <thead className="bg-zinc-50/50 text-[11px] font-bold uppercase tracking-[0.1em] text-zinc-400 border-b border-zinc-200/60 dark:bg-zinc-900/20 dark:text-zinc-500 dark:border-zinc-800/60">
             <tr>
               <th className="px-6 py-4">Task</th>
               <th className="px-6 py-4">Assigned To</th>
@@ -71,7 +71,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
               <tr key={task.id} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-900/10 transition-colors duration-300">
                 <td className="px-6 py-4">
                   <div className="font-bold text-zinc-900 dark:text-zinc-100">{task.title}</div>
-                  <div className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">{task.description}</div>
+                  <div className="text-xs text-zinc-400 dark:text-zinc-505 mt-1">{task.description}</div>
                 </td>
                 <td className="px-6 py-4 text-zinc-700 dark:text-zinc-300">{getEmployeeDisplayName(employees, task.assignedTo)}</td>
                 <td className="px-6 py-4">
@@ -84,7 +84,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                     <select
                       value={task.status}
                       onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
-                      className="text-[11px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold cursor-pointer"
+                      className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-750 dark:text-zinc-250 rounded-lg px-2.5 py-1 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
                     >
                       <option value="todo">To Do</option>
                       <option value="in_progress">In Progress</option>

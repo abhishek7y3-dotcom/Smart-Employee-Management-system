@@ -4,6 +4,14 @@ import { useState, useEffect, FormEvent, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { resendResetOtp } from '../../api/auth';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, ClipboardCheck } from 'lucide-react';
+
+const inputBase =
+  'w-full rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600';
+const inputNormal =
+  'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10';
+const inputError =
+  'border-red-400 focus:border-red-400 focus:ring-red-400/10';
 
 function ResetPasswordForm() {
   const { resetPassword, loading, error } = useAuth();
@@ -14,6 +22,8 @@ function ResetPasswordForm() {
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [resendLoading, setResendLoading] = useState(false);
@@ -81,7 +91,7 @@ function ResetPasswordForm() {
 
     try {
       const message = await resetPassword({ email, otp, password });
-      setSuccessMessage(message || 'Password reset successful! Redirecting to login...');
+      setSuccessMessage(message || 'Password reset successful! Redirecting to login…');
       setTimeout(() => {
         router.push('/login');
       }, 3000);
@@ -91,87 +101,120 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-3xl border border-zinc-200/85 bg-white/95 p-8 shadow-2xl shadow-zinc-200/50 dark:shadow-zinc-950/50 backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/90 relative overflow-hidden transition-all duration-300 hover:scale-[1.01]">
-      {/* Decorative corner glows */}
-      <div className="absolute -right-16 -top-16 w-32 h-32 rounded-full bg-blue-500/10 blur-2xl pointer-events-none"></div>
-      <div className="absolute -left-16 -bottom-16 w-32 h-32 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none"></div>
-
-      <div className="text-center relative z-10">
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20 mb-4 hover:scale-105 transition-all duration-300">
-          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
+    <div className="w-full max-w-sm relative z-10">
+      {/* Logo */}
+      <div className="flex flex-col items-center mb-10">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm mb-5">
+          <ClipboardCheck className="h-5 w-5" />
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">Reset Password</h1>
-        <p className="mt-2.5 text-xs text-zinc-455 dark:text-zinc-500">Enter the verification code and set your new password.</p>
+        <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
+          Employee Task Manager
+        </h1>
+        <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">
+          Set a new password
+        </p>
       </div>
 
-      <form className="mt-8 space-y-5 relative z-10" onSubmit={handleSubmit}>
-        <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500" htmlFor="email">
-            Email Address
+      <form className="space-y-4" onSubmit={handleSubmit}>
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400" htmlFor="email">
+            Email
           </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            placeholder="name@company.com"
-            className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
-          />
+          <div className="relative">
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@company.com"
+              className={`${inputBase} pl-10 pr-4 py-2.5 ${inputNormal}`}
+            />
+          </div>
         </div>
 
-        <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 text-center" htmlFor="otp">
-            Verification Code
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400 text-center block" htmlFor="otp">
+            Enter the 6-digit code sent to{' '}
+            {email ? (
+              <span className="font-semibold text-zinc-700 dark:text-zinc-300">{email}</span>
+            ) : (
+              'your email'
+            )}
           </label>
           <input
             id="otp"
             type="text"
+            inputMode="numeric"
             maxLength={6}
             value={otp}
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
             placeholder="000000"
-            className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
+            className={`${inputBase} px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center ${inputNormal}`}
           />
         </div>
 
-        <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500" htmlFor="password">
-            New Password
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400" htmlFor="password">
+            New password
           </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="••••••••"
-            className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
-          />
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+            <input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="••••••••"
+              className={`${inputBase} pl-10 pr-10 py-2.5 ${inputNormal}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500" htmlFor="confirmPassword">
-            Confirm New Password
+        <div className="space-y-1.5">
+          <label className="text-xs font-medium text-zinc-500 dark:text-zinc-400" htmlFor="confirmPassword">
+            Confirm new password
           </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            value={confirmPassword}
-            onChange={(event) => setConfirmPassword(event.target.value)}
-            placeholder="••••••••"
-            className="mt-2 w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700/80 dark:bg-zinc-950 dark:text-zinc-50 dark:focus:border-blue-500"
-          />
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              placeholder="••••••••"
+              className={`${inputBase} pl-10 pr-10 py-2.5 ${inputNormal}`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
-        {(formError || error) && (
-          <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 px-4 py-3 text-xs text-red-700 dark:text-red-400">
-            {formError || error}
+        {formError && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
+            {formError}
+          </div>
+        )}
+        {error && !formError && (
+          <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-xs text-red-600 dark:text-red-400">
+            {error}
           </div>
         )}
 
         {successMessage && (
-          <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-250 dark:border-emerald-900/50 px-4 py-3 text-xs text-emerald-700 dark:text-emerald-400">
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-400">
             {successMessage}
           </div>
         )}
@@ -179,30 +222,32 @@ function ResetPasswordForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-xl bg-blue-600 px-4 py-3.5 text-xs font-bold text-white shadow-md shadow-blue-500/15 transition duration-300 hover:bg-blue-700 hover:shadow-blue-500/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-blue-300 dark:disabled:bg-blue-900/40 dark:disabled:text-blue-200/50 cursor-pointer"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-semibold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
-          {loading ? 'Resetting Password...' : 'Reset Password'}
+          {loading ? 'Resetting password…' : 'Reset password'} <ArrowRight className="h-3.5 w-3.5" />
         </button>
+
+        <div className="flex items-center justify-center text-xs">
+          <button
+            type="button"
+            onClick={handleResendOtp}
+            disabled={resendCooldown > 0 || resendLoading}
+            className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors disabled:opacity-40 cursor-pointer"
+          >
+            {resendLoading ? 'Sending…' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+          </button>
+        </div>
 
         {resendMessage && (
-          <div className={`rounded-xl px-4 py-3 text-xs ${resendMessage.includes('Failed') || resendMessage.includes('error') || resendMessage.includes('enter your email') ? 'bg-red-50 dark:bg-red-950/20 border border-red-200/50 dark:border-red-900/50 text-red-700 dark:text-red-400' : 'bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400'}`}>
-            {resendMessage}
-          </div>
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-400">{resendMessage}</p>
         )}
-
-        <button
-          type="button"
-          onClick={handleResendOtp}
-          disabled={resendCooldown > 0 || resendLoading}
-          className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-xs font-bold text-zinc-700 transition duration-200 hover:bg-zinc-50 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 cursor-pointer"
-        >
-          {resendLoading ? 'Sending...' : resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend reset code'}
-        </button>
       </form>
 
-      <div className="mt-8 border-t border-zinc-200/80 pt-5 text-center text-xs dark:border-zinc-800/80 relative z-10">
-        <a href="/login" className="font-bold text-blue-600 transition hover:text-blue-750 dark:text-blue-400 dark:hover:text-blue-300">
-          Back to Login
+      {/* Footer */}
+      <div className="mt-8 text-center text-xs text-zinc-400 dark:text-zinc-500">
+        Remember your password?{' '}
+        <a href="/login" className="font-medium text-zinc-700 dark:text-zinc-200 hover:underline transition-colors">
+          Sign in
         </a>
       </div>
     </div>
@@ -211,16 +256,19 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50/50 px-4 py-12 transition-colors duration-300 dark:bg-zinc-950 relative overflow-hidden">
-      {/* Ambient background glows */}
-      <div className="absolute -top-40 -left-40 w-120 h-120 rounded-full bg-blue-500/10 blur-3xl pointer-events-none dark:bg-blue-600/5"></div>
-      <div className="absolute -bottom-40 -right-40 w-120 h-120 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none dark:bg-indigo-600/5"></div>
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 px-4 py-16 font-sans transition-colors duration-300">
+      {/* Subtle ambient glow */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-3xl dark:bg-blue-600/5" />
+      </div>
 
-      <Suspense fallback={
-        <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-xl dark:border-zinc-800 dark:bg-zinc-900/50 flex items-center justify-center backdrop-blur-md">
-          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-        </div>
-      }>
+      <Suspense
+        fallback={
+          <div className="w-full max-w-sm relative z-10 flex items-center justify-center py-20">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-900 dark:border-zinc-800 dark:border-t-zinc-100" />
+          </div>
+        }
+      >
         <ResetPasswordForm />
       </Suspense>
     </div>
