@@ -228,7 +228,7 @@ export default function EmployeesPage() {
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                     <input
                       id="email"
-                      type="email"
+                      type="text"
                       maxLength={254}
                       value={formData.email}
                       onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors({ ...errors, email: '' }); }}
