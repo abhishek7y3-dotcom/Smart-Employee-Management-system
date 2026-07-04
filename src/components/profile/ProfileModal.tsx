@@ -69,9 +69,55 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   if (!isOpen || !user) return null;
 
   const handleFirstNameChange = (val: string) => {
-    const noSpaces = val.replace(/\s/g, '');
-    setFirstName(noSpaces);
+    setFirstName(val);
+    if (!val) {
+      setFirstNameError(null);
+      return;
+    }
+    if (val.startsWith(' ')) {
+      setFirstNameError('First name cannot start with a space.');
+      return;
+    }
+    if (/\d/.test(val)) {
+      setFirstNameError('First name cannot contain numbers.');
+      return;
+    }
+    const invalidCharRegex = /[^a-zA-Z.'-]/;
+    if (invalidCharRegex.test(val)) {
+      setFirstNameError("First name can only contain letters, dots (.), quotes ('), and hyphens (-).");
+      return;
+    }
+    if (!/^[a-zA-Z]/.test(val)) {
+      setFirstNameError('First name must start with a letter.');
+      return;
+    }
     setFirstNameError(null);
+  };
+
+  const handleLastNameChange = (val: string) => {
+    setLastName(val);
+    if (!val) {
+      setLastNameError(null);
+      return;
+    }
+    if (val.startsWith(' ')) {
+      setLastNameError('Last name cannot start with a space.');
+      return;
+    }
+    if (/\d/.test(val)) {
+      setLastNameError('Last name cannot contain numbers.');
+      return;
+    }
+    const invalidCharRegex = /[^a-zA-Z.'-]/;
+    if (invalidCharRegex.test(val)) {
+      setLastNameError("Last name can only contain letters, dots (.), quotes ('), and hyphens (-).");
+      return;
+    }
+    if (!/^[a-zA-Z]/.test(val)) {
+      setLastNameError('Last name must start with a letter.');
+      return;
+    }
+    setLastNameError(null);
   };
 
   const handleMobileChange = (val: string) => {
@@ -244,15 +290,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   id="profile-lastname"
                   type="text"
                   value={lastName}
-                  onChange={(e) => {
-                    let val = e.target.value;
-                    val = val.replace(/\d/g, '');
-                    if (val.startsWith(' ')) {
-                      val = val.trimStart();
-                    }
-                    setLastName(val);
-                    setLastNameError(null);
-                  }}
+                  onChange={(e) => handleLastNameChange(e.target.value)}
                   className={`w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${lastNameError ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}
                   placeholder="Last name"
                   required
