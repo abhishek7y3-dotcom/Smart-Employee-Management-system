@@ -52,6 +52,7 @@ interface CommunicationContextType {
   filters: CommunicationFilters;
   selectedConversation: Conversation | null;
   isComposeOpen: boolean;
+  composePrefill: (Partial<ComposeFormData> & { id?: string }) | null;
   isMobileListOpen: boolean;
   isLoading: boolean;
 
@@ -59,11 +60,11 @@ interface CommunicationContextType {
   setFilters: (filters: Partial<CommunicationFilters>) => void;
   resetFilters: () => void;
   selectConversation: (conversation: Conversation | null) => void;
-  openCompose: (prefill?: Partial<ComposeFormData>) => void;
+  openCompose: (prefill?: Partial<ComposeFormData> & { id?: string }) => void;
   closeCompose: () => void;
   sendMessage: (data: ComposeFormData) => void;
   replyToConversation: (conversationId: string, content: string, attachments?: File[]) => void;
-  saveDraft: (data: ComposeFormData) => void;
+  saveDraft: (data: ComposeFormData, draftId?: string) => void;
   deleteDraft: (draftId: string) => void;
   markAsRead: (conversationId: string) => void;
   markNotificationRead: (notificationId: string) => void;
@@ -110,11 +111,12 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [messages, setMessages] = useState<Record<string, Message[]>>(mockMessages);
   const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
   const [drafts, setDrafts] = useState<Draft[]>(mockDrafts);
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [analytics, setAnalytics] = useState<CommunicationAnalytics>(emptyAnalytics);
   const [filters, setFiltersState] = useState<CommunicationFilters>(defaultFilters);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [composePrefill, setComposePrefill] = useState<(Partial<ComposeFormData> & { id?: string }) | null>(null);
   const [isMobileListOpen, setIsMobileListOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -125,6 +127,9 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
       // Try fetching from API first
       const token = typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
 
+      let conversationsList: Conversation[] = [];
+      let announcementsList: Announcement[] = [];
+
       if (token) {
         const [convData, annData, analyticsData] = await Promise.allSettled([
           commApi.fetchConversations(),
@@ -132,17 +137,23 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
           commApi.fetchAnalytics(),
         ]);
 
-        if (convData.status === 'fulfilled') setConversations(convData.value);
-        else {
+        if (convData.status === 'fulfilled') {
+          conversationsList = convData.value;
+          setConversations(convData.value);
+        } else {
           // Fallback to localStorage, then mock
           const stored = loadFromStorage(STORAGE_KEYS.conversations);
-          if (stored) setConversations(stored);
+          conversationsList = stored || mockConversations;
+          setConversations(conversationsList);
         }
 
-        if (annData.status === 'fulfilled') setAnnouncements(annData.value);
-        else {
+        if (annData.status === 'fulfilled') {
+          announcementsList = annData.value;
+          setAnnouncements(annData.value);
+        } else {
           const stored = loadFromStorage(STORAGE_KEYS.announcements);
-          if (stored) setAnnouncements(stored);
+          announcementsList = stored || mockAnnouncements;
+          setAnnouncements(announcementsList);
         }
 
         if (analyticsData.status === 'fulfilled') {
@@ -153,26 +164,62 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         // No token — use localStorage or mock
         const storedConv = loadFromStorage(STORAGE_KEYS.conversations);
-        if (storedConv) setConversations(storedConv);
+        conversationsList = storedConv || mockConversations;
+        setConversations(conversationsList);
 
         const storedAnn = loadFromStorage(STORAGE_KEYS.announcements);
-        if (storedAnn) setAnnouncements(storedAnn);
+        announcementsList = storedAnn || mockAnnouncements;
+        setAnnouncements(announcementsList);
 
         const storedMsg = loadFromStorage(STORAGE_KEYS.messages);
         if (storedMsg) setMessages(storedMsg);
 
         const storedDrafts = loadFromStorage(STORAGE_KEYS.drafts);
         if (storedDrafts) setDrafts(storedDrafts);
-
-        const storedNotif = loadFromStorage(STORAGE_KEYS.notifications);
-        if (storedNotif) setNotifications(storedNotif);
       }
+
+      // Generate real notifications dynamically
+      const generatedNotifs: Notification[] = [];
+
+      conversationsList.forEach((c) => {
+        if (c.lastMessageSender && c.lastMessageSender !== (user?.name || 'You') && c.lastMessageSender !== 'You') {
+          generatedNotifs.push({
+            id: `notif-conv-${c.id}`,
+            type: 'new_message',
+            title: c.type === 'broadcast' ? 'Broadcast Message' : 'New Message',
+            message: `${c.lastMessageSender} sent: "${c.subject}"`,
+            senderId: c.participants.find((p) => p !== userId) || '',
+            senderName: c.lastMessageSender,
+            conversationId: c.id,
+            isRead: c.isRead,
+            createdAt: c.lastMessageTime || c.updatedAt,
+          });
+        }
+      });
+
+      announcementsList.forEach((ann) => {
+        const isRead = ann.readBy.includes(userId);
+        generatedNotifs.push({
+          id: `notif-ann-${ann.id}`,
+          type: 'announcement',
+          title: 'New Announcement',
+          message: `${ann.authorName || 'Admin'} published announcement: "${ann.title}"`,
+          senderId: ann.authorId,
+          senderName: ann.authorName,
+          senderAvatar: ann.authorAvatar,
+          isRead: isRead,
+          createdAt: ann.publishDate || ann.createdAt,
+        });
+      });
+
+      generatedNotifs.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setNotifications(generatedNotifs);
     } catch {
-      // Silent fallback — mock data is already set as initial state
+      // Silent fallback
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [userId, user]);
 
   useEffect(() => {
     loadData();
@@ -249,12 +296,14 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const openCompose = useCallback((prefill?: Partial<ComposeFormData>) => {
+  const openCompose = useCallback((prefill?: Partial<ComposeFormData> & { id?: string }) => {
+    setComposePrefill(prefill || null);
     setIsComposeOpen(true);
   }, []);
 
   const closeCompose = useCallback(() => {
     setIsComposeOpen(false);
+    setComposePrefill(null);
   }, []);
 
   const sendMessage = useCallback(async (data: ComposeFormData) => {
@@ -408,9 +457,10 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [userId, user]);
 
-  const saveDraft = useCallback((data: ComposeFormData) => {
+  const saveDraft = useCallback((data: ComposeFormData, draftId?: string) => {
+    const finalId = draftId || `draft-${Date.now()}`;
     const newDraft: Draft = {
-      id: `draft-${Date.now()}`,
+      id: finalId,
       to: data.to,
       toNames: data.to,
       subject: data.subject,
@@ -423,9 +473,16 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
       createdAt: new Date().toISOString(),
     };
 
-    setDrafts((prev) => [newDraft, ...prev]);
+    setDrafts((prev) => {
+      const exists = prev.some((d) => d.id === finalId);
+      if (exists) {
+        return prev.map((d) => (d.id === finalId ? { ...newDraft, createdAt: d.createdAt } : d));
+      }
+      return [newDraft, ...prev];
+    });
     toast.success('Draft saved');
     setIsComposeOpen(false);
+    setComposePrefill(null);
   }, []);
 
   const deleteDraft = useCallback((draftId: string) => {
@@ -451,17 +508,29 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     setNotifications((prev) =>
       prev.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n))
     );
-  }, []);
+    const notif = notifications.find((n) => n.id === notificationId);
+    if (notif && notif.conversationId) {
+      markAsRead(notif.conversationId);
+    }
+  }, [notifications, markAsRead]);
 
   const markAllNotificationsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  }, []);
+    conversations.forEach((c) => {
+      if (!c.isRead) {
+        markAsRead(c.id);
+      }
+    });
+  }, [conversations, markAsRead]);
 
   const archiveConversation = useCallback(async (conversationId: string) => {
     setConversations((prev) =>
       prev.map((c) =>
         c.id === conversationId ? { ...c, isArchived: true, status: 'archived' as const } : c
       )
+    );
+    setSelectedConversation((prev) =>
+      prev && prev.id === conversationId ? { ...prev, isArchived: true, status: 'archived' as const } : prev
     );
     toast.success('Conversation archived');
 
@@ -478,6 +547,9 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
         c.id === conversationId ? { ...c, isArchived: false, status: 'read' as const } : c
       )
     );
+    setSelectedConversation((prev) =>
+      prev && prev.id === conversationId ? { ...prev, isArchived: false, status: 'read' as const } : prev
+    );
     toast.success('Conversation unarchived');
 
     try {
@@ -491,6 +563,9 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     setConversations((prev) =>
       prev.map((c) => (c.id === conversationId ? { ...c, isPinned: true } : c))
     );
+    setSelectedConversation((prev) =>
+      prev && prev.id === conversationId ? { ...prev, isPinned: true } : prev
+    );
     toast.success('Conversation pinned');
 
     try {
@@ -503,6 +578,9 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
   const unpinConversation = useCallback(async (conversationId: string) => {
     setConversations((prev) =>
       prev.map((c) => (c.id === conversationId ? { ...c, isPinned: false } : c))
+    );
+    setSelectedConversation((prev) =>
+      prev && prev.id === conversationId ? { ...prev, isPinned: false } : prev
     );
     toast.success('Conversation unpinned');
 
@@ -799,6 +877,7 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
         filters,
         selectedConversation,
         isComposeOpen,
+        composePrefill,
         isMobileListOpen,
         isLoading,
         setFilters,

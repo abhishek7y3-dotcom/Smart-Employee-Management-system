@@ -35,6 +35,12 @@ const defaultTaskForm: Omit<TaskInput, 'status'> & { status?: TaskInput['status'
   dueDate: getTodayString(),
 };
 
+const priorityWeights: Record<TaskPriority, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+
 export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const { tasks, employees, addTask, updateTask, updateTaskStatus, deleteTask } = useTasks();
   const { user } = useAuth();
@@ -55,18 +61,24 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
 
   const filteredTasks = useMemo(() => {
     const urlFiltered = getFilteredTasksByUrlStatus(tasks, statusFilter);
-    return urlFiltered.filter((task) => {
-      const query = searchTerm.trim().toLowerCase();
-      const employee = employees.find((item) => item.id === task.assignedTo);
-      const matchesSearch =
-        !query ||
-        task.title.toLowerCase().includes(query) ||
-        task.description.toLowerCase().includes(query) ||
-        employee?.name.toLowerCase().includes(query);
-      const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-      const matchesDate = !dateFilter || task.dueDate === dateFilter;
-      return matchesSearch && matchesPriority && matchesDate;
-    });
+    return urlFiltered
+      .filter((task) => {
+        const query = searchTerm.trim().toLowerCase();
+        const employee = employees.find((item) => item.id === task.assignedTo);
+        const matchesSearch =
+          !query ||
+          task.title.toLowerCase().includes(query) ||
+          task.description.toLowerCase().includes(query) ||
+          employee?.name.toLowerCase().includes(query);
+        const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+        const matchesDate = !dateFilter || task.dueDate === dateFilter;
+        return matchesSearch && matchesPriority && matchesDate;
+      })
+      .sort((a, b) => {
+        const weightA = priorityWeights[a.priority] || 0;
+        const weightB = priorityWeights[b.priority] || 0;
+        return weightB - weightA;
+      });
   }, [employees, priorityFilter, searchTerm, statusFilter, tasks, dateFilter]);
 
   const resetCreateForm = () => {
@@ -106,7 +118,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Tasks</h2>
-          <p className="text-xs text-zinc-450 dark:text-zinc-500">Review, create, and update task tracking logs assigned to employees.</p>
+          <p className="text-xs text-zinc-400 dark:text-zinc-500">Review, create, and update task tracking logs assigned to employees.</p>
         </div>
         {isAdmin && (
           <button
@@ -130,11 +142,11 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             </label>
             <label className="md:col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Description</span>
-              <textarea maxLength={500} value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-955 dark:text-zinc-50" />
+              <textarea maxLength={500} value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
             </label>
             <label>
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</span>
-              <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-955 dark:text-zinc-50 font-semibold cursor-pointer">
+              <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
@@ -142,7 +154,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             </label>
             <label>
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Assignee</span>
-              <select required value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-955 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-955 dark:text-zinc-50 font-semibold cursor-pointer">
+              <select required value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="">Select Employee</option>
                 {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.designation || 'Employee'})</option>)}
               </select>

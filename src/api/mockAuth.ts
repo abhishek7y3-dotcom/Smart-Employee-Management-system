@@ -67,10 +67,16 @@ export async function registerUser(payload: RegisterRequest): Promise<RegisterRe
 
   const newUser: StoredUser = {
     id: `user-${Date.now()}`,
-    name: payload.name,
+    name: payload.name || `${payload.firstName || ''} ${payload.lastName || ''}`.trim() || 'User',
+    firstName: payload.firstName,
+    lastName: payload.lastName,
+    gender: payload.gender,
+    mobileNumber: payload.mobileNumber,
+    countryCode: payload.countryCode,
     email: payload.email.toLowerCase(),
     role: 'member',
     password: payload.password,
+    profilePicture: payload.profilePicture || '',
   };
 
   saveStoredUsers([...users, newUser]);
@@ -80,28 +86,47 @@ export async function registerUser(payload: RegisterRequest): Promise<RegisterRe
     user: {
       id: newUser.id,
       name: newUser.name,
+      firstName: newUser.firstName,
+      lastName: newUser.lastName,
+      gender: newUser.gender,
+      mobileNumber: newUser.mobileNumber,
+      countryCode: newUser.countryCode,
       email: newUser.email,
       role: newUser.role,
+      profilePicture: newUser.profilePicture,
     },
   };
 }
 
 export async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
   const users = getStoredUsers();
-  const existingUser = users.find(
-    (user) => user.email.toLowerCase() === payload.email.toLowerCase()
-  );
+  let existingUser;
+  if (payload.email) {
+    existingUser = users.find(
+      (user) => user.email.toLowerCase() === payload.email?.toLowerCase()
+    );
+  } else if (payload.mobileNumber) {
+    existingUser = users.find(
+      (user) => user.mobileNumber === payload.mobileNumber && user.countryCode === payload.countryCode
+    );
+  }
 
   if (!existingUser || existingUser.password !== payload.password) {
-    throw createError('Invalid email or password.', 401);
+    throw createError('Invalid credentials or password.', 401);
   }
 
   return {
     user: {
       id: existingUser.id,
       name: existingUser.name,
+      firstName: existingUser.firstName,
+      lastName: existingUser.lastName,
+      gender: existingUser.gender,
+      mobileNumber: existingUser.mobileNumber,
+      countryCode: existingUser.countryCode,
       email: existingUser.email,
       role: existingUser.role,
+      profilePicture: existingUser.profilePicture,
     },
     token: createToken(),
   };

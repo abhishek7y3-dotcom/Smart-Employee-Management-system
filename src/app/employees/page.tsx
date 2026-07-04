@@ -147,7 +147,7 @@ export default function EmployeesPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search team members..."
-              className="w-full rounded-xl border border-zinc-300 bg-white py-2.5 pl-11 pr-4 text-xs text-zinc-955 outline-none transition duration-205 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className="w-full rounded-xl border border-zinc-300 bg-white py-2.5 pl-11 pr-4 text-xs text-zinc-950 outline-none transition duration-205 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
           </div>
           <div className="text-xs font-bold text-zinc-400 dark:text-zinc-500">
@@ -265,7 +265,7 @@ export default function EmployeesPage() {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-20 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer animate-in fade-in"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                     </button>
                     <button
                       type="button"
@@ -289,7 +289,7 @@ export default function EmployeesPage() {
                         id="designation"
                         value={formData.designation}
                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-450 focus:ring-zinc-400/10 appearance-none cursor-pointer"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-400 focus:ring-zinc-400/10 appearance-none cursor-pointer"
                       >
                         <option value="Developer">Developer</option>
                         <option value="Designer">Designer</option>
@@ -312,7 +312,7 @@ export default function EmployeesPage() {
                         id="role"
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-450 focus:ring-zinc-400/10 appearance-none cursor-pointer"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-400 focus:ring-zinc-400/10 appearance-none cursor-pointer"
                       >
                         <option value="user">Employee</option>
                         <option value="admin">Admin</option>
@@ -323,7 +323,7 @@ export default function EmployeesPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="avatarUrl">
-                    Profile Picture <span className="text-zinc-400 dark:text-zinc-650">(optional)</span>
+                    Profile Picture <span className="text-zinc-400 dark:text-zinc-500">(optional)</span>
                   </label>
                   <div className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 bg-white dark:bg-zinc-900 transition duration-150 ${errors.image ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}>
                     {formData.avatarUrl ? (

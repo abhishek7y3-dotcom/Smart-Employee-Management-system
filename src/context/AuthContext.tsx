@@ -14,6 +14,9 @@ import {
   loginUser,
   registerUser,
   resetPassword as resetPasswordApi,
+  updateUserProfile,
+  removeUser,
+  verifyResetOtp as verifyResetOtpApi,
 } from '../api/auth';
 import {
   AuthUser,
@@ -41,6 +44,9 @@ interface AuthContextType extends AuthState {
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<string>;
   resetPassword: (payload: ResetPasswordRequest) => Promise<string>;
   persistAuth: (authUser: AuthUser, authToken: string) => void;
+  updateUser: (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string }) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  verifyResetOtp: (otp: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -160,6 +166,55 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push('/login');
   }, [clearAuth, router]);
 
+  const updateUser = useCallback(
+    async (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string }) => {
+      if (!user) return;
+      setLoading(true);
+      setError(null);
+      try {
+        const updatedUser = await updateUserProfile(user.id, updates);
+        setUser(updatedUser);
+        window.localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(updatedUser));
+      } catch (apiError) {
+        setError(getFriendlyErrorMessage(apiError));
+        throw apiError;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user]
+  );
+
+  const deleteAccount = useCallback(async () => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await removeUser(user.id);
+      clearAuth();
+      router.push('/login');
+    } catch (apiError) {
+      setError(getFriendlyErrorMessage(apiError));
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user, clearAuth, router]);
+
+  const verifyResetOtp = useCallback(async (otp: string) => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await verifyResetOtpApi(user.email, otp);
+    } catch (apiError) {
+      setError(getFriendlyErrorMessage(apiError));
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   const isAuthenticated = Boolean(user && token);
 
   return (
@@ -177,6 +232,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         forgotPassword,
         resetPassword,
         persistAuth,
+        updateUser,
+        deleteAccount,
+        verifyResetOtp,
       }}
     >
       {children}</AuthContext.Provider>

@@ -31,7 +31,7 @@ interface TabConfig {
 export const CommunicationHub: React.FC = () => {
   const {
     conversations, messages, announcements, drafts, notifications, analytics,
-    filters, selectedConversation, isComposeOpen, isMobileListOpen,
+    filters, selectedConversation, isComposeOpen, composePrefill, isMobileListOpen,
     setFilters, resetFilters, selectConversation, openCompose, closeCompose,
     sendMessage, replyToConversation, saveDraft, deleteDraft,
     archiveConversation, unarchiveConversation, pinConversation, unpinConversation,
@@ -273,6 +273,41 @@ export const CommunicationHub: React.FC = () => {
                   <DraftCard
                     key={draft.id}
                     draft={draft}
+                    onEdit={() => openCompose({
+                      id: draft.id,
+                      to: draft.to,
+                      subject: draft.subject,
+                      project: draft.project || '',
+                      relatedTaskId: draft.relatedTaskId || '',
+                      priority: draft.priority,
+                      content: draft.content,
+                      attachments: draft.attachments,
+                    })}
+                    onSend={() => {
+                      if (draft.to.length > 0 && draft.subject.trim() && draft.content.trim()) {
+                        sendMessage({
+                          to: draft.to,
+                          subject: draft.subject,
+                          project: draft.project || '',
+                          relatedTaskId: draft.relatedTaskId || '',
+                          priority: draft.priority,
+                          content: draft.content,
+                          attachments: draft.attachments,
+                        });
+                        deleteDraft(draft.id);
+                      } else {
+                        openCompose({
+                          id: draft.id,
+                          to: draft.to,
+                          subject: draft.subject,
+                          project: draft.project || '',
+                          relatedTaskId: draft.relatedTaskId || '',
+                          priority: draft.priority,
+                          content: draft.content,
+                          attachments: draft.attachments,
+                        });
+                      }
+                    }}
                     onDelete={() => deleteDraft(draft.id)}
                   />
                 ))
@@ -490,8 +525,14 @@ export const CommunicationHub: React.FC = () => {
       <ComposeModal
         isOpen={isComposeOpen}
         onClose={closeCompose}
-        onSend={sendMessage}
+        onSend={(data, draftId) => {
+          sendMessage(data);
+          if (draftId) {
+            deleteDraft(draftId);
+          }
+        }}
         onSaveDraft={saveDraft}
+        prefill={composePrefill}
       />
 
       {/* Floating Compose Button (mobile) */}

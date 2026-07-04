@@ -9,9 +9,10 @@ import { fetchEmployees, EmployeeOption } from '../../api/communication';
 interface ComposeModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSend: (data: ComposeFormData) => void;
-  onSaveDraft: (data: ComposeFormData) => void;
+  onSend: (data: ComposeFormData, draftId?: string) => void;
+  onSaveDraft: (data: ComposeFormData, draftId?: string) => void;
   isBroadcast?: boolean;
+  prefill?: (Partial<ComposeFormData> & { id?: string }) | null;
 }
 
 const priorityOptions: { value: MessagePriority; label: string; color: string }[] = [
@@ -21,7 +22,7 @@ const priorityOptions: { value: MessagePriority; label: string; color: string }[
   { value: 'urgent', label: 'Urgent', color: 'text-red-600 bg-red-50 dark:bg-red-950/30' },
 ];
 
-export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onSend, onSaveDraft, isBroadcast }) => {
+export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onSend, onSaveDraft, isBroadcast, prefill }) => {
   const [form, setForm] = useState<ComposeFormData>({
     to: [],
     subject: '',
@@ -32,6 +33,34 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
     attachments: [],
   });
   const [toInput, setToInput] = useState('');
+
+  // Load prefill values
+  useEffect(() => {
+    if (isOpen) {
+      if (prefill) {
+        setForm({
+          to: prefill.to || [],
+          subject: prefill.subject || '',
+          project: prefill.project || '',
+          relatedTaskId: prefill.relatedTaskId || '',
+          priority: prefill.priority || 'medium',
+          content: prefill.content || '',
+          attachments: prefill.attachments || [],
+        });
+      } else {
+        setForm({
+          to: [],
+          subject: '',
+          project: '',
+          relatedTaskId: '',
+          priority: 'medium',
+          content: '',
+          attachments: [],
+        });
+      }
+      setErrors({});
+    }
+  }, [isOpen, prefill]);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [employees, setEmployees] = useState<EmployeeOption[]>([]);
   const [isLoadingEmployees, setIsLoadingEmployees] = useState(false);
@@ -83,12 +112,12 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
 
   const handleSend = () => {
     if (!validate()) return;
-    onSend(form);
+    onSend(form, prefill?.id);
     onClose();
   };
 
   const handleSaveDraft = () => {
-    onSaveDraft(form);
+    onSaveDraft(form, prefill?.id);
     onClose();
   };
 

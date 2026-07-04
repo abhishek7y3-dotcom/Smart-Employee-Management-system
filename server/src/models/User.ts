@@ -3,6 +3,11 @@ import { Schema, model, Document } from 'mongoose';
 
 export interface IUser extends Document {
   name: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  mobileNumber?: string;
+  countryCode?: string;
   email: string;
   password: string;
   role: 'user' | 'admin';
@@ -28,6 +33,31 @@ const userSchema = new Schema<IUser>(
       trim: true,
       minlength: 2,
       maxlength: 100,
+    },
+    firstName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    lastName: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    gender: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    mobileNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    countryCode: {
+      type: String,
+      trim: true,
+      default: '',
     },
     email: {
       type: String,
@@ -91,6 +121,10 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.pre<IUser>('save', async function save(next) {
+  if (this.firstName || this.lastName) {
+    this.name = `${this.firstName || ''} ${this.lastName || ''}`.trim() || 'User';
+  }
+
   if (!this.isModified('password')) {
     return next();
   }

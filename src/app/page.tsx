@@ -92,7 +92,7 @@ export default function DashboardPage() {
             <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
+                  <ClipboardList className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Recent Tasks</h3>
                 </div>
                 <Link href="/tasks" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">View All</Link>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
             <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
+                  <MessageSquare className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Communication</h3>
                 </div>
                 <Link href="/communication" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Open Hub</Link>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
             <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-zinc-450 dark:text-zinc-500" />
+                  <Users className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Team Members</h3>
                 </div>
                 <Link href="/employees" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">View All</Link>

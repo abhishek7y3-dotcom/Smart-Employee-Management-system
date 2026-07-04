@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ClipboardCheck } from 'lucide-react';
+import { Bell, ClipboardCheck, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { useTasks } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
+import { ProfileModal } from './profile/ProfileModal';
 import { getRecentActivities } from '../utils/dashboardUtils';
 
 const activityMessages: Record<string, string> = {
@@ -30,6 +31,10 @@ export const Header: React.FC = () => {
   const { activities } = useTasks();
   const { user, logout } = useAuth();
 
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const recentActivities = useMemo(() => getRecentActivities(activities, 5), [activities]);
 
   const [lastSeenId, setLastSeenId] = useState<string | null>(null);
@@ -43,6 +48,9 @@ export const Header: React.FC = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
+      }
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileDropdownOpen(false);
       }
     };
 
@@ -126,23 +134,58 @@ export const Header: React.FC = () => {
         </div>
 
         <div className="hidden h-6 w-px bg-zinc-200 dark:bg-zinc-800 sm:block" />
-        <div className="hidden items-center gap-2 sm:flex">
-          <img
-            src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
-            alt={user?.name || 'Diana Prince'}
-            className="h-9 w-9 rounded-full object-cover ring-2 ring-zinc-200/50 dark:ring-zinc-800"
-          />
-          <div className="hidden text-left md:block">
-            <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200">{user?.name || 'Diana Prince'}</p>
-            <button
-              onClick={logout}
-              className="block text-[10px] font-bold text-red-500 hover:text-red-650 transition-colors duration-300 bg-transparent border-none p-0 text-left outline-none cursor-pointer"
-            >
-              Sign Out
-            </button>
-          </div>
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+            className="flex items-center gap-2.5 rounded-xl p-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors cursor-pointer text-left outline-none"
+          >
+            <img
+              src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
+              alt={user?.name || 'Diana Prince'}
+              className="h-9 w-9 rounded-full object-cover ring-2 ring-zinc-200/50 dark:ring-zinc-800 shadow-sm"
+            />
+            <div className="hidden text-left md:block">
+              <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{user?.name || 'Diana Prince'}</p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">{user?.designation || 'Project Manager'}</p>
+            </div>
+            <ChevronDown className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
+          </button>
+
+          {isProfileDropdownOpen && (
+            <div className="absolute right-0 top-12 mt-1.5 z-50 w-48 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 dark:border-zinc-800/80 dark:bg-zinc-950">
+              <div className="p-1.5 space-y-0.5">
+                <button
+                  onClick={() => {
+                    setIsProfileModalOpen(true);
+                    setIsProfileDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors cursor-pointer text-left outline-none"
+                >
+                  <UserIcon className="h-4 w-4 text-zinc-400" />
+                  View Profile
+                </button>
+                <div className="h-px bg-zinc-100 dark:bg-zinc-900 mx-1.5" />
+                <button
+                  onClick={() => {
+                    logout();
+                    setIsProfileDropdownOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/20 transition-colors cursor-pointer text-left outline-none"
+                >
+                  <LogOut className="h-4 w-4 text-red-500" />
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </header>
   );
 };

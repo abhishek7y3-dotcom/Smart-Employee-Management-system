@@ -4,37 +4,62 @@ import { useState, FormEvent, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { verifyOtp, resendVerificationOtp } from '../../api/auth';
-import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone } from 'lucide-react';
 
 const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
 
 const inputBase =
-  'w-full rounded-lg border text-base text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600';
+  'w-full rounded-xl border text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600';
 const inputNormal =
-  'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10';
+  'border-zinc-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/20';
 const inputError =
-  'border-red-400 focus:border-red-400 focus:ring-red-400/10';
+  'border-red-400 focus:border-red-400 focus:ring-red-400/20';
+
+const countries = [
+  { name: 'India', code: '+91', flag: 'IN' },
+  { name: 'United States', code: '+1', flag: 'US' },
+  { name: 'United Kingdom', code: '+44', flag: 'UK' },
+  { name: 'Canada', code: '+1', flag: 'CA' },
+  { name: 'Australia', code: '+61', flag: 'AU' },
+  { name: 'Germany', code: '+49', flag: 'DE' },
+  { name: 'France', code: '+33', flag: 'FR' },
+  { name: 'Singapore', code: '+65', flag: 'SG' },
+  { name: 'Japan', code: '+81', flag: 'JP' },
+];
 
 export default function RegisterPage() {
   const { register, loading, error } = useAuth();
   const router = useRouter();
-  const [name, setName] = useState('');
+
+  // Registration states
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
+  const [gender, setGender] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [mobileNumber, setMobileNumber] = useState('');
+
+  // OTP Verification digits (6 separate boxes)
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
+
+  // UI States
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const [nameError, setNameError] = useState<string | null>(null);
+  const [firstNameError, setFirstNameError] = useState<string | null>(null);
+  const [lastNameError, setLastNameError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
+  const [mobileError, setMobileError] = useState<string | null>(null);
+  const [genderError, setGenderError] = useState<string | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const [otp, setOtp] = useState('');
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpError, setOtpError] = useState<string | null>(null);
   const [otpSuccess, setOtpSuccess] = useState(false);
@@ -58,19 +83,66 @@ export default function RegisterPage() {
     }
   };
 
+  const handleFirstNameChange = (val: string) => {
+    const noSpaces = val.replace(/\s/g, '');
+    setFirstName(noSpaces);
+    setFirstNameError(null);
+  };
+
+  const handleMobileChange = (val: string) => {
+    const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
+    setMobileNumber(digitsOnly);
+    setMobileError(null);
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormError(null);
     setSuccessMessage(null);
-    setNameError(null);
+    setFirstNameError(null);
+    setLastNameError(null);
     setEmailError(null);
     setPasswordError(null);
     setConfirmPasswordError(null);
+    setMobileError(null);
+    setGenderError(null);
 
     let hasError = false;
 
-    if (!name.trim()) {
-      setNameError('Please enter your Name.');
+    const nameRegex = /^[a-zA-Z][a-zA-Z.'-]*$/;
+
+    if (!firstName.trim()) {
+      setFirstNameError('Please enter your first name.');
+      hasError = true;
+    } else if (firstName.trim().length < 2) {
+      setFirstNameError('First name must be at least 2 characters.');
+      hasError = true;
+    } else if (!nameRegex.test(firstName)) {
+      setFirstNameError("First name must start with a letter and contain only letters, dots, quotes, and hyphens.");
+      hasError = true;
+    }
+
+    if (!lastName.trim()) {
+      setLastNameError('please enter your last name.');
+      hasError = true;
+    } else if (!nameRegex.test(lastName)) {
+      setLastNameError("Last name must start with a letter and contain only letters, dots, quotes, and hyphens.");
+      hasError = true;
+    }
+
+    if (!gender) {
+      setGenderError('Please select your gender.');
+      hasError = true;
+    }
+
+    if (!mobileNumber.trim()) {
+      setMobileError('Please enter your Mobile number.');
+      hasError = true;
+    } else if (mobileNumber.length !== 10) {
+      setMobileError('Mobile number must be exactly 10 digits.');
+      hasError = true;
+    } else if (mobileNumber.startsWith('0')) {
+      setMobileError('Mobile number should never start with 0.');
       hasError = true;
     }
 
@@ -101,7 +173,16 @@ export default function RegisterPage() {
     if (hasError) return;
 
     try {
-      const message = await register({ name, email, password, profilePicture });
+      const message = await register({
+        firstName,
+        lastName,
+        gender,
+        mobileNumber,
+        countryCode,
+        email,
+        password,
+        profilePicture
+      });
       setSuccessMessage(message || 'Registration successful! Please verify using the 6-digit code.');
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Registration failed.';
@@ -136,18 +217,47 @@ export default function RegisterPage() {
     }
   };
 
+  const handleOtpDigitChange = (index: number, value: string) => {
+    const numericValue = value.replace(/\D/g, '');
+    if (!numericValue) {
+      const nextDigits = [...otpDigits];
+      nextDigits[index] = '';
+      setOtpDigits(nextDigits);
+      return;
+    }
+
+    const nextDigits = [...otpDigits];
+    nextDigits[index] = numericValue.slice(-1);
+    setOtpDigits(nextDigits);
+
+    if (index < 5 && numericValue) {
+      const nextInput = document.getElementById(`otp-digit-${index + 1}`);
+      if (nextInput) (nextInput as HTMLInputElement).focus();
+    }
+  };
+
+  const handleOtpDigitKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otpDigits[index] && index > 0) {
+      const prevInput = document.getElementById(`otp-digit-${index - 1}`);
+      if (prevInput) {
+        (prevInput as HTMLInputElement).focus();
+      }
+    }
+  };
+
   const handleOtpSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setOtpError(null);
 
-    if (otp.length !== 6) {
-      setOtpError('Please enter a 6-digit code.');
+    const fullOtp = otpDigits.join('');
+    if (fullOtp.length !== 6) {
+      setOtpError('Please enter the 6-digit code.');
       return;
     }
 
     setOtpLoading(true);
     try {
-      await verifyOtp(email, otp);
+      await verifyOtp(email, fullOtp);
       setOtpSuccess(true);
       setTimeout(() => {
         router.push('/login');
@@ -166,7 +276,7 @@ export default function RegisterPage() {
         <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-3xl dark:bg-blue-600/5" />
       </div>
 
-      <div className="w-full max-w-sm relative z-10">
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm mb-5">
@@ -183,7 +293,7 @@ export default function RegisterPage() {
         {successMessage ? (
           otpSuccess ? (
             <div className="space-y-4 text-center">
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-4 text-sm text-emerald-700 dark:text-emerald-400">
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-4 py-6 text-sm text-emerald-700 dark:text-emerald-400 animate-in zoom-in-95">
                 <p className="font-semibold text-base mb-1">Email verified</p>
                 <p>Your account is verified. Redirecting to login…</p>
               </div>
@@ -191,34 +301,40 @@ export default function RegisterPage() {
           ) : (
             <form onSubmit={handleOtpSubmit} className="space-y-5">
               {successMessage && (
-                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-3 text-sm text-emerald-700 dark:text-emerald-400">
+                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-3 text-sm text-emerald-700 dark:text-emerald-400 font-medium">
                   {successMessage}
                 </div>
               )}
 
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 text-center block" htmlFor="otp">
+              <div className="space-y-3">
+                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 text-center block">
                   Enter the 6-digit code sent to{' '}
-                  <span className="font-semibold text-zinc-700 dark:text-zinc-300">{email}</span>
+                  <span className="font-bold text-zinc-900 dark:text-zinc-100">{email}</span>
                 </label>
-                <input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => { setOtp(e.target.value.replace(/\D/g, '')); setOtpError(null); }}
-                  placeholder="000000"
-                  className={`${inputBase} px-4 py-3 text-2xl font-mono tracking-[0.4em] text-center ${otpError ? inputError : inputNormal
-                    }`}
-                />
-                {otpError && <p className="text-sm text-red-500 text-center">{otpError}</p>}
+
+                <div className="flex justify-center gap-2">
+                  {otpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`otp-digit-${idx}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                      onKeyDown={(e) => handleOtpDigitKeyDown(idx, e)}
+                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-zinc-950 dark:text-zinc-50"
+                    />
+                  ))}
+                </div>
+
+                {otpError && <p className="text-sm text-red-500 font-semibold text-center">{otpError}</p>}
               </div>
 
               <button
                 type="submit"
-                disabled={otp.length !== 6 || otpLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-base font-semibold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                disabled={otpDigits.some((d) => !d) || otpLoading}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-3 text-base font-semibold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {otpLoading ? 'Verifying…' : 'Verify email'} <ArrowRight className="h-4 w-4" />
               </button>
@@ -228,40 +344,116 @@ export default function RegisterPage() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0 || resendLoading}
-                  className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors disabled:opacity-40 cursor-pointer"
+                  className="text-zinc-400 hover:text-zinc-650 transition-colors disabled:opacity-40 cursor-pointer text-sm font-semibold"
                 >
                   {resendLoading ? 'Sending…' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
                 </button>
               </div>
 
               {resendMessage && (
-                <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">{resendMessage}</p>
+                <p className="text-center text-sm text-zinc-550 dark:text-zinc-400 font-medium">{resendMessage}</p>
               )}
             </form>
           )
         ) : (
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="name">
-                Full name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                <input
-                  id="name"
-                  type="text"
-                  maxLength={100}
-                  value={name}
-                  onChange={(event) => { setName(event.target.value); setNameError(null); setFormError(null); }}
-                  placeholder="John Doe"
-                  className={`${inputBase} pl-10 pr-4 py-3 ${nameError ? inputError : inputNormal}`}
-                />
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {/* First Name & Last Name */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="firstName">
+                  First name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <input
+                    id="firstName"
+                    type="text"
+                    maxLength={50}
+                    value={firstName}
+                    onChange={(e) => handleFirstNameChange(e.target.value)}
+                    placeholder="John"
+                    className={`${inputBase} pl-10 pr-3.5 py-2.5 ${firstNameError ? inputError : inputNormal}`}
+                  />
+                </div>
+                {firstNameError && <p className="text-sm text-red-500 font-semibold">{firstNameError}</p>}
               </div>
-              {nameError && <p className="text-sm text-red-500">{nameError}</p>}
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="lastName">
+                  Last name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <input
+                    id="lastName"
+                    type="text"
+                    maxLength={50}
+                    value={lastName}
+                    onChange={(e) => { setLastName(e.target.value); setLastNameError(null); }}
+                    placeholder="Doe"
+                    className={`${inputBase} pl-10 pr-3.5 py-2.5 ${lastNameError ? inputError : inputNormal}`}
+                  />
+                </div>
+                {lastNameError && <p className="text-sm text-red-500 font-semibold">{lastNameError}</p>}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
+            {/* Gender Select Dropdown */}
+            <div className="space-y-1">
+              <label htmlFor="gender" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                Gender
+              </label>
+              <select
+                id="gender"
+                value={gender}
+                onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+              {genderError && <p className="text-sm text-red-500 font-semibold">{genderError}</p>}
+            </div>
+
+            {/* Country Selector Dropdown & Mobile Number */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="mobile">
+                Mobile Number
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-2.5 text-xs text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shrink-0 cursor-pointer font-semibold"
+                >
+                  {countries.map((c) => (
+                    <option key={c.name} value={c.code}>
+                      {c.flag} {c.code}
+                    </option>
+                  ))}
+                </select>
+
+                <div className="relative flex-1">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <input
+                    id="mobile"
+                    type="text"
+                    inputMode="numeric"
+                    value={mobileNumber}
+                    onChange={(e) => handleMobileChange(e.target.value)}
+                    placeholder="10-digit number"
+                    className={`${inputBase} pl-10 pr-3.5 py-2.5 ${mobileError ? inputError : inputNormal}`}
+                  />
+                </div>
+              </div>
+              {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
+            </div>
+
+            {/* Email */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
                 Email
               </label>
               <div className="relative">
@@ -273,14 +465,15 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(event) => { setEmail(event.target.value); setEmailError(null); setFormError(null); }}
                   placeholder="name@company.com"
-                  className={`${inputBase} pl-10 pr-4 py-3 ${emailError ? inputError : inputNormal}`}
+                  className={`${inputBase} pl-10 pr-3.5 py-2.5 ${emailError ? inputError : inputNormal}`}
                 />
               </div>
-              {emailError && <p className="text-sm text-red-500">{emailError}</p>}
+              {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">
+            {/* Password */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">
                 Password
               </label>
               <div className="relative">
@@ -292,21 +485,22 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(event) => { setPassword(event.target.value); setPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
-                  className={`${inputBase} pl-10 pr-10 py-3 ${passwordError ? inputError : inputNormal}`}
+                  className={`${inputBase} pl-10 pr-10 py-2.5 ${passwordError ? inputError : inputNormal}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
+              {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="confirmPassword">
+            {/* Confirm Password */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="confirmPassword">
                 Confirm password
               </label>
               <div className="relative">
@@ -318,25 +512,25 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(event) => { setConfirmPassword(event.target.value); setConfirmPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
-                  className={`${inputBase} pl-10 pr-10 py-3 ${confirmPasswordError ? inputError : inputNormal}`}
+                  className={`${inputBase} pl-10 pr-10 py-2.5 ${confirmPasswordError ? inputError : inputNormal}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {confirmPasswordError && <p className="text-sm text-red-500">{confirmPasswordError}</p>}
+              {confirmPasswordError && <p className="text-sm text-red-500 font-semibold">{confirmPasswordError}</p>}
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="profile-pic">
+            {/* Profile Picture */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="profile-pic">
                 Profile picture <span className="text-zinc-400 dark:text-zinc-600">(optional)</span>
               </label>
-              <div className={`flex items-center gap-3 rounded-lg border px-3 py-3 bg-white dark:bg-zinc-900 transition duration-150 ${formError?.includes('Image') ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'
-                }`}>
+              <div className={`flex items-center gap-3 rounded-xl border px-3 py-2 bg-white dark:bg-zinc-900 transition duration-150 ${formError?.includes('Image') ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}>
                 {profilePicture ? (
                   <img src={profilePicture} alt="Profile preview" className="h-8 w-8 shrink-0 rounded-full object-cover" />
                 ) : (
@@ -349,18 +543,18 @@ export default function RegisterPage() {
                   type="file"
                   accept="image/*"
                   onChange={handleFileChange}
-                  className="w-full text-sm text-zinc-500 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-2.5 file:py-1.5 file:text-sm file:font-medium file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-400 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700 cursor-pointer"
+                  className="w-full text-xs text-zinc-500 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-100 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-400 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700 cursor-pointer"
                 />
               </div>
             </div>
 
             {formError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-3 text-sm text-red-600 dark:text-red-400">
+              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
                 {formError}
               </div>
             )}
             {error && !formError && (
-              <div className="rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-3 text-sm text-red-600 dark:text-red-400">
+              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
                 {error}
               </div>
             )}
@@ -368,7 +562,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-3 text-base font-semibold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? 'Creating account…' : 'Create account'} <ArrowRight className="h-4 w-4" />
             </button>

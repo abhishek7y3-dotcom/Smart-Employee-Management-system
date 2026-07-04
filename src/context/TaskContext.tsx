@@ -262,8 +262,17 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toast.success('Mock team member added');
     } else {
       try {
+        const nameParts = (newEmployeeData.name || '').trim().split(/\s+/);
+        const fName = nameParts[0] || 'Employee';
+        const lName = nameParts.slice(1).join(' ') || 'Member';
+
         const regResult = await registerUser({
           name: newEmployeeData.name,
+          firstName: fName,
+          lastName: lName,
+          gender: 'Other',
+          mobileNumber: '0000000000',
+          countryCode: '+91',
           email: newEmployeeData.email,
           password: newEmployeeData.password || 'TempPassword123!',
           profilePicture: newEmployeeData.avatarUrl,

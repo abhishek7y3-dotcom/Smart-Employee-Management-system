@@ -1,9 +1,15 @@
 export interface AuthUser {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  mobileNumber?: string;
+  countryCode?: string;
   email: string;
   role?: string;
   profilePicture?: string;
+  designation?: string;
 }
 
 export interface TokenResponse {
@@ -12,7 +18,12 @@ export interface TokenResponse {
 }
 
 export interface RegisterRequest {
-  name: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  gender?: string;
+  mobileNumber?: string;
+  countryCode?: string;
   email: string;
   password: string;
   profilePicture?: string;
@@ -24,8 +35,10 @@ export interface RegisterResponse {
 }
 
 export interface LoginRequest {
-  email: string;
-  password: string;
+  email?: string;
+  password?: string;
+  mobileNumber?: string;
+  countryCode?: string;
 }
 
 export interface LoginResponse {

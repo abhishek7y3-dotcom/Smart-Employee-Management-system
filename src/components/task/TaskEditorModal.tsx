@@ -67,7 +67,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Edit Task</h3>
-            <p className="mt-1 text-xs text-zinc-450 dark:text-zinc-500">Update task details without changing the card layout.</p>
+            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Update task details without changing the card layout.</p>
           </div>
           <button
             type="button"

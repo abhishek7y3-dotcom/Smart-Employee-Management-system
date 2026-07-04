@@ -13,6 +13,7 @@ import {
   deleteUser,
   requestLoginOtp,
   loginWithOtp,
+  verifyResetOtp,
 } from '../controllers/authController';
 import { registerValidation, loginValidation, forgotPasswordValidation, resetPasswordValidation } from '../validators/authValidator';
 import { validateRequest } from '../middleware/validateRequest';
@@ -29,6 +30,7 @@ router.post('/forgot-password', forgotPasswordValidation, validateRequest, forgo
 router.post('/reset-password', resetPasswordValidation, validateRequest, resetPassword);
 router.post('/request-login-otp', requestLoginOtp);
 router.post('/login-with-otp', loginWithOtp);
+router.post('/verify-reset-otp', verifyResetOtp);
 router.get('/profile', authenticate, profile);
 router.get('/users', authenticate, getAllUsers);
 router.put('/users/:id', authenticate, updateUser);

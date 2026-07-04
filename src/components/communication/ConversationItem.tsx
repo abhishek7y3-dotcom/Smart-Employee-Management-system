@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Archive, ArrowUp, Bell, Check, Paperclip, Pin, Star } from 'lucide-react';
+import { Archive, ArchiveRestore, ArrowUp, Bell, Check, Paperclip, Pin, Star } from 'lucide-react';
 import { Conversation } from '../../types/communication';
 import { formatRelativeTime, getPriorityDot } from '../../utils/communicationUtils';
 
@@ -118,8 +118,9 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           <button
             onClick={(e) => { e.stopPropagation(); onArchive(); }}
             className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+            title={conversation.isArchived ? 'Unarchive' : 'Archive'}
           >
-            <Archive className="h-3 w-3" />
+            {conversation.isArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
           </button>
         )}
       </div>

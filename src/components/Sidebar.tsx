@@ -51,12 +51,22 @@ export const Sidebar: React.FC = () => {
         </svg>
       ),
     },
+    {
+      name: 'Settings',
+      href: '/settings',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+      ),
+    },
   ];
 
   return (
     <aside className="w-64 border-r border-zinc-200/60 bg-white/60 px-4 py-6 dark:border-zinc-800/60 dark:bg-zinc-950/60 flex flex-col justify-between backdrop-blur-md">
       <div className="space-y-6">
-        <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-450 dark:text-zinc-500">
+        <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500">
           Workspace Navigation
         </div>
         <nav className="space-y-1">
@@ -68,11 +78,11 @@ export const Sidebar: React.FC = () => {
                 href={item.href}
                 className={`group flex items-center gap-3.5 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 ${
                   isActive
-                    ? 'bg-zinc-100/80 text-zinc-950 border-blue-600 dark:bg-zinc-905/60 dark:text-zinc-50 dark:border-blue-500 font-bold shadow-sm'
+                    ? 'bg-zinc-100/80 text-zinc-950 border-blue-600 dark:bg-zinc-900/60 dark:text-zinc-50 dark:border-blue-500 font-bold shadow-sm'
                     : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950 border-transparent dark:text-zinc-400 dark:hover:bg-zinc-900/30 dark:hover:text-zinc-100'
                 }`}
               >
-                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-250'}>
+                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}>
                   {item.icon}
                 </span>
                 {item.name}
@@ -83,7 +93,7 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div className="border-t border-zinc-200/60 pt-4 dark:border-zinc-800/65">
-        <div className="rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-4 text-[11px] text-zinc-500 dark:border-zinc-800/40 dark:bg-zinc-900/20 dark:text-zinc-450">
+        <div className="rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-4 text-[11px] text-zinc-500 dark:border-zinc-800/40 dark:bg-zinc-900/20 dark:text-zinc-400">
           <p className="font-bold text-zinc-800 dark:text-zinc-300">
             Mode: <span className="text-blue-600 dark:text-blue-400">{isMock ? 'Local Mock' : 'Server API'}</span>
           </p>

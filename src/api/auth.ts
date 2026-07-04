@@ -140,7 +140,7 @@ export async function resendResetOtp(email: string): Promise<{ message: string }
 
 export async function updateUserProfile(
   id: string,
-  payload: { role?: string; designation?: string }
+  payload: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string }
 ): Promise<any> {
   if (isMockAuthEnabled()) {
     return { id, ...payload };
@@ -167,26 +167,27 @@ export async function removeUser(id: string): Promise<any> {
 }
 
 
-export async function requestLoginOtp(email: string): Promise<{ message: string }> {
+export async function requestLoginOtp(payload: { email?: string; mobileNumber?: string; countryCode?: string }): Promise<{ message: string; email?: string }> {
   if (isMockAuthEnabled()) {
     return { message: 'Mock login OTP sent to your email.' };
   }
 
   try {
-    const response = await axiosInstance.post<any>('/auth/request-login-otp', { email });
-    return { message: response.data.message || 'Login code sent to your email.' };
+    const response = await axiosInstance.post<any>('/auth/request-login-otp', payload);
+    return response.data;
   } catch (error) {
     throw normalizeApiError(error);
   }
 }
 
-export async function loginWithOtp(email: string, otp: string): Promise<LoginResponse> {
+export async function loginWithOtp(payload: { email?: string; mobileNumber?: string; countryCode?: string; otp: string }): Promise<LoginResponse> {
   if (isMockAuthEnabled()) {
+    const email = payload.email || 'mock@example.com';
     return mockLoginUser({ email, password: '' });
   }
 
   try {
-    const response = await axiosInstance.post<any>('/auth/login-with-otp', { email, otp });
+    const response = await axiosInstance.post<any>('/auth/login-with-otp', payload);
     const apiData = response.data.data;
     return {
       user: apiData.user,
@@ -194,6 +195,21 @@ export async function loginWithOtp(email: string, otp: string): Promise<LoginRes
         accessToken: apiData.token,
         expiresIn: 3600,
       },
+    };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function verifyResetOtp(email: string, otp: string): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP verified successfully.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/verify-reset-otp', { email, otp });
+    return {
+      message: response.data.message || 'Verification successful.'
     };
   } catch (error) {
     throw normalizeApiError(error);

@@ -7,11 +7,16 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { encrypt, decrypt } from '../utils/crypto';
 
 export async function register(req: Request, res: Response) {
-  const { name, email, password, profilePicture } = req.body as {
+  const { name, email, password, profilePicture, firstName, lastName, gender, mobileNumber, countryCode } = req.body as {
     name: string;
     email: string;
     password: string;
     profilePicture?: string;
+    firstName?: string;
+    lastName?: string;
+    gender?: string;
+    mobileNumber?: string;
+    countryCode?: string;
   };
 
   try {
@@ -25,7 +30,8 @@ export async function register(req: Request, res: Response) {
     }
 
     // Upload image to Cloudinary (falls back to placeholder if Cloudinary not config'd)
-    const profilePicUrl = await uploadToCloudinary(profilePicture || '', name);
+    const computedName = `${firstName || ''} ${lastName || ''}`.trim() || name;
+    const profilePicUrl = await uploadToCloudinary(profilePicture || '', computedName);
 
     // Check if the request is made by an Admin (who should automatically verify new users)
     let isCreatedByAdmin = false;
@@ -37,7 +43,7 @@ export async function register(req: Request, res: Response) {
         const userId = decoded.id as string;
         if (userId) {
           const reqUser = await User.findById(userId);
-          if (reqUser && (reqUser.role === 'admin' || reqUser.role === 'Admin' || reqUser.role === 'Project Manager')) {
+          if (reqUser && (reqUser.role === 'admin' || reqUser.designation === 'Admin' || reqUser.designation === 'Project Manager')) {
             isCreatedByAdmin = true;
           }
         }
@@ -48,13 +54,18 @@ export async function register(req: Request, res: Response) {
 
     // Generate 6-Digit OTP Code
     const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
-    const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const verificationOtpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes (lower from 10 min to 2 min)
 
     const role = email.toLowerCase().startsWith('admin') ? 'admin' : 'user';
     const designation = role === 'admin' ? 'Admin' : 'Employee';
 
     const user = await User.create({
-      name,
+      name: computedName,
+      firstName,
+      lastName,
+      gender,
+      mobileNumber,
+      countryCode,
       email: email.toLowerCase(),
       password,
       profilePicture: profilePicUrl,
@@ -67,7 +78,7 @@ export async function register(req: Request, res: Response) {
 
     if (!isCreatedByAdmin) {
       // Log OTP to terminal for development/testing
-      console.log(`\n🔑 [REGISTER] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 10 min)\n`);
+      console.log(`\n🔑 [REGISTER] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 2 min)\n`);
 
       // Trigger Verification OTP Email (fire-and-forget; don't block registration on email failure)
       sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
@@ -84,6 +95,11 @@ export async function register(req: Request, res: Response) {
         user: {
           id: user._id,
           name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          gender: user.gender,
+          mobileNumber: user.mobileNumber,
+          countryCode: user.countryCode,
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
@@ -102,14 +118,20 @@ export async function register(req: Request, res: Response) {
 }
 
 export async function login(req: Request, res: Response) {
-  const { email, password } = req.body as { email: string; password: string };
+  const { email, password, mobileNumber, countryCode } = req.body as { email?: string; password: string; mobileNumber?: string; countryCode?: string };
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    } else if (mobileNumber) {
+      user = await User.findOne({ mobileNumber, countryCode }).select('+password');
+    }
+
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Email address not registered.',
+        message: 'No account found with these credentials.',
         errors: [],
       });
     }
@@ -118,7 +140,7 @@ export async function login(req: Request, res: Response) {
     if (!user.isVerified) {
       return res.status(400).json({
         success: false,
-        message: 'Your email address is not verified yet. Please check your inbox for the verification code.',
+        message: 'Your account is not verified yet. Please check your inbox for the verification code.',
         errors: [],
       });
     }
@@ -141,6 +163,11 @@ export async function login(req: Request, res: Response) {
         user: {
           id: user._id,
           name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          gender: user.gender,
+          mobileNumber: user.mobileNumber,
+          countryCode: user.countryCode,
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
@@ -246,11 +273,11 @@ export async function forgotPassword(req: Request, res: Response) {
     // Generate 6-digit OTP code for password reset
     const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetPasswordOtp = encrypt(otpPlain); // stored encrypted
-    user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    user.resetPasswordOtpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
     await user.save();
 
     // Log OTP to terminal for development/testing
-    console.log(`\n🔑 [FORGOT PASSWORD] Reset OTP for ${user.email}: ${otpPlain} (expires in 10 min)\n`);
+    console.log(`\n🔑 [FORGOT PASSWORD] Reset OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
 
     // Fire-and-forget: don't block the response on email delivery
     sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
@@ -384,27 +411,26 @@ export async function resendVerificationOtp(req: Request, res: Response) {
     }
 
     // Rate limit: prevent resend if last OTP was generated less than 60 seconds ago
-    if (user.verificationOtpExpires && user.verificationOtpExpires.getTime() > Date.now() - 9 * 60 * 1000) {
-      // OTP was created less than 1 minute ago (10min - 9min = 1min)
-      const secondsLeft = Math.ceil((user.verificationOtpExpires.getTime() - (Date.now() - 9 * 60 * 1000)) / 1000);
-      if (secondsLeft > 540) {
+    if (user.verificationOtpExpires && user.verificationOtpExpires.getTime() > Date.now() + 1 * 60 * 1000) {
+      const secondsLeft = Math.ceil((user.verificationOtpExpires.getTime() - (Date.now() + 1 * 60 * 1000)) / 1000);
+      if (secondsLeft > 0) {
         return res.status(429).json({
           success: false,
-          message: `Please wait ${secondsLeft - 540} seconds before requesting a new code.`,
+          message: `Please wait ${secondsLeft} seconds before requesting a new code.`,
         });
       }
     }
 
     // Generate new 6-digit OTP
     const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
-    const verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const verificationOtpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
 
     user.verificationOtp = encrypt(verificationOtpPlain);
     user.verificationOtpExpires = verificationOtpExpires;
     await user.save();
 
     // Log OTP to terminal for development/testing
-    console.log(`\n🔑 [RESEND VERIFY] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 10 min)\n`);
+    console.log(`\n🔑 [RESEND VERIFY] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 2 min)\n`);
 
     // Send the new OTP via email (fire-and-forget)
     sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
@@ -445,12 +471,12 @@ export async function resendResetOtp(req: Request, res: Response) {
     }
 
     // Rate limit: prevent resend if last OTP was generated less than 60 seconds ago
-    if (user.resetPasswordOtpExpires && user.resetPasswordOtpExpires.getTime() > Date.now() - 9 * 60 * 1000) {
-      const secondsLeft = Math.ceil((user.resetPasswordOtpExpires.getTime() - (Date.now() - 9 * 60 * 1000)) / 1000);
-      if (secondsLeft > 540) {
+    if (user.resetPasswordOtpExpires && user.resetPasswordOtpExpires.getTime() > Date.now() + 1 * 60 * 1000) {
+      const secondsLeft = Math.ceil((user.resetPasswordOtpExpires.getTime() - (Date.now() + 1 * 60 * 1000)) / 1000);
+      if (secondsLeft > 0) {
         return res.status(429).json({
           success: false,
-          message: `Please wait ${secondsLeft - 540} seconds before requesting a new code.`,
+          message: `Please wait ${secondsLeft} seconds before requesting a new code.`,
         });
       }
     }
@@ -458,11 +484,11 @@ export async function resendResetOtp(req: Request, res: Response) {
     // Generate new 6-digit OTP
     const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetPasswordOtp = encrypt(otpPlain);
-    user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000);
+    user.resetPasswordOtpExpires = new Date(Date.now() + 2 * 60 * 1000);
     await user.save();
 
     // Log OTP to terminal for development/testing
-    console.log(`\n🔑 [RESEND RESET] Reset OTP for ${user.email}: ${otpPlain} (expires in 10 min)\n`);
+    console.log(`\n🔑 [RESEND RESET] Reset OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
 
     // Send the new OTP via email (fire-and-forget)
     sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
@@ -483,29 +509,35 @@ export async function resendResetOtp(req: Request, res: Response) {
 }
 
 export async function requestLoginOtp(req: Request, res: Response) {
-  const { email } = req.body as { email: string };
+  const { email, mobileNumber, countryCode } = req.body as { email?: string; mobileNumber?: string; countryCode?: string };
 
-  if (!email) {
-    return res.status(400).json({ success: false, message: 'Email is required.' });
+  if (!email && !mobileNumber) {
+    return res.status(400).json({ success: false, message: 'Email or Mobile Number is required.' });
   }
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase() });
+    } else if (mobileNumber) {
+      user = await User.findOne({ mobileNumber, countryCode });
+    }
+
     if (!user) {
-      return res.status(404).json({ success: false, message: 'No account found with that email.' });
+      return res.status(404).json({ success: false, message: 'No account found with these credentials.' });
     }
     if (!user.isVerified) {
-      return res.status(400).json({ success: false, message: 'Your email is not verified yet. Please verify your account first.' });
+      return res.status(400).json({ success: false, message: 'Your account is not verified yet. Please verify your account first.' });
     }
 
     const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+    const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
 
     user.loginOtp = encrypt(otpPlain);
     user.loginOtpExpires = otpExpires;
     await user.save();
 
-    console.log(`\n🔑 [LOGIN OTP] OTP for ${user.email}: ${otpPlain} (expires in 10 min)\n`);
+    console.log(`\n🔑 [LOGIN OTP] OTP for ${user.email} (${user.countryCode || ''} ${user.mobileNumber || ''}): ${otpPlain} (expires in 2 min)\n`);
 
     sendVerificationOtp(user.email, user.name, otpPlain).catch((err) => {
       console.error('authController.ts: Failed to send login OTP email:', err);
@@ -513,7 +545,8 @@ export async function requestLoginOtp(req: Request, res: Response) {
 
     return res.status(200).json({
       success: true,
-      message: 'A login code has been sent to your email.',
+      message: 'A login code has been sent to your registered profile details.',
+      email: user.email,
     });
   } catch (error) {
     console.error('authController.ts: requestLoginOtp error:', error);
@@ -522,16 +555,22 @@ export async function requestLoginOtp(req: Request, res: Response) {
 }
 
 export async function loginWithOtp(req: Request, res: Response) {
-  const { email, otp } = req.body as { email: string; otp: string };
+  const { email, mobileNumber, countryCode, otp } = req.body as { email?: string; mobileNumber?: string; countryCode?: string; otp: string };
 
-  if (!email || !otp) {
-    return res.status(400).json({ success: false, message: 'Email and OTP code are required.' });
+  if ((!email && !mobileNumber) || !otp) {
+    return res.status(400).json({ success: false, message: 'Credentials and OTP code are required.' });
   }
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+loginOtp +loginOtpExpires');
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase() }).select('+loginOtp +loginOtpExpires');
+    } else if (mobileNumber) {
+      user = await User.findOne({ mobileNumber, countryCode }).select('+loginOtp +loginOtpExpires');
+    }
+
     if (!user) {
-      return res.status(404).json({ success: false, message: 'No account found with that email.' });
+      return res.status(404).json({ success: false, message: 'No account found with these credentials.' });
     }
     if (!user.loginOtp) {
       return res.status(400).json({ success: false, message: 'No login code found. Please request a new one.' });
@@ -565,6 +604,11 @@ export async function loginWithOtp(req: Request, res: Response) {
         user: {
           id: user._id,
           name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          gender: user.gender,
+          mobileNumber: user.mobileNumber,
+          countryCode: user.countryCode,
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
@@ -595,6 +639,11 @@ export async function profile(req: Request, res: Response) {
       user: {
         id: user._id,
         name: user.name,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        gender: user.gender,
+        mobileNumber: user.mobileNumber,
+        countryCode: user.countryCode,
         email: user.email,
         role: user.role,
         designation: user.designation || 'Employee',
@@ -624,14 +673,27 @@ export async function getAllUsers(req: Request, res: Response) {
 
 export async function updateUser(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  const { role, designation } = req.body as { role?: string; designation?: string };
+  const { role, designation, name, profilePicture, firstName, lastName, gender, mobileNumber, countryCode } = req.body as {
+    role?: string;
+    designation?: string;
+    name?: string;
+    profilePicture?: string;
+    firstName?: string;
+    lastName?: string;
+    gender?: string;
+    mobileNumber?: string;
+    countryCode?: string;
+  };
   const { id } = req.params;
 
   try {
-    if (authReq.user?.role !== 'admin') {
+    const isAdmin = authReq.user?.role === 'admin';
+    const isSelf = authReq.user?._id.toString() === id;
+
+    if (!isAdmin && !isSelf) {
       return res.status(403).json({
         success: false,
-        message: 'Forbidden. Only administrators can perform this action.',
+        message: 'Forbidden. You do not have permission to update this profile.',
         errors: [],
       });
     }
@@ -645,20 +707,55 @@ export async function updateUser(req: Request, res: Response) {
       });
     }
 
-    // An admin's designation cannot be changed by other users other than the admin itself.
-    if (user.role === 'admin' && user._id.toString() !== authReq.user?._id.toString() && designation !== undefined) {
-      return res.status(403).json({
-        success: false,
-        message: "Forbidden. An administrator's designation can only be updated by themselves.",
-        errors: [],
-      });
-    }
-
-    if (role) {
+    // Role and designation updates are reserved for admins
+    if (role !== undefined) {
+      if (!isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden. Only administrators can update user roles.',
+          errors: [],
+        });
+      }
       user.role = role as 'user' | 'admin';
     }
+
     if (designation !== undefined) {
+      if (!isAdmin) {
+        return res.status(403).json({
+          success: false,
+          message: 'Forbidden. Only administrators can update user designations.',
+          errors: [],
+        });
+      }
       user.designation = designation;
+    }
+
+    if (firstName !== undefined) {
+      user.firstName = firstName;
+    }
+
+    if (lastName !== undefined) {
+      user.lastName = lastName;
+    }
+
+    if (gender !== undefined) {
+      user.gender = gender;
+    }
+
+    if (mobileNumber !== undefined) {
+      user.mobileNumber = mobileNumber;
+    }
+
+    if (countryCode !== undefined) {
+      user.countryCode = countryCode;
+    }
+
+    if (name !== undefined) {
+      user.name = name;
+    }
+
+    if (profilePicture !== undefined) {
+      user.profilePicture = profilePicture;
     }
 
     await user.save();
@@ -670,9 +767,14 @@ export async function updateUser(req: Request, res: Response) {
         user: {
           id: user._id,
           name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          gender: user.gender,
+          mobileNumber: user.mobileNumber,
+          countryCode: user.countryCode,
           email: user.email,
           role: user.role,
-          designation: user.designation,
+          designation: user.designation || 'Employee',
           profilePicture: user.profilePicture,
         }
       },
@@ -692,15 +794,18 @@ export async function deleteUser(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
-    if (authReq.user?.role !== 'admin') {
+    const isAdmin = authReq.user?.role === 'admin';
+    const isSelf = authReq.user?._id.toString() === id;
+
+    if (!isAdmin && !isSelf) {
       return res.status(403).json({
         success: false,
-        message: 'Forbidden. Only administrators can remove users.',
+        message: 'Forbidden. You do not have permission to perform this action.',
         errors: [],
       });
     }
 
-    if (authReq.user._id.toString() === id) {
+    if (isAdmin && isSelf) {
       return res.status(400).json({
         success: false,
         message: 'You cannot remove your own admin account.',
@@ -728,6 +833,59 @@ export async function deleteUser(req: Request, res: Response) {
       success: false,
       message: 'An error occurred while removing the user.',
       errors: [],
+    });
+  }
+}
+
+export async function verifyResetOtp(req: Request, res: Response) {
+  const { email, otp } = req.body as { email: string; otp: string };
+  if (!email || !otp) {
+    return res.status(400).json({
+      success: false,
+      message: 'Email and OTP code are required.',
+    });
+  }
+
+  try {
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+      });
+    }
+
+    if (!user.resetPasswordOtp) {
+      return res.status(400).json({
+        success: false,
+        message: 'No verification code found. Please request a new one.',
+      });
+    }
+
+    let storedOtp = decrypt(user.resetPasswordOtp);
+    if (storedOtp !== otp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification code.',
+      });
+    }
+
+    if (user.resetPasswordOtpExpires && user.resetPasswordOtpExpires.getTime() < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please request a new one.',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully.',
+    });
+  } catch (error) {
+    console.error('authController.ts: verifyResetOtp error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred during verification.',
     });
   }
 }
