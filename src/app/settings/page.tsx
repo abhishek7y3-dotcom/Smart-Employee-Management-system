@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock } from 'lucide-react';
@@ -8,6 +9,7 @@ import { toast } from 'sonner';
 
 export default function SettingsPage() {
   const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp } = useAuth();
+  const router = useRouter();
 
   // Change password states
   const [showPasswordSection, setShowPasswordSection] = useState(false);
@@ -112,7 +114,10 @@ export default function SettingsPage() {
       setIsOtpSent(true);
       setOtpDigits(['', '', '', '', '', '']);
       setPasswordTimer(120); // 2-min countdown
-      toast.success('Verification OTP code sent to your email.');
+      toast.success('Verification OTP code sent. Redirecting to reset page...');
+      setTimeout(() => {
+        router.push(`/reset-password?email=${encodeURIComponent(user.email)}`);
+      }, 1500);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to send OTP code');
     } finally {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, User, Shield, Loader2, Mail, Camera, FileCheck, Phone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
@@ -23,7 +24,9 @@ const countries = [
 ];
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, forgotPassword } = useAuth();
+  const router = useRouter();
+  const [isSendingPasswordOtp, setIsSendingPasswordOtp] = useState(false);
   
   // Profile info state
   const [firstName, setFirstName] = useState('');
@@ -224,6 +227,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         setProfilePicture(reader.result as string);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handlePasswordChangeRequest = async () => {
+    if (!user?.email) return;
+    setIsSendingPasswordOtp(true);
+    try {
+      await forgotPassword({ email: user.email });
+      toast.success('Verification OTP code sent. Redirecting to reset page...');
+      setTimeout(() => {
+        onClose();
+        router.push(`/reset-password?email=${encodeURIComponent(user.email)}`);
+      }, 1500);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send OTP code');
+    } finally {
+      setIsSendingPasswordOtp(false);
     }
   };
 
@@ -431,6 +451,22 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Security Section with Change Password */}
+            <div className="border-t border-zinc-200/80 dark:border-zinc-850 pt-4 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-zinc-900 dark:text-white">Security & Password</span>
+                <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Request code to reset password credentials</p>
+              </div>
+              <button
+                type="button"
+                onClick={handlePasswordChangeRequest}
+                disabled={isSendingPasswordOtp}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-55/80 dark:hover:bg-zinc-900 transition shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {isSendingPasswordOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : '🔑 Change Password'}
+              </button>
             </div>
 
             {/* Save Profile Button */}

@@ -8,8 +8,30 @@ export const registerValidation = [
     .matches(strictEmailRegex).withMessage('Please enter a valid email address')
     .isLength({ max: 254 }).withMessage('Email cannot exceed 254 characters'),
   body('password')
-    .isLength({ min: 8, max: 128 })
-    .withMessage('Password must be between 8 and 128 characters'),
+    .isLength({ min: 8, max: 64 })
+    .withMessage('Password must be between 8 and 64 characters')
+    .matches(/[A-Z]/)
+    .withMessage('Password must contain at least one uppercase letter')
+    .matches(/[a-z]/)
+    .withMessage('Password must contain at least one lowercase letter')
+    .matches(/[0-9]/)
+    .withMessage('Password must contain at least one number')
+    .matches(/[!@#$%^&*()_+=\-[\]{};:',.<>?/\\|`~]/)
+    .withMessage('Password must contain at least one special character')
+    .custom((value) => {
+      if (value.trim().length === 0) {
+        throw new Error('Password cannot consist only of spaces');
+      }
+      const commonPasswords = ['password', 'password123', 'qwerty', 'admin123', '12345678', 'welcome123'];
+      if (commonPasswords.includes(value.toLowerCase())) {
+        throw new Error('This password is too common and insecure');
+      }
+      const allowedRegex = /^[a-zA-Z0-9!@#$%^&*()_+=\-[\]{};:',.<>?/\\|`~\s]*$/;
+      if (!allowedRegex.test(value)) {
+        throw new Error('Password contains invalid characters');
+      }
+      return true;
+    }),
   body('firstName')
     .trim()
     .notEmpty()

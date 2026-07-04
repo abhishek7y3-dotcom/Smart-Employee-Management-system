@@ -4,7 +4,8 @@ import { useState, FormEvent, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { verifyOtp, resendVerificationOtp } from '../../api/auth';
-import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone, Check } from 'lucide-react';
+import { checkRequirements, isPasswordValid, calculatePasswordStrength, getPasswordValidationError } from '../../utils/passwordValidator';
 
 const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
 
@@ -66,6 +67,10 @@ export default function RegisterPage() {
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [resendCooldown, setResendCooldown] = useState(0);
+
+  const reqs = checkRequirements(password);
+  const strength = calculatePasswordStrength(password);
+  const isPassValid = isPasswordValid(password);
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -219,11 +224,9 @@ export default function RegisterPage() {
       hasError = true;
     }
 
-    if (!password.trim()) {
-      setPasswordError('Please enter your password.');
-      hasError = true;
-    } else if (password.length < 8) {
-      setPasswordError('Password must be at least 8 characters.');
+    const passError = getPasswordValidationError(password);
+    if (passError) {
+      setPasswordError(passError);
       hasError = true;
     }
 
@@ -555,11 +558,85 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-blue-500"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                 </button>
               </div>
+
+              {/* Password Validation Checklist & Strength Meter */}
+              {password && (
+                <div className="space-y-2.5 mt-2 p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800/80 transition-all duration-200 animate-in fade-in slide-in-from-top-1">
+                  {/* Strength Meter */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between text-xs font-semibold">
+                      <span className="text-zinc-500 dark:text-zinc-400">Password Strength:</span>
+                      <span className={`font-bold transition-colors duration-200 ${
+                        strength.level === 'Very Weak' ? 'text-red-500' :
+                        strength.level === 'Weak' ? 'text-orange-500' :
+                        strength.level === 'Medium' ? 'text-yellow-500' :
+                        strength.level === 'Strong' ? 'text-green-500' : 'text-emerald-600'
+                      }`}>{strength.level}</span>
+                    </div>
+                    <div className="flex gap-1 h-1.5 w-full rounded-full bg-zinc-200/50 dark:bg-zinc-800 overflow-hidden">
+                      {[1, 2, 3, 4, 5].map((index) => (
+                        <div
+                          key={index}
+                          className={`h-full flex-1 transition-all duration-300 ${
+                            index <= strength.barCount ? strength.colorClass : 'bg-transparent'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Requirements checklist */}
+                  <div className="space-y-1.5 pt-1.5 text-xs text-zinc-600 dark:text-zinc-400">
+                    <div className="flex items-center gap-2 transition-colors duration-150">
+                      {reqs.hasMinMaxLen ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
+                      ) : (
+                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
+                      )}
+                      <span className={reqs.hasMinMaxLen ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>8–64 characters</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-colors duration-150">
+                      {reqs.hasUppercase ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
+                      ) : (
+                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
+                      )}
+                      <span className={reqs.hasUppercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one uppercase letter</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-colors duration-150">
+                      {reqs.hasLowercase ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
+                      ) : (
+                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
+                      )}
+                      <span className={reqs.hasLowercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one lowercase letter</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-colors duration-150">
+                      {reqs.hasNumber ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
+                      ) : (
+                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
+                      )}
+                      <span className={reqs.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one number</span>
+                    </div>
+                    <div className="flex items-center gap-2 transition-colors duration-150">
+                      {reqs.hasSpecialChar ? (
+                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
+                      ) : (
+                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
+                      )}
+                      <span className={reqs.hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one special character</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
             </div>
 
@@ -626,7 +703,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !isPassValid}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? 'Creating account…' : 'Create account'} <ArrowRight className="h-4 w-4" />
