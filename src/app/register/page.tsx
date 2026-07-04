@@ -89,15 +89,15 @@ export default function RegisterPage() {
       setFirstNameError(null);
       return;
     }
-    if (val.startsWith(' ')) {
-      setFirstNameError('First name cannot start with a space.');
+    if (val.includes(' ')) {
+      setFirstNameError('Please do not use space in the first name.');
       return;
     }
     if (/\d/.test(val)) {
       setFirstNameError('First name cannot contain numbers.');
       return;
     }
-    const invalidCharRegex = /[^a-zA-Z.'-]/;
+    const invalidCharRegex = /[^a-zA-Z.'\-]/;
     if (invalidCharRegex.test(val)) {
       setFirstNameError("First name can only contain letters, dots (.), quotes ('), and hyphens (-).");
       return;
@@ -123,9 +123,9 @@ export default function RegisterPage() {
       setLastNameError('Last name cannot contain numbers.');
       return;
     }
-    const invalidCharRegex = /[^a-zA-Z.'-]/;
+    const invalidCharRegex = /[^a-zA-Z.'\- ]/;
     if (invalidCharRegex.test(val)) {
-      setLastNameError("Last name can only contain letters, dots (.), quotes ('), and hyphens (-).");
+      setLastNameError("Last name can only contain letters, spaces, dots (.), quotes ('), and hyphens (-).");
       return;
     }
     if (!/^[a-zA-Z]/.test(val)) {
@@ -139,6 +139,14 @@ export default function RegisterPage() {
   const handleMobileChange = (val: string) => {
     const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
     setMobileNumber(digitsOnly);
+    if (!digitsOnly) {
+      setMobileError(null);
+      return;
+    }
+    if (digitsOnly.startsWith('0')) {
+      setMobileError('Mobile number should never start with 0.');
+      return;
+    }
     setMobileError(null);
   };
 
@@ -156,15 +164,19 @@ export default function RegisterPage() {
 
     let hasError = false;
 
-    const nameRegex = /^[a-zA-Z][a-zA-Z.'-]*$/;
+    const firstNameRegex = /^[a-zA-Z][a-zA-Z.'\-]*$/;
+    const lastNameRegex = /^[a-zA-Z][a-zA-Z.'\- ]*$/;
 
     if (!firstName.trim()) {
       setFirstNameError('Please enter your first name.');
       hasError = true;
+    } else if (firstName.includes(' ')) {
+      setFirstNameError('Please do not use space in the first name.');
+      hasError = true;
     } else if (firstName.trim().length < 2) {
       setFirstNameError('First name must be at least 2 characters.');
       hasError = true;
-    } else if (!nameRegex.test(firstName)) {
+    } else if (!firstNameRegex.test(firstName)) {
       setFirstNameError("First name must start with a letter and contain only letters, dots, quotes, and hyphens.");
       hasError = true;
     }
@@ -178,8 +190,8 @@ export default function RegisterPage() {
     } else if (/\d/.test(lastName)) {
       setLastNameError('Last name cannot contain numbers.');
       hasError = true;
-    } else if (!nameRegex.test(lastName)) {
-      setLastNameError("Last name must start with a letter and contain only letters, dots, quotes, and hyphens.");
+    } else if (!lastNameRegex.test(lastName)) {
+      setLastNameError("Last name must start with a letter and contain only letters, spaces, dots, quotes, and hyphens.");
       hasError = true;
     }
 

@@ -749,11 +749,11 @@ export async function updateUser(req: Request, res: Response) {
           errors: [],
         });
       }
-      const nameRegex = /^[a-zA-Z][a-zA-Z.'-]*$/;
+      const nameRegex = /^[a-zA-Z][a-zA-Z.'\- ]*$/;
       if (!nameRegex.test(lastName)) {
         return res.status(400).json({
           success: false,
-          message: 'Last name must start with a letter and contain only letters, dots, quotes, and hyphens.',
+          message: 'Last name must start with a letter and contain only letters, spaces, dots, quotes, and hyphens.',
           errors: [],
         });
       }

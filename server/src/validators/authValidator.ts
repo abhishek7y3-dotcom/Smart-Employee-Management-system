@@ -16,14 +16,14 @@ export const registerValidation = [
     .withMessage('First name is required')
     .isLength({ min: 2 })
     .withMessage('First name must be at least 2 characters')
-    .matches(/^[a-zA-Z][a-zA-Z.'-]*$/)
+    .matches(/^[a-zA-Z][a-zA-Z.'\-]*$/)
     .withMessage("First name must start with a letter and contain only letters, dots, quotes, and hyphens"),
   body('lastName')
     .trim()
     .notEmpty()
     .withMessage('Last name is required')
-    .matches(/^[a-zA-Z][a-zA-Z.'-]*$/)
-    .withMessage("Last name must start with a letter and contain only letters, dots, quotes, and hyphens"),
+    .matches(/^[a-zA-Z][a-zA-Z.'\- ]*$/)
+    .withMessage("Last name must start with a letter and contain only letters, spaces, dots, quotes, and hyphens"),
   body('mobileNumber')
     .trim()
     .matches(/^\d{10}$/)
