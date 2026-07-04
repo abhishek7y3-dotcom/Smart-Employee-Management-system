@@ -125,6 +125,12 @@ export default function RegisterPage() {
     if (!lastName.trim()) {
       setLastNameError('please enter your last name.');
       hasError = true;
+    } else if (lastName.startsWith(' ')) {
+      setLastNameError('Last name cannot start with a space.');
+      hasError = true;
+    } else if (/\d/.test(lastName)) {
+      setLastNameError('Last name cannot contain numbers.');
+      hasError = true;
     } else if (!nameRegex.test(lastName)) {
       setLastNameError("Last name must start with a letter and contain only letters, dots, quotes, and hyphens.");
       hasError = true;
@@ -389,7 +395,15 @@ export default function RegisterPage() {
                     type="text"
                     maxLength={50}
                     value={lastName}
-                    onChange={(e) => { setLastName(e.target.value); setLastNameError(null); }}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      val = val.replace(/\d/g, '');
+                      if (val.startsWith(' ')) {
+                        val = val.trimStart();
+                      }
+                      setLastName(val);
+                      setLastNameError(null);
+                    }}
                     placeholder="Doe"
                     className={`${inputBase} pl-10 pr-3.5 py-2.5 ${lastNameError ? inputError : inputNormal}`}
                   />

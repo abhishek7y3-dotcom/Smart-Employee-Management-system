@@ -735,6 +735,28 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     if (lastName !== undefined) {
+      if (lastName.startsWith(' ')) {
+        return res.status(400).json({
+          success: false,
+          message: 'Last name cannot start with a space.',
+          errors: [],
+        });
+      }
+      if (/\d/.test(lastName)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Last name cannot contain numbers.',
+          errors: [],
+        });
+      }
+      const nameRegex = /^[a-zA-Z][a-zA-Z.'-]*$/;
+      if (!nameRegex.test(lastName)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Last name must start with a letter and contain only letters, dots, quotes, and hyphens.',
+          errors: [],
+        });
+      }
       user.lastName = lastName;
     }
 

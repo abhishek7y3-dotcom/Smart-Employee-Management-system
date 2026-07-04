@@ -104,6 +104,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     if (!lastName.trim()) {
       setLastNameError('Last name is required.');
       hasError = true;
+    } else if (lastName.startsWith(' ')) {
+      setLastNameError('Last name cannot start with a space.');
+      hasError = true;
+    } else if (/\d/.test(lastName)) {
+      setLastNameError('Last name cannot contain numbers.');
+      hasError = true;
     } else if (!nameRegex.test(lastName)) {
       setLastNameError("Last name must start with a letter and contain only letters, dots, quotes, and hyphens.");
       hasError = true;
@@ -238,7 +244,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   id="profile-lastname"
                   type="text"
                   value={lastName}
-                  onChange={(e) => { setLastName(e.target.value); setLastNameError(null); }}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    val = val.replace(/\d/g, '');
+                    if (val.startsWith(' ')) {
+                      val = val.trimStart();
+                    }
+                    setLastName(val);
+                    setLastNameError(null);
+                  }}
                   className={`w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${lastNameError ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}
                   placeholder="Last name"
                   required
