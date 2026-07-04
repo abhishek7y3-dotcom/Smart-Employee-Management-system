@@ -32,6 +32,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
   const [gender, setGender] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [designation, setDesignation] = useState('');
 
   // Error States
   const [firstNameError, setFirstNameError] = useState<string | null>(null);
@@ -58,6 +59,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
       setGender(user.gender || '');
       setCountryCode(user.countryCode || '+91');
       setMobileNumber(user.mobileNumber || '');
+      setDesignation(user.designation || '');
       
       setFirstNameError(null);
       setLastNameError(null);
@@ -198,7 +200,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         profilePicture,
         gender,
         countryCode,
-        mobileNumber
+        mobileNumber,
+        ...(user?.role === 'admin' ? { designation } : {})
       });
       toast.success('Profile updated successfully');
       onClose();
@@ -310,6 +313,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 {lastNameError && <p className="text-sm text-red-500 font-semibold">{lastNameError}</p>}
               </div>
             </div>
+
+            {/* Designation Field (Editable by admin only) */}
+            {user?.role === 'admin' && (
+              <div className="space-y-1.5">
+                <label htmlFor="profile-designation" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Designation</label>
+                <select
+                  id="profile-designation"
+                  value={designation}
+                  onChange={(e) => setDesignation(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
+                >
+                  <option value="CEO">CEO</option>
+                  <option value="Employee">Employee</option>
+                  <option value="Developer">Developer</option>
+                  <option value="Designer">Designer</option>
+                  <option value="QA Engineer">QA Engineer</option>
+                  <option value="Project Manager">Project Manager</option>
+                  <option value="Specialist">Specialist</option>
+                  <option value="HR Specialist">HR Specialist</option>
+                  <option value="Analyst">Analyst</option>
+                </select>
+              </div>
+            )}
 
             {/* Gender Selection Dropdown */}
             <div className="space-y-1.5">

@@ -22,7 +22,7 @@ export default function EmployeesPage() {
     name: '',
     email: '',
     password: '',
-    designation: 'Developer',
+    designation: 'Employee',
     role: 'user',
     avatarUrl: ''
   });
@@ -70,7 +70,7 @@ export default function EmployeesPage() {
       name: '',
       email: '',
       password: pass,
-      designation: 'Developer',
+      designation: 'Employee',
       role: 'user',
       avatarUrl: ''
     });
@@ -291,6 +291,7 @@ export default function EmployeesPage() {
                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                         className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-400 focus:ring-zinc-400/10 appearance-none cursor-pointer"
                       >
+                        <option value="Employee">Employee</option>
                         <option value="Developer">Developer</option>
                         <option value="Designer">Designer</option>
                         <option value="QA Engineer">QA Engineer</option>

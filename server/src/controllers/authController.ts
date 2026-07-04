@@ -57,7 +57,7 @@ export async function register(req: Request, res: Response) {
     const verificationOtpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes (lower from 10 min to 2 min)
 
     const role = email.toLowerCase().startsWith('admin') ? 'admin' : 'user';
-    const designation = role === 'admin' ? 'Admin' : 'Employee';
+    const designation = role === 'admin' ? 'CEO' : 'Employee';
 
     const user = await User.create({
       name: computedName,

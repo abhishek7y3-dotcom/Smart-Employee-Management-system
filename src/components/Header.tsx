@@ -147,7 +147,7 @@ export const Header: React.FC = () => {
             />
             <div className="hidden text-left md:block">
               <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{user?.name || 'Diana Prince'}</p>
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">{user?.designation || 'Project Manager'}</p>
+              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">{user?.designation || (user?.role === 'admin' ? 'CEO' : 'Employee')}</p>
             </div>
             <ChevronDown className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
           </button>
