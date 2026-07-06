@@ -703,7 +703,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={loading || !isPassValid}
+              disabled={loading}
               className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? 'Creating account…' : 'Create account'} <ArrowRight className="h-4 w-4" />

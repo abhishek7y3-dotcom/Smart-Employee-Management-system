@@ -72,7 +72,7 @@ export function isPasswordValid(password: string): boolean {
  */
 export function getPasswordValidationError(password: string): string | null {
   if (!password) {
-    return 'Password is required.';
+    return 'Please enter your password.';
   }
   if (password.trim().length === 0) {
     return 'Password cannot consist only of spaces.';
