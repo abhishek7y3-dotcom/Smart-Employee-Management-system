@@ -36,21 +36,21 @@ export const VALIDATION_MESSAGES = {
   },
 
   TASK: {
-    TITLE_REQUIRED: 'Title is required',
-    TITLE_EMPTY: 'Title cannot be empty',
-    TITLE_TOO_LONG: 'Title cannot exceed 150 characters',
+    TITLE_REQUIRED: 'Please enter a task title.',
+    TITLE_EMPTY: 'Please enter a task title.',
+    TITLE_TOO_LONG: 'Please keep the task title under 150 characters.',
 
-    DESCRIPTION_REQUIRED: 'Description is required',
-    DESCRIPTION_EMPTY: 'Description cannot be empty',
-    DESCRIPTION_TOO_LONG: 'Description cannot exceed 500 characters',
+    DESCRIPTION_REQUIRED: 'Please enter a task description.',
+    DESCRIPTION_EMPTY: 'Please enter a task description.',
+    DESCRIPTION_TOO_LONG: 'Please keep the task description under 500 characters.',
 
-    STATUS_INVALID: (statusValues: string[]) => `Status must be one of: ${statusValues.join(', ')}`,
-    PRIORITY_INVALID: (priorityValues: string[]) => `Priority must be one of: ${priorityValues.join(', ')}`,
+    STATUS_INVALID: (statusValues: string[]) => `Please select a valid task status from: ${statusValues.join(', ')}.`,
+    PRIORITY_INVALID: (priorityValues: string[]) => `Please select a valid task priority from: ${priorityValues.join(', ')}.`,
 
-    DUE_DATE_REQUIRED: 'Due date is required',
-    DUE_DATE_INVALID: 'Due date must be a valid date',
+    DUE_DATE_REQUIRED: 'Please select a due date.',
+    DUE_DATE_INVALID: 'Please select a valid due date.',
 
-    ASSIGNED_TO_REQUIRED: 'AssignedTo is required',
-    ASSIGNED_TO_INVALID: 'AssignedTo must be a valid user ID',
+    ASSIGNED_TO_REQUIRED: 'Please assign this task to an employee.',
+    ASSIGNED_TO_INVALID: 'Please select a valid employee for task assignment.',
   },
 };

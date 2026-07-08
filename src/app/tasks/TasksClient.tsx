@@ -59,6 +59,12 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const [newAssignee, setNewAssignee] = useState(defaultTaskForm.assignedTo);
   const [newDueDate, setNewDueDate] = useState(defaultTaskForm.dueDate);
 
+  // Field validation errors
+  const [titleError, setTitleError] = useState<string | null>(null);
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+  const [assigneeError, setAssigneeError] = useState<string | null>(null);
+  const [dueDateError, setDueDateError] = useState<string | null>(null);
+
   const filteredTasks = useMemo(() => {
     const urlFiltered = getFilteredTasksByUrlStatus(tasks, statusFilter);
     return urlFiltered
@@ -87,12 +93,55 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
     setNewPriority(defaultTaskForm.priority);
     setNewAssignee(defaultTaskForm.assignedTo);
     setNewDueDate(getTodayString());
+    setTitleError(null);
+    setDescriptionError(null);
+    setAssigneeError(null);
+    setDueDateError(null);
   };
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
+    let hasError = false;
+
+    if (!newTitle.trim()) {
+      setTitleError('Please enter a task title.');
+      hasError = true;
+    } else if (newTitle.length > 150) {
+      setTitleError('Please keep the task title under 150 characters.');
+      hasError = true;
+    } else {
+      setTitleError(null);
+    }
+
+    if (!newDescription.trim()) {
+      setDescriptionError('Please enter a task description.');
+      hasError = true;
+    } else if (newDescription.length > 500) {
+      setDescriptionError('Please keep the task description under 500 characters.');
+      hasError = true;
+    } else {
+      setDescriptionError(null);
+    }
+
+    if (!newAssignee) {
+      setAssigneeError('Please assign this task to an employee.');
+      hasError = true;
+    } else {
+      setAssigneeError(null);
+    }
+
     const today = getTodayString();
-    if (!newTitle.trim() || !newAssignee || !newDueDate || new Date(newDueDate).getTime() < new Date(today).getTime()) return;
+    if (!newDueDate) {
+      setDueDateError('Please select a due date.');
+      hasError = true;
+    } else if (new Date(newDueDate).getTime() < new Date(today).getTime()) {
+      setDueDateError('Please select a due date that is today or in the future.');
+      hasError = true;
+    } else {
+      setDueDateError(null);
+    }
+
+    if (hasError) return;
 
     addTask({
       title: newTitle.trim(),
@@ -138,11 +187,32 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="md:col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Title</span>
-              <input required maxLength={150} value={newTitle} onChange={(e) => setNewTitle(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
+              <input
+                maxLength={150}
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
+                  titleError
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                }`}
+              />
+              {titleError && <p className="mt-1 text-xs font-semibold text-red-500">{titleError}</p>}
             </label>
             <label className="md:col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Description</span>
-              <textarea maxLength={500} value={newDescription} onChange={(e) => setNewDescription(e.target.value)} rows={3} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
+              <textarea
+                maxLength={500}
+                value={newDescription}
+                onChange={(e) => setNewDescription(e.target.value)}
+                rows={3}
+                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
+                  descriptionError
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                }`}
+              />
+              {descriptionError && <p className="mt-1 text-xs font-semibold text-red-500">{descriptionError}</p>}
             </label>
             <label>
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</span>
@@ -153,15 +223,35 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               </select>
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Assignee</span>
-              <select required value={newAssignee} onChange={(e) => setNewAssignee(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Assignee</span>
+              <select
+                value={newAssignee}
+                onChange={(e) => setNewAssignee(e.target.value)}
+                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer ${
+                  assigneeError
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                }`}
+              >
                 <option value="">Select Employee</option>
                 {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.designation || 'Employee'})</option>)}
               </select>
+              {assigneeError && <p className="mt-1 text-xs font-semibold text-red-500">{assigneeError}</p>}
             </label>
             <label>
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Due Date</span>
-              <input required min={getTodayString()} type="date" value={newDueDate} onChange={(e) => setNewDueDate(e.target.value)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50" />
+              <input
+                min={getTodayString()}
+                type="date"
+                value={newDueDate}
+                onChange={(e) => setNewDueDate(e.target.value)}
+                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
+                  dueDateError
+                    ? 'border-red-500 focus:border-red-500'
+                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                }`}
+              />
+              {dueDateError && <p className="mt-1 text-xs font-semibold text-red-500">{dueDateError}</p>}
             </label>
           </div>
           <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-all duration-300 hover:bg-blue-700 active:scale-[0.98] sm:w-auto cursor-pointer">
