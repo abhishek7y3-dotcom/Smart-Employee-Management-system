@@ -1,82 +1,83 @@
 import { body } from 'express-validator';
+import { VALIDATION_MESSAGES } from '../constants/validationMessages';
 
 const strictEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
 
 export const registerValidation = [
   body('email')
-    .isEmail().withMessage('Valid email is required')
-    .matches(strictEmailRegex).withMessage('Please enter a valid email address')
-    .isLength({ max: 254 }).withMessage('Email cannot exceed 254 characters'),
+    .isEmail().withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_REQUIRED)
+    .matches(strictEmailRegex).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID)
+    .isLength({ max: 254 }).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_TOO_LONG),
   body('password')
     .isLength({ min: 8, max: 64 })
-    .withMessage('Password must be between 8 and 64 characters')
+    .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_LENGTH_RANGE)
     .matches(/[A-Z]/)
-    .withMessage('Password must contain at least one uppercase letter')
+    .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_UPPERCASE)
     .matches(/[a-z]/)
-    .withMessage('Password must contain at least one lowercase letter')
+    .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_LOWERCASE)
     .matches(/[0-9]/)
-    .withMessage('Password must contain at least one number')
+    .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_NUMBER)
     .matches(/[!@#$%^&*()_+=\-[\]{};:',.<>?/\\|`~]/)
-    .withMessage('Password must contain at least one special character')
+    .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_SPECIAL_CHAR)
     .custom((value) => {
       if (value.trim().length === 0) {
-        throw new Error('Password cannot consist only of spaces');
+        throw new Error(VALIDATION_MESSAGES.AUTH.PASSWORD_SPACES_ONLY);
       }
       const commonPasswords = ['password', 'password123', 'qwerty', 'admin123', '12345678', 'welcome123'];
       if (commonPasswords.includes(value.toLowerCase())) {
-        throw new Error('This password is too common and insecure');
+        throw new Error(VALIDATION_MESSAGES.AUTH.PASSWORD_TOO_COMMON);
       }
       const allowedRegex = /^[a-zA-Z0-9!@#$%^&*()_+=\-[\]{};:',.<>?/\\|`~\s]*$/;
       if (!allowedRegex.test(value)) {
-        throw new Error('Password contains invalid characters');
+        throw new Error(VALIDATION_MESSAGES.AUTH.PASSWORD_INVALID_CHARS);
       }
       return true;
     }),
   body('firstName')
     .trim()
     .notEmpty()
-    .withMessage('First name is required')
+    .withMessage(VALIDATION_MESSAGES.AUTH.FIRST_NAME_REQUIRED)
     .isLength({ min: 2 })
-    .withMessage('First name must be at least 2 characters')
+    .withMessage(VALIDATION_MESSAGES.AUTH.FIRST_NAME_MIN_LENGTH)
     .matches(/^[a-zA-Z][a-zA-Z.'\-]*$/)
-    .withMessage("First name must start with a letter and contain only letters, dots, quotes, and hyphens"),
+    .withMessage(VALIDATION_MESSAGES.AUTH.FIRST_NAME_INVALID),
   body('lastName')
     .trim()
     .notEmpty()
-    .withMessage('Last name is required')
+    .withMessage(VALIDATION_MESSAGES.AUTH.LAST_NAME_REQUIRED)
     .matches(/^[a-zA-Z][a-zA-Z.'\- ]*$/)
-    .withMessage("Last name must start with a letter and contain only letters, spaces, dots, quotes, and hyphens"),
+    .withMessage(VALIDATION_MESSAGES.AUTH.LAST_NAME_INVALID),
   body('mobileNumber')
     .trim()
     .matches(/^\d{10}$/)
-    .withMessage('Mobile number must be exactly 10 digits'),
+    .withMessage(VALIDATION_MESSAGES.AUTH.MOBILE_NUMBER_INVALID),
   body('countryCode')
     .trim()
     .notEmpty()
-    .withMessage('Country code is required'),
+    .withMessage(VALIDATION_MESSAGES.AUTH.COUNTRY_CODE_REQUIRED),
   body('gender')
     .trim()
     .notEmpty()
-    .withMessage('Gender is required'),
+    .withMessage(VALIDATION_MESSAGES.AUTH.GENDER_REQUIRED),
 ];
 
 export const loginValidation = [
   body('password')
-    .isLength({ max: 128 }).withMessage('Password cannot exceed 128 characters'),
+    .isLength({ max: 128 }).withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_TOO_LONG),
   body().custom((value) => {
     if (!value.email && !value.mobileNumber) {
-      throw new Error('Email or Mobile Number is required');
+      throw new Error(VALIDATION_MESSAGES.AUTH.LOGIN_CREDENTIALS_REQUIRED);
     }
     if (value.email) {
       if (!strictEmailRegex.test(value.email) || value.email.length > 254) {
-        throw new Error('Please enter a valid email address');
+        throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
       }
     } else {
       if (!value.countryCode) {
-        throw new Error('Country code is required');
+        throw new Error(VALIDATION_MESSAGES.AUTH.COUNTRY_CODE_REQUIRED);
       }
       if (!value.mobileNumber || !/^\d{10}$/.test(value.mobileNumber)) {
-        throw new Error('Mobile number must be exactly 10 digits');
+        throw new Error(VALIDATION_MESSAGES.AUTH.MOBILE_NUMBER_INVALID);
       }
     }
     return true;
@@ -85,18 +86,18 @@ export const loginValidation = [
 
 export const forgotPasswordValidation = [
   body('email')
-    .isEmail().withMessage('Valid email is required')
-    .matches(strictEmailRegex).withMessage('Please enter a valid email address ')
-    .isLength({ max: 254 }).withMessage('Email cannot exceed 254 characters'),
+    .isEmail().withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_REQUIRED)
+    .matches(strictEmailRegex).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID)
+    .isLength({ max: 254 }).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_TOO_LONG),
 ];
 
 export const resetPasswordValidation = [
   body('email')
-    .isEmail().withMessage('Valid email is required')
-    .matches(strictEmailRegex).withMessage('Please enter a valid email address ')
-    .isLength({ max: 254 }).withMessage('Email cannot exceed 254 characters'),
-  body('otp').notEmpty().withMessage('Verification code is required'),
+    .isEmail().withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_REQUIRED)
+    .matches(strictEmailRegex).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID)
+    .isLength({ max: 254 }).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_TOO_LONG),
+  body('otp').notEmpty().withMessage(VALIDATION_MESSAGES.AUTH.OTP_REQUIRED),
   body('password')
     .isLength({ min: 8, max: 128 })
-    .withMessage('Password must be between 8 and 128 characters'),
+    .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_RESET_LENGTH_RANGE),
 ];
