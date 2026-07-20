@@ -90,11 +90,11 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
         {canEditRole && (
           <div className="relative">
             <select
-              value={employee.role}
+              value={employee.role === 'user' || employee.role === 'employee' ? 'member' : employee.role}
               onChange={(e) => updateEmployeeRole(employee.id, e.target.value)}
               className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
             >
-              <option value="employee">Employee</option>
+              <option value="member">Employee</option>
               <option value="admin">Admin</option>
             </select>
           </div>

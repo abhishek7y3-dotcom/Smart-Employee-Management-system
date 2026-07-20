@@ -76,11 +76,10 @@ export const Sidebar: React.FC = () => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center gap-3.5 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 ${
-                  isActive
+                className={`group flex items-center gap-3.5 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 ${isActive
                     ? 'bg-zinc-100/80 text-zinc-950 border-blue-600 dark:bg-zinc-900/60 dark:text-zinc-50 dark:border-blue-500 font-bold shadow-sm'
                     : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950 border-transparent dark:text-zinc-400 dark:hover:bg-zinc-900/30 dark:hover:text-zinc-100'
-                }`}
+                  }`}
               >
                 <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}>
                   {item.icon}

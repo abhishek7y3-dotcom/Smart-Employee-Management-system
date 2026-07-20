@@ -1,13 +1,18 @@
 import { body } from 'express-validator';
 import { VALIDATION_MESSAGES } from '../constants/validationMessages';
-
-const strictEmailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
+import { isValidMobileNumber } from '../utils/mobileValidator';
+import { isValidEmail } from '../utils/emailValidator';
 
 export const registerValidation = [
   body('email')
-    .isEmail().withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_REQUIRED)
-    .matches(strictEmailRegex).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID)
-    .isLength({ max: 254 }).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_TOO_LONG),
+    .trim()
+    .toLowerCase()
+    .custom((value) => {
+      if (!isValidEmail(value)) {
+        throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
+      }
+      return true;
+    }),
   body('password')
     .isLength({ min: 8, max: 64 })
     .withMessage(VALIDATION_MESSAGES.AUTH.PASSWORD_LENGTH_RANGE)
@@ -34,23 +39,44 @@ export const registerValidation = [
       return true;
     }),
   body('firstName')
-    .trim()
-    .notEmpty()
-    .withMessage(VALIDATION_MESSAGES.AUTH.FIRST_NAME_REQUIRED)
-    .isLength({ min: 2 })
-    .withMessage(VALIDATION_MESSAGES.AUTH.FIRST_NAME_MIN_LENGTH)
-    .matches(/^[a-zA-Z][a-zA-Z.'\-]*$/)
-    .withMessage(VALIDATION_MESSAGES.AUTH.FIRST_NAME_INVALID),
+    .custom((value) => {
+      const trimmed = (value || '').trim();
+      if (!trimmed) throw new Error('First Name is required');
+      if (trimmed.length < 2) throw new Error('First Name must be at least 2 characters long');
+      if (trimmed.length > 50) throw new Error('First Name must be at most 50 characters long');
+      if (!/^[A-Z]/.test(trimmed)) throw new Error('First Name must start with a capital letter');
+      if (/[0-9]/.test(trimmed)) throw new Error('First Name should only contain letters');
+      if (/\s/.test(trimmed)) throw new Error('First Name cannot contain spaces');
+      if (!/^[A-Z][a-zA-Z]*(?:['-][a-zA-Z]+)*$/.test(trimmed)) throw new Error('First Name has invalid characters or consecutive symbols');
+      return true;
+    }),
   body('lastName')
-    .trim()
-    .notEmpty()
-    .withMessage(VALIDATION_MESSAGES.AUTH.LAST_NAME_REQUIRED)
-    .matches(/^[a-zA-Z][a-zA-Z.'\- ]*$/)
-    .withMessage(VALIDATION_MESSAGES.AUTH.LAST_NAME_INVALID),
+    .custom((value) => {
+      const trimmed = (value || '').trim();
+      if (!trimmed) throw new Error('Last Name is required');
+      if (trimmed.length < 2) throw new Error('Last Name must be at least 2 characters long');
+      if (trimmed.length > 50) throw new Error('Last Name must be at most 50 characters long');
+      if (!/^[A-Z]/.test(trimmed)) throw new Error('Last Name must start with a capital letter');
+      if (/[0-9]/.test(trimmed)) throw new Error('Last Name should only contain letters');
+      if (!/^[A-Z][a-zA-Z]*(?:[\s'-][a-zA-Z]+)*$/.test(trimmed)) throw new Error('Last Name has invalid characters or consecutive spaces/symbols');
+      return true;
+    }),
   body('mobileNumber')
     .trim()
-    .matches(/^\d{10}$/)
-    .withMessage(VALIDATION_MESSAGES.AUTH.MOBILE_NUMBER_INVALID),
+    .notEmpty()
+    .withMessage('Mobile number is required')
+    .escape()
+    .custom((value, { req }) => {
+      const countryCode = req.body.countryCode || '+91';
+      if (!isValidMobileNumber(value, countryCode)) {
+        if (countryCode === '+91') {
+          throw new Error('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+        } else {
+          throw new Error('Please enter a valid mobile number for the selected country.');
+        }
+      }
+      return true;
+    }),
   body('countryCode')
     .trim()
     .notEmpty()
@@ -59,6 +85,10 @@ export const registerValidation = [
     .trim()
     .notEmpty()
     .withMessage(VALIDATION_MESSAGES.AUTH.GENDER_REQUIRED),
+  body('qualification')
+    .trim()
+    .notEmpty()
+    .withMessage('Qualification is required'),
 ];
 
 export const loginValidation = [
@@ -69,15 +99,19 @@ export const loginValidation = [
       throw new Error(VALIDATION_MESSAGES.AUTH.LOGIN_CREDENTIALS_REQUIRED);
     }
     if (value.email) {
-      if (!strictEmailRegex.test(value.email) || value.email.length > 254) {
+      if (!isValidEmail(value.email.trim().toLowerCase())) {
         throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
       }
     } else {
       if (!value.countryCode) {
         throw new Error(VALIDATION_MESSAGES.AUTH.COUNTRY_CODE_REQUIRED);
       }
-      if (!value.mobileNumber || !/^\d{10}$/.test(value.mobileNumber)) {
-        throw new Error(VALIDATION_MESSAGES.AUTH.MOBILE_NUMBER_INVALID);
+      if (!value.mobileNumber || !isValidMobileNumber(value.mobileNumber, value.countryCode)) {
+        if (value.countryCode === '+91') {
+          throw new Error('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+        } else {
+          throw new Error('Please enter a valid mobile number for the selected country.');
+        }
       }
     }
     return true;
@@ -86,16 +120,26 @@ export const loginValidation = [
 
 export const forgotPasswordValidation = [
   body('email')
-    .isEmail().withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_REQUIRED)
-    .matches(strictEmailRegex).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID)
-    .isLength({ max: 254 }).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_TOO_LONG),
+    .trim()
+    .toLowerCase()
+    .custom((value) => {
+      if (!isValidEmail(value)) {
+        throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
+      }
+      return true;
+    }),
 ];
 
 export const resetPasswordValidation = [
   body('email')
-    .isEmail().withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_REQUIRED)
-    .matches(strictEmailRegex).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID)
-    .isLength({ max: 254 }).withMessage(VALIDATION_MESSAGES.AUTH.EMAIL_TOO_LONG),
+    .trim()
+    .toLowerCase()
+    .custom((value) => {
+      if (!isValidEmail(value)) {
+        throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
+      }
+      return true;
+    }),
   body('otp').notEmpty().withMessage(VALIDATION_MESSAGES.AUTH.OTP_REQUIRED),
   body('password')
     .isLength({ min: 8, max: 128 })

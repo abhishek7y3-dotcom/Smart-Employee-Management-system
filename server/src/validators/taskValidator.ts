@@ -1,7 +1,7 @@
 import { body } from 'express-validator';
 import { VALIDATION_MESSAGES } from '../constants/validationMessages';
 
-const statusValues = ['todo', 'in_progress', 'completed', 'overdue'];
+const statusValues = ['todo', 'in_progress', 'completed', 'overdue', 'cancelled'];
 const priorityValues = ['low', 'medium', 'high'];
 
 export const taskCreateValidation = [

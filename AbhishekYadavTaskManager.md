@@ -3,7 +3,7 @@
 Welcome to the **Mini Employee Task Manager**, a premium, state-of-the-art task tracking and team collaboration platform designed for managers, administrators, and employee teams. The project is split into a Next.js frontend client and a Node.js Express backend API server.
 
 ---
-
+# Abhishek Yadav
 ## 🚀 Key Features
 
 ### 🔐 1. Authentication & Security
@@ -133,4 +133,4 @@ Mini Employee Task Manager/
 ---
 
 ## 👥 Authors
-- **Soubhagya Vashistha**
+- **Abhishek Yadav**

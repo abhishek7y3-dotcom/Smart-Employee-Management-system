@@ -7,7 +7,7 @@ import { AuthRequest } from '../middleware/authMiddleware';
 import { encrypt, decrypt } from '../utils/crypto';
 
 export async function register(req: Request, res: Response) {
-  const { name, email, password, profilePicture, firstName, lastName, gender, mobileNumber, countryCode } = req.body as {
+  const { name, email, password, profilePicture, firstName, lastName, gender, qualification, mobileNumber, countryCode } = req.body as {
     name: string;
     email: string;
     password: string;
@@ -15,18 +15,30 @@ export async function register(req: Request, res: Response) {
     firstName?: string;
     lastName?: string;
     gender?: string;
+    qualification?: string;
     mobileNumber?: string;
     countryCode?: string;
   };
 
   try {
-    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    const existingUser = await User.findOne({
+      $or: [{ email: email.toLowerCase() }, { mobileNumber }]
+    });
     if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already registered.',
-        errors: [],
-      });
+      if (existingUser.email === email.toLowerCase()) {
+        return res.status(409).json({
+          success: false,
+          message: 'Email is already registered.',
+          errors: [],
+        });
+      }
+      if (existingUser.mobileNumber === mobileNumber) {
+        return res.status(409).json({
+          success: false,
+          message: 'Mobile number is already registered.',
+          errors: [],
+        });
+      }
     }
 
     // Upload image to Cloudinary (falls back to placeholder if Cloudinary not config'd)
@@ -56,7 +68,7 @@ export async function register(req: Request, res: Response) {
     const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationOtpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes (lower from 10 min to 2 min)
 
-    const role = email.toLowerCase().startsWith('admin') ? 'admin' : 'user';
+    const role = email.toLowerCase().startsWith('admin') ? 'admin' : 'member';
     const designation = role === 'admin' ? 'CEO' : 'Employee';
 
     const user = await User.create({
@@ -64,6 +76,7 @@ export async function register(req: Request, res: Response) {
       firstName,
       lastName,
       gender,
+      qualification,
       mobileNumber,
       countryCode,
       email: email.toLowerCase(),
@@ -716,7 +729,9 @@ export async function updateUser(req: Request, res: Response) {
           errors: [],
         });
       }
-      user.role = role as 'user' | 'admin';
+      // Frontend may still send 'employee' or 'user' for role, map it to 'member'
+      const sanitizedRole = (role === 'employee' || role === 'user') ? 'member' : role;
+      user.role = sanitizedRole as 'member' | 'admin';
     }
 
     if (designation !== undefined) {
@@ -777,7 +792,12 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     if (profilePicture !== undefined) {
-      user.profilePicture = profilePicture;
+      if (profilePicture.startsWith('data:image')) {
+        const computedName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name;
+        user.profilePicture = await uploadToCloudinary(profilePicture, computedName);
+      } else {
+        user.profilePicture = profilePicture;
+      }
     }
 
     await user.save();

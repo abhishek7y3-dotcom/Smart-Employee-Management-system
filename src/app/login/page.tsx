@@ -225,47 +225,56 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 px-4 py-16 font-sans transition-colors duration-300">
-      {/* Ambient glow */}
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4 py-16 font-sans transition-colors duration-500 overflow-hidden relative">
+      {/* Dynamic Ambient Background */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-3xl dark:bg-blue-600/5" />
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-400/20 dark:bg-blue-600/20 blur-[100px] mix-blend-multiply dark:mix-blend-lighten animate-pulse opacity-70" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-400/20 dark:bg-indigo-600/20 blur-[120px] mix-blend-multiply dark:mix-blend-lighten opacity-60" />
+        <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-purple-400/15 dark:bg-purple-600/15 blur-[80px] mix-blend-multiply dark:mix-blend-lighten" />
       </div>
 
-      <div className="w-full max-w-sm relative z-10">
+      <div className="w-full max-w-md relative z-10">
+        <div className="backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border border-white/40 dark:border-zinc-800/50 p-8 sm:p-10 rounded-3xl shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 transition-all duration-300">
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm mb-4">
-            <ClipboardCheck className="h-5 w-5" />
+        <div className="flex flex-col items-center mb-10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 mb-5 ring-4 ring-white/50 dark:ring-zinc-800/50">
+            <ClipboardCheck className="h-7 w-7" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
+          <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 font-outfit text-center">
             Employee Task Manager
           </h1>
-          <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">Sign in to your workspace</p>
+          <p className="mt-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 text-center">Sign in to your workspace</p>
         </div>
 
         {/* ── 1. INITIAL METHOD CHOICE SCREEN ────────────────────────────────── */}
         {mode === 'initial' && (
-          <div className="space-y-4">
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <button
               type="button"
               onClick={() => { setMode('email'); setSubTab('password'); resetErrors(); }}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white hover:bg-zinc-50 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 px-5 py-4 text-sm font-bold text-zinc-800 dark:text-zinc-200 transition shadow-sm cursor-pointer"
+              className="group flex w-full items-center justify-between rounded-2xl border border-white/60 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 px-6 py-4.5 text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
             >
               <span className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-blue-500" /> Continue with Email
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
+                  <Mail className="h-5 w-5" />
+                </div>
+                Continue with Email
               </span>
-              <ArrowRight className="h-4 w-4 text-zinc-450" />
+              <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
             </button>
 
             <button
               type="button"
               onClick={() => { setMode('phone'); setSubTab('password'); resetErrors(); }}
-              className="flex w-full items-center justify-between rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white hover:bg-zinc-50 dark:bg-zinc-900/60 dark:hover:bg-zinc-900 px-5 py-4 text-sm font-bold text-zinc-800 dark:text-zinc-200 transition shadow-sm cursor-pointer"
+              className="group flex w-full items-center justify-between rounded-2xl border border-white/60 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 px-6 py-4.5 text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
             >
               <span className="flex items-center gap-3">
-                <Phone className="h-5 w-5 text-emerald-500" /> Continue with Phone Number
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300">
+                  <Phone className="h-5 w-5" />
+                </div>
+                Continue with Phone
               </span>
-              <ArrowRight className="h-4 w-4 text-zinc-450" />
+              <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
             </button>
           </div>
         )}
@@ -277,32 +286,32 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => { setMode('initial'); resetErrors(); }}
-              className="flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-850 dark:text-zinc-400 dark:hover:text-zinc-200 transition cursor-pointer"
+              className="group flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors duration-300 cursor-pointer"
             >
-              <ArrowLeft className="h-3.5 w-3.5" /> Back to options
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to options
             </button>
 
             {/* Sub-tab selection: Password vs OTP */}
-            <div className="flex rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 p-1">
+            <div className="flex rounded-xl bg-zinc-200/50 dark:bg-zinc-950/50 p-1.5 shadow-inner">
               <button
                 type="button"
                 onClick={() => { setSubTab('password'); resetErrors(); }}
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${subTab === 'password'
-                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'
+                className={`flex-1 rounded-lg py-2.5 text-xs font-bold transition-all duration-300 ${subTab === 'password'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
                   }`}
               >
-                Login with Password
+                Password
               </button>
               <button
                 type="button"
                 onClick={() => { setSubTab('otp'); resetErrors(); }}
-                className={`flex-1 rounded-lg py-2 text-xs font-bold transition ${subTab === 'otp'
-                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 shadow-sm'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700'
+                className={`flex-1 rounded-lg py-2.5 text-xs font-bold transition-all duration-300 ${subTab === 'otp'
+                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700'
+                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
                   }`}
               >
-                Login with OTP
+                OTP Code
               </button>
             </div>
 
@@ -396,9 +405,10 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition hover:bg-zinc-755 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
                 >
-                  {loading ? 'Signing in…' : 'Sign In'} <ArrowRight className="h-4 w-4" />
+                  {loading ? 'Authenticating...' : 'Sign In Securely'} 
+                  {!loading && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                 </button>
               </form>
             )}
@@ -461,9 +471,10 @@ export default function LoginPage() {
                     <button
                       type="submit"
                       disabled={otpSending}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition hover:bg-zinc-755 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
                     >
-                      {otpSending ? 'Sending OTP…' : 'Send Login OTP'} <ArrowRight className="h-4 w-4" />
+                      {otpSending ? 'Sending Code...' : 'Send Verification Code'} 
+                      {!otpSending && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </button>
                   </form>
                 ) : (
@@ -516,9 +527,10 @@ export default function LoginPage() {
                     <button
                       type="submit"
                       disabled={otpDigits.some((d) => !d) || otpVerifying || otpTimer <= 0}
-                      className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition hover:bg-zinc-755 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                      className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
                     >
-                      {otpVerifying ? 'Verifying…' : 'Sign In'} <ArrowRight className="h-4 w-4" />
+                      {otpVerifying ? 'Verifying Code...' : 'Verify & Sign In'} 
+                      {!otpVerifying && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
                     </button>
 
                     <div className="flex items-center justify-between text-xs">
@@ -538,12 +550,14 @@ export default function LoginPage() {
         )}
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
+        <div className="mt-8 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
           Don&apos;t have an account?{' '}
-          <a href="/register" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
+          <a href="/register" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors decoration-2 underline-offset-2">
             Create account
           </a>
         </div>
+        
+      </div>
       </div>
     </div>
   );

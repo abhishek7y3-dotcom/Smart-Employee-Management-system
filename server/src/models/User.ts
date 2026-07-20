@@ -6,11 +6,12 @@ export interface IUser extends Document {
   firstName?: string;
   lastName?: string;
   gender?: string;
+  qualification?: string;
   mobileNumber?: string;
   countryCode?: string;
   email: string;
   password: string;
-  role: 'user' | 'admin';
+  role: 'member' | 'admin';
   profilePicture?: string;
   isVerified: boolean;
   verificationOtp?: string;
@@ -49,10 +50,16 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: '',
     },
-    mobileNumber: {
+    qualification: {
       type: String,
       trim: true,
       default: '',
+    },
+    mobileNumber: {
+      type: String,
+      trim: true,
+      required: true,
+      unique: true,
     },
     countryCode: {
       type: String,
@@ -75,8 +82,8 @@ const userSchema = new Schema<IUser>(
     },
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user',
+      enum: ['member', 'admin'],
+      default: 'member',
     },
     designation: {
       type: String,

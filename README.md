@@ -1,96 +1,162 @@
-# Mini Employee Task Manager
+# 🚀 Employee Task Manager (MERN + Next.js)
 
-A beginner-friendly Employee Task Manager training project built using Next.js, TypeScript, and Tailwind CSS. This project is structured specifically to teach React patterns, state management, and basic CRUD features.
-
-## Project Purpose
-The purpose of this project is to serve as a hands-on training template for developers learning React and Next.js with TypeScript. It provides a structured sandbox to understand:
-- Component-driven development (atoms vs. features).
-- React state management and Context API.
-- TypeScript interfaces, types, and compile-time safety.
-- Next.js folder routing (App Router).
-- Local storage state persistence (offline-first development).
+A premium, full-stack enterprise application designed to streamline internal company operations, user management, task delegation, and intra-team communication. Built utilizing a modernized MERN architecture coupled with a Next.js App Router frontend.
 
 ---
 
-## Tech Stack
+## 📖 Table of Contents
+1. [Overview](#-overview)
+2. [Tech Stack](#-tech-stack)
+3. [Core Features](#-core-features)
+4. [Architecture & Design](#-architecture--design)
+5. [Getting Started](#-getting-started)
+6. [Available Scripts](#-available-scripts)
+7. [Environment Variables](#-environment-variables)
+8. [Project Documentation](#-project-documentation)
+
+---
+
+## 🌟 Overview
+
+The Employee Task Manager serves as a centralized hub for organizations. It enforces strict **Role-Based Access Control (RBAC)** to ensure that Administrators can dictate workflow while Members focus on execution. 
+The application guarantees high security via AES-encrypted One-Time Passwords (OTPs) during registration, protected JWT-based route access, and Mongoose-level validation schemas.
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend (Client-Side)
 - **Framework**: [Next.js (App Router)](https://nextjs.org/)
+- **UI Library**: [React 18+](https://react.dev/)
 - **Language**: [TypeScript](https://www.typescriptlang.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **State Management**: React Context API
-- **Persistence**: browser `localStorage` (Offline Mock Data)
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) (Extensive use of Glassmorphism and CSS variables)
+- **Icons**: [Lucide React](https://lucide.dev/)
+- **HTTP Client**: [Axios](https://axios-http.com/)
+
+### Backend (Server-Side)
+- **Runtime**: [Node.js](https://nodejs.org/)
+- **Framework**: [Express.js](https://expressjs.com/)
+- **Language**: [TypeScript](https://www.typescriptlang.org/)
+- **Database**: [MongoDB](https://www.mongodb.com/) (Managed via Mongoose ODM)
+- **Validation**: `express-validator`
+
+### Security & Integrations
+- **Authentication**: JWT (JSON Web Tokens)
+- **Encryption**: Built-in Node `crypto` (AES-256-GCM) & `bcrypt`
+- **Email Delivery**: Nodemailer
+- **Media Storage**: Cloudinary API
 
 ---
 
-## How to Install
+## ✨ Core Features
 
-Ensure you have [Node.js](https://nodejs.org/) installed (v18.x or above recommended).
-
-1. Clone or navigate to the project root directory.
-2. Install the necessary dependencies:
-   ```bash
-   npm install
-   ```
+- 🔐 **Bulletproof Authentication**: Secure email validation loop requiring AES-encrypted 6-digit OTPs before account creation.
+- 🛡️ **Role-Based Access Control (RBAC)**: Strict separation of concerns. Admins have omnipotent read/write access (assigning tasks, broadcasting announcements), whereas Members are isolated to only view and update tasks specifically assigned to them.
+- 📊 **Dynamic Dashboard**: Beautiful UI featuring Glassmorphism, animated mesh gradients, and automatic Dark Mode transitions.
+- 💬 **Integrated Communication**: Real-time ready schema supporting internal 1-on-1 team messaging and global Admin announcements.
+- 📝 **Intelligent UI Forms**: Frontend forms feature smart typing (auto-capitalizing trailing names) and integrated search filtering inside country-code dropdowns.
 
 ---
 
-## How to Run
+## 🏗 Architecture & Design
 
-To run the development server locally:
+The project is decoupled into two primary working directories:
+- `/src` (Frontend)
+- `/server/src` (Backend)
 
+The **Backend** strictly adheres to a **Controller-Route-Validator** pattern:
+1. `routes/` define the HTTP endpoints.
+2. `middleware/` verifies JWT tokens.
+3. `validators/` sanitize payloads to prevent NoSQL injection.
+4. `controllers/` execute database operations.
+
+The **Frontend** focuses on seamless UX, leveraging Next.js server-components alongside client-side React hooks. Global states (Auth, Tasks) are preserved using React Context.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v18+ recommended)
+- MongoDB running locally or a MongoDB Atlas URI
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/your-username/employee-task-manager.git
+cd employee-task-manager
+```
+
+### 2. Setup the Backend
+```bash
+cd server
+npm install
+```
+Configure your `/server/.env` (See Environment Variables section below).
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-To check for compilation or linting errors:
-- **Lint check**: `npm run lint`
-- **TypeScript compilation check**: `npx tsc --noEmit`
-
----
-
-## Folder Structure
-
-The project code resides inside the `src/` directory to keep configuration files clean and separated from the application logic. Below is an explanation of the directory structure:
-
-```text
-src/
-├── app/               # Next.js App Router (pages, layouts, and routing logic)
-│   ├── favicon.ico    # Website icon
-│   ├── globals.css    # Global CSS styles including Tailwind configurations
-│   ├── layout.tsx     # Application shell and HTML wrapper
-│   └── page.tsx       # Root landing page (dashboard view)
-├── components/        # Reusable React UI components
-│   ├── ui/            # Generic, low-level UI elements (e.g., Button, Input, Modal, Badge)
-│   ├── task/          # Feature components related to tasks (e.g., TaskList, TaskCard, TaskForm)
-│   └── employee/      # Feature components related to employees (e.g., EmployeeCard, EmployeeSelector)
-├── context/           # Global React Context providers (state stores, e.g., TaskContext)
-├── data/              # Static constants and local mock data files (initial tasks and employees list)
-├── hooks/             # Custom React hooks (e.g., useLocalStorage)
-├── types/             # Centralized TypeScript interface and type declarations
-│   └── auth.ts
-└── utils/             # Reusable helper and utility functions (e.g., date formatters)
+### 3. Setup the Frontend
+Open a new terminal window:
+```bash
+# from the root of the project
+npm install
+```
+Configure your `.env.local` file.
+```bash
+npm run dev
 ```
 
-### Why each folder is needed:
-- **`src/app/`**: Essential for Next.js App Router architecture. It handles routing automatically based on folder layout.
-- **`src/components/`**: Groups UI blocks. Splitting it into `ui` (atoms) and feature-specific directories like `task` and `employee` prevents files from cluttering and makes the layout modular.
-- **`src/context/`**: Allows passing down state (tasks and employee lists) without prop-drilling, mimicking a global state store or database client.
-- **`src/data/`**: Provides seeding mock records for initial loading so the app looks populated right away.
-- **`src/hooks/`**: Encourages code reuse. Encapsulating custom behaviors (like local storage syncing) into reusable hooks keeps components clean.
-- **`src/types/`**: Enforces strict contract contracts on objects, minimizing runtime bugs and enabling auto-complete during development.
-- **`src/utils/`**: Keeps non-component helper logic (such as converting date stamps) separated and testable.
+The application will be running on `http://localhost:3000`.
 
 ---
 
-## Basic Development Rules
+## 📜 Available Scripts
 
-To maintain high code quality and consistency throughout the training, adhere to the following development rules:
+### Frontend Scripts (Root)
+- `npm run dev`: Starts the Next.js development server.
+- `npm run build`: Compiles the application for production deployment.
+- `npm start`: Starts the Next.js production server.
 
-1. **Strict Type Safety**: Avoid using `any` under any circumstances. Ensure every parameter, variable, and return type is explicitly typed.
-2. **Component Separation**:
-   - Save low-level styling components (e.g., inputs, selectors) in `src/components/ui/` with zero business logic.
-   - Keep business/data logic inside `src/components/task/` and `src/components/employee/`.
-3. **Keep Context Simple**: Use `TaskContext` only for holding state and persistence. Avoid putting complex UI-related state (like sidebar open/close toggle state) in it.
-4. **Tailwind Best Practices**: Use utility classes directly in elements. For complicated custom rules or complex CSS integrations, define them in `globals.css` using standard Tailwind syntax.
-5. **No Placeholders**: Do not check in unfinished placeholders or console logs in production files. Keep error logs descriptive.
+### Backend Scripts (`/server`)
+- `npm run dev`: Starts the Express server using `nodemon` for hot-reloading.
+- `npm run build`: Compiles the TypeScript backend into the `/dist` directory.
+- `npm start`: Runs the compiled Node output.
+
+---
+
+## 🔐 Environment Variables
+
+You must provide the following variables for the application to function securely:
+
+**Backend (`/server/.env`)**
+```env
+PORT=5000
+MONGODB_URI=mongodb://127.0.0.1:27017/task-manager
+JWT_SECRET=your_super_secret_jwt_key
+JWT_EXPIRES_IN=7d
+ENCRYPTION_KEY=32_character_aes_key
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+CLOUDINARY_CLOUD_NAME=your_name
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret
+```
+
+**Frontend (`/.env.local`)**
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+---
+
+## 📚 Project Documentation
+For deep-dives into the architecture, rules, and historical fixes, please refer to the internal markdown files generated at the root of the project:
+- `design.md`: In-depth Architectural & UI/UX Design guidelines.
+- `RULES.md`: Coding standards, strict conventions, and Git protocols.
+- `phases.md`: Breakdown of historical development phases and future scope.
+- `MEMORY.md`: Contextual memory regarding bug fixes and database relationships.
+- `structure.md`: Visual directory tree mappings.
+- `PRD.md`: The official Product Requirements Document.

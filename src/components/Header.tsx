@@ -29,7 +29,29 @@ export const Header: React.FC = () => {
 
   const [isMounted, setIsMounted] = useState(false);
   const { activities } = useTasks();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleProfilePicChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+      setIsUploading(true);
+      try {
+        await updateUser({ profilePicture: base64String });
+      } catch (error) {
+        console.error('Failed to update profile picture', error);
+      } finally {
+        setIsUploading(false);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -155,6 +177,37 @@ export const Header: React.FC = () => {
           {isProfileDropdownOpen && (
             <div className="absolute right-0 top-12 mt-1.5 z-50 w-48 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 dark:border-zinc-800/80 dark:bg-zinc-950">
               <div className="p-1.5 space-y-0.5">
+                <div className="flex flex-col items-center justify-center p-4 border-b border-zinc-100 dark:border-zinc-900 mb-1">
+                  <div 
+                    className="relative cursor-pointer group rounded-full overflow-hidden" 
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <img
+                      src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
+                      alt={user?.name || 'User Profile'}
+                      className={`h-16 w-16 object-cover transition-opacity ${isUploading ? 'opacity-50' : 'group-hover:opacity-80'}`}
+                    />
+                    {isUploading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="h-4 w-4 border-2 border-zinc-800 border-t-transparent rounded-full animate-spin dark:border-white dark:border-t-transparent" />
+                      </div>
+                    )}
+                  </div>
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading}
+                    className="mt-2 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
+                  >
+                    {isUploading ? 'Uploading...' : 'Change profile picture'}
+                  </button>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/jpeg, image/png, image/webp"
+                    onChange={handleProfilePicChange}
+                  />
+                </div>
                 <button
                   onClick={() => {
                     setIsProfileModalOpen(true);

@@ -23,7 +23,7 @@ export default function EmployeesPage() {
     email: '',
     password: '',
     designation: 'Employee',
-    role: 'user',
+    role: 'member',
     avatarUrl: ''
   });
 
@@ -71,7 +71,7 @@ export default function EmployeesPage() {
       email: '',
       password: pass,
       designation: 'Employee',
-      role: 'user',
+      role: 'member',
       avatarUrl: ''
     });
     setErrors({});

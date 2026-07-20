@@ -1,32 +1,41 @@
 'use client';
 
-import { useState, FormEvent, type ChangeEvent } from 'react';
+import { useState, FormEvent, type ChangeEvent, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { verifyOtp, resendVerificationOtp } from '../../api/auth';
-import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone, Check } from 'lucide-react';
+import { countries } from '@/constants/countries';
+import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone, Check, Plus } from 'lucide-react';
 import { checkRequirements, isPasswordValid, calculatePasswordStrength, getPasswordValidationError } from '../../utils/passwordValidator';
-
-const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
+import { isValidEmail } from '../../utils/emailValidator';
 
 const inputBase =
-  'w-full rounded-xl border text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600';
+  'peer w-full rounded-xl border text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-400 dark:focus:placeholder-zinc-600';
+
+const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: string = 'left-9') =>
+  `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
+  `${!value ? `top-3 ${leftInset} text-sm text-zinc-400` : '-top-2.5 left-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400'} ` +
+  `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
+  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-blue-500'}`;
 const inputNormal =
   'border-zinc-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/20';
 const inputError =
   'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
-const countries = [
-  { name: 'India', code: '+91', flag: 'IN' },
-  { name: 'United States', code: '+1', flag: 'US' },
-  { name: 'United Kingdom', code: '+44', flag: 'UK' },
-  { name: 'Canada', code: '+1', flag: 'CA' },
-  { name: 'Australia', code: '+61', flag: 'AU' },
-  { name: 'Germany', code: '+49', flag: 'DE' },
-  { name: 'France', code: '+33', flag: 'FR' },
-  { name: 'Singapore', code: '+65', flag: 'SG' },
-  { name: 'Japan', code: '+81', flag: 'JP' },
-];
+
+const validateNameField = (value: string, fieldName: string, allowSpace: boolean = true): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return `${fieldName} is required`;
+  if (trimmed.length < 2) return `${fieldName} must be at least 2 characters long`;
+  if (trimmed.length > 50) return `${fieldName} must be at most 50 characters long`;
+  if (!/^[A-Z]/.test(trimmed)) return `${fieldName} must start with a capital letter`;
+  if (/[0-9]/.test(trimmed) || /[@#$%^&*()]/.test(trimmed)) return `${fieldName} should only contain letters`;
+  if (!allowSpace && /\s/.test(trimmed)) return `${fieldName} cannot contain spaces`;
+
+  const regex = allowSpace ? /^[A-Z][a-zA-Z]*(?:[\s'-][a-zA-Z]+)*$/ : /^[A-Z][a-zA-Z]*(?:['-][a-zA-Z]+)*$/;
+  if (!regex.test(trimmed)) return `${fieldName} has invalid characters or consecutive ${allowSpace ? 'spaces/' : ''}symbols`;
+  return null;
+};
 
 export default function RegisterPage() {
   const { register, loading, error } = useAuth();
@@ -40,8 +49,24 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [gender, setGender] = useState('');
+  const [qualification, setQualification] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setIsCountryDropdownOpen(false);
+        setCountrySearchQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // OTP Verification digits (6 separate boxes)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
@@ -57,6 +82,7 @@ export default function RegisterPage() {
   const [confirmPasswordError, setConfirmPasswordError] = useState<string | null>(null);
   const [mobileError, setMobileError] = useState<string | null>(null);
   const [genderError, setGenderError] = useState<string | null>(null);
+  const [qualificationError, setQualificationError] = useState<string | null>(null);
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -89,70 +115,55 @@ export default function RegisterPage() {
   };
 
   const handleFirstNameChange = (val: string) => {
-    setFirstName(val);
-    if (!val) {
-      setFirstNameError(null);
-      return;
+    let filteredVal = val.replace(/[^a-zA-Z]/g, '');
+    if (filteredVal.length > 0) {
+      filteredVal = filteredVal.charAt(0).toUpperCase() + filteredVal.slice(1);
     }
-    if (val.includes(' ')) {
-      setFirstNameError('Please do not use space in the first name.');
-      return;
-    }
-    if (/\d/.test(val)) {
-      setFirstNameError('First name cannot contain numbers.');
-      return;
-    }
-    const invalidCharRegex = /[^a-zA-Z.'\-]/;
-    if (invalidCharRegex.test(val)) {
-      setFirstNameError("First name can only contain letters, dots (.), quotes ('), and hyphens (-).");
-      return;
-    }
-    if (!/^[a-zA-Z]/.test(val)) {
-      setFirstNameError('First name must start with a letter.');
-      return;
-    }
+    filteredVal = filteredVal.slice(0, 50);
+    setFirstName(filteredVal);
     setFirstNameError(null);
   };
 
   const handleLastNameChange = (val: string) => {
-    setLastName(val);
-    if (!val) {
-      setLastNameError(null);
-      return;
+    let filteredVal = val.replace(/[^a-zA-Z\s'-]/g, '');
+    filteredVal = filteredVal.trimStart().replace(/\s{2,}/g, ' ').replace(/-{2,}/g, '-').replace(/'{2,}/g, "'");
+    if (filteredVal.length > 0) {
+      filteredVal = filteredVal.replace(/(?:^|\s|-)\S/g, (match) => match.toUpperCase());
     }
-    if (val.startsWith(' ')) {
-      setLastNameError('Last name cannot start with a space.');
-      return;
-    }
-    if (/\d/.test(val)) {
-      setLastNameError('Last name cannot contain numbers.');
-      return;
-    }
-    const invalidCharRegex = /[^a-zA-Z.'\- ]/;
-    if (invalidCharRegex.test(val)) {
-      setLastNameError("Last name can only contain letters, spaces, dots (.), quotes ('), and hyphens (-).");
-      return;
-    }
-    if (!/^[a-zA-Z]/.test(val)) {
-      setLastNameError('Last name must start with a letter.');
-      return;
-    }
+    filteredVal = filteredVal.slice(0, 50);
+    setLastName(filteredVal);
     setLastNameError(null);
   };
 
 
   const handleMobileChange = (val: string) => {
-    const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
-    setMobileNumber(digitsOnly);
+    const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
+    
+    // Automatically remove non-numeric chars and slice to max length
+    const digitsOnly = val.replace(/\D/g, '').slice(0, selectedCountry.maxLength);
+    
     if (!digitsOnly) {
+      setMobileNumber('');
       setMobileError(null);
       return;
     }
-    if (digitsOnly.startsWith('0')) {
-      setMobileError('Mobile number should never start with 0.');
+    
+    // Indian mobile numbers must start with 6, 7, 8, or 9
+    // If it doesn't, we return early WITHOUT setting state to physically block typing
+    if (countryCode === '+91' && !/^[6-9]/.test(digitsOnly)) {
       return;
     }
-    setMobileError(null);
+    
+    setMobileNumber(digitsOnly);
+    
+    // Real-time validation
+    if (countryCode === '+91' && digitsOnly.length < 10) {
+      setMobileError('Please enter a valid 10-digit Indian mobile number.');
+    } else if (countryCode !== '+91' && (digitsOnly.length < 6 || digitsOnly.length > selectedCountry.maxLength)) {
+      setMobileError(`Please enter a valid mobile number for ${selectedCountry.name}.`);
+    } else {
+      setMobileError(null);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -165,38 +176,21 @@ export default function RegisterPage() {
     setPasswordError(null);
     setConfirmPasswordError(null);
     setMobileError(null);
+    setMobileError(null);
     setGenderError(null);
+    setQualificationError(null);
 
     let hasError = false;
 
-    const firstNameRegex = /^[a-zA-Z][a-zA-Z.'\-]*$/;
-    const lastNameRegex = /^[a-zA-Z][a-zA-Z.'\- ]*$/;
-
-    if (!firstName.trim()) {
-      setFirstNameError('Please enter your first name.');
-      hasError = true;
-    } else if (firstName.includes(' ')) {
-      setFirstNameError('Please do not use space in the first name.');
-      hasError = true;
-    } else if (firstName.trim().length < 2) {
-      setFirstNameError('First name must be at least 2 characters.');
-      hasError = true;
-    } else if (!firstNameRegex.test(firstName)) {
-      setFirstNameError("First name must start with a letter and contain only letters, dots, quotes, and hyphens.");
+    const fnError = validateNameField(firstName, 'First name', false);
+    if (fnError) {
+      setFirstNameError(fnError);
       hasError = true;
     }
 
-    if (!lastName.trim()) {
-      setLastNameError('please enter your last name.');
-      hasError = true;
-    } else if (lastName.startsWith(' ')) {
-      setLastNameError('Last name cannot start with a space.');
-      hasError = true;
-    } else if (/\d/.test(lastName)) {
-      setLastNameError('Last name cannot contain numbers.');
-      hasError = true;
-    } else if (!lastNameRegex.test(lastName)) {
-      setLastNameError("Last name must start with a letter and contain only letters, spaces, dots, quotes, and hyphens.");
+    const lnError = validateNameField(lastName, 'Last name');
+    if (lnError) {
+      setLastNameError(lnError);
       hasError = true;
     }
 
@@ -205,28 +199,36 @@ export default function RegisterPage() {
       hasError = true;
     }
 
-    if (!mobileNumber.trim()) {
-      setMobileError('Please enter your Mobile number.');
-      hasError = true;
-    } else if (mobileNumber.length !== 10) {
-      setMobileError('Mobile number must be exactly 10 digits.');
-      hasError = true;
-    } else if (mobileNumber.startsWith('0')) {
-      setMobileError('Mobile number should never start with 0.');
+    if (!qualification) {
+      setQualificationError('Please select your qualification.');
       hasError = true;
     }
 
-    if (!email.trim()) {
+    const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
+
+    if (!mobileNumber.trim()) {
+      setMobileError('Please enter your Mobile number.');
+      hasError = true;
+    } else if (countryCode === '+91' && !/^[6-9]\d{9}$/.test(mobileNumber)) {
+      setMobileError('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+      hasError = true;
+    } else if (countryCode !== '+91' && (mobileNumber.length < 6 || mobileNumber.length > selectedCountry.maxLength)) {
+      setMobileError(`Mobile number must be between 6 and ${selectedCountry.maxLength} digits.`);
+      hasError = true;
+    }
+
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setEmailError('Please enter an email address.');
       hasError = true;
-    } else if (!emailRegex.test(email)) {
-      setEmailError('Please enter a valid email address.');
+    } else if (!isValidEmail(trimmedEmail)) {
+      setEmailError('Please enter a valid email address (e.g., user@example.com).');
       hasError = true;
     }
 
     const passError = getPasswordValidationError(password);
     if (passError) {
-      setPasswordError(passError);
+      setPasswordError('Please enter the valid password.');
       hasError = true;
     }
 
@@ -242,12 +244,13 @@ export default function RegisterPage() {
 
     try {
       const message = await register({
-        firstName,
-        lastName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         gender,
+        qualification,
         mobileNumber,
         countryCode,
-        email,
+        email: email.trim().toLowerCase(),
         password,
         profilePicture
       });
@@ -338,18 +341,45 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-zinc-950 px-4 py-16 font-sans transition-colors duration-300">
+    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4 py-8 font-sans transition-colors duration-300">
       {/* Subtle ambient glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-3xl dark:bg-blue-600/5" />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
+      <div className="w-full max-w-md relative z-10 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-zinc-100 dark:border-zinc-800/50 rounded-3xl p-6 sm:p-8 my-4 sm:my-0">
+        {/* Profile Picture Upload & Title */}
         <div className="flex flex-col items-center mb-10">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm mb-5">
-            <ClipboardCheck className="h-5 w-5" />
+          <div className="relative mb-2">
+            <label htmlFor="profile-pic" className={`cursor-pointer group relative flex h-24 w-24 items-center justify-center rounded-full bg-[#9ca3af] dark:bg-zinc-700 transition-all duration-200 overflow-hidden ${formError?.includes('Image') ? 'ring-2 ring-red-400' : 'hover:bg-zinc-500 dark:hover:bg-zinc-600'}`}>
+              {profilePicture ? (
+                <img src={profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-end pt-3">
+                  <div className="w-9 h-9 bg-[#e5e7eb] dark:bg-zinc-900 rounded-full mb-1 shrink-0" />
+                  <div className="w-[85%] h-10 bg-[#e5e7eb] dark:bg-zinc-900 rounded-t-full shrink-0 translate-y-1" />
+                </div>
+              )}
+              {profilePicture && (
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-semibold uppercase tracking-wider">
+                  Change
+                </div>
+              )}
+              <input
+                id="profile-pic"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
+            {!profilePicture && (
+              <div className="absolute bottom-0 right-0 h-8 w-8 bg-[#9ca3af] dark:bg-zinc-700 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950 pointer-events-none shadow-sm">
+                <Plus className="h-5 w-5 text-white" strokeWidth={3} />
+              </div>
+            )}
           </div>
+          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-6">Upload Profile Picture</span>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
             Employee Task Manager
           </h1>
@@ -428,10 +458,7 @@ export default function RegisterPage() {
             {/* First Name & Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="firstName">
-                  First name
-                </label>
-                <div className="relative">
+                <div className="relative mt-2">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   <input
                     id="firstName"
@@ -440,17 +467,17 @@ export default function RegisterPage() {
                     value={firstName}
                     onChange={(e) => handleFirstNameChange(e.target.value)}
                     placeholder="John"
-                    className={`${inputBase} pl-10 pr-3.5 py-2.5 ${firstNameError ? inputError : inputNormal}`}
+                    className={`${inputBase} pl-10 pr-3.5 py-3 ${firstNameError ? inputError : inputNormal}`}
                   />
+                  <label htmlFor="firstName" className={getFloatingLabelClass(firstName, !!firstNameError)}>
+                    First name
+                  </label>
                 </div>
                 {firstNameError && <p className="text-sm text-red-500 font-semibold">{firstNameError}</p>}
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="lastName">
-                  Last name
-                </label>
-                <div className="relative">
+                <div className="relative mt-2">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                   <input
                     id="lastName"
@@ -459,49 +486,144 @@ export default function RegisterPage() {
                     value={lastName}
                     onChange={(e) => handleLastNameChange(e.target.value)}
                     placeholder="Doe"
-                    className={`${inputBase} pl-10 pr-3.5 py-2.5 ${lastNameError ? inputError : inputNormal}`}
+                    className={`${inputBase} pl-10 pr-3.5 py-3 ${lastNameError ? inputError : inputNormal}`}
                   />
+                  <label htmlFor="lastName" className={getFloatingLabelClass(lastName, !!lastNameError)}>
+                    Last name
+                  </label>
                 </div>
                 {lastNameError && <p className="text-sm text-red-500 font-semibold">{lastNameError}</p>}
               </div>
             </div>
 
-            {/* Gender Select Dropdown */}
-            <div className="space-y-1">
-              <label htmlFor="gender" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                Gender
-              </label>
-              <select
-                id="gender"
-                value={gender}
-                onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-              {genderError && <p className="text-sm text-red-500 font-semibold">{genderError}</p>}
+            {/* Gender and Qualification Grid */}
+            <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
+              {/* Gender Radio Buttons */}
+              <div className="space-y-2">
+                <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
+                  Gender
+                </label>
+                <div className="flex flex-wrap gap-4 px-1">
+                  {['Male', 'Female', 'Other'].map((g) => (
+                    <label key={g} className="flex items-center gap-2 cursor-pointer group">
+                      <input
+                        type="radio"
+                        name="gender"
+                        value={g}
+                        checked={gender === g}
+                        onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
+                        className="peer sr-only"
+                      />
+                      <div className="w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50 peer-checked:border-blue-500 peer-checked:bg-blue-500 flex items-center justify-center transition-all">
+                        <div className="w-1.5 h-1.5 rounded-full bg-white scale-0 peer-checked:scale-100 transition-transform" />
+                      </div>
+                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+                        {g}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                {genderError && <p className="text-sm text-red-500 font-semibold px-1">{genderError}</p>}
+              </div>
+
+              {/* Qualification Select */}
+              <div className="space-y-1">
+                <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1 opacity-0 pointer-events-none hidden sm:block">
+                  Qualification
+                </label>
+                <div className="relative">
+                  <select
+                    value={qualification}
+                    onChange={(e) => { setQualification(e.target.value); setQualificationError(null); }}
+                    className={`${inputBase} px-3 py-3 ${qualificationError ? inputError : inputNormal} appearance-none cursor-pointer`}
+                  >
+                    <option value="" disabled hidden>Select Qualification</option>
+                    <optgroup label="Highest Qualification">
+                      {['10th', '12th', 'Bachelor\'s', 'Master\'s', 'PhD', 'Other'].map(q => (
+                        <option key={q} value={q}>{q}</option>
+                      ))}
+                    </optgroup>
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                {qualificationError && <p className="text-sm text-red-500 font-semibold px-1">{qualificationError}</p>}
+              </div>
             </div>
 
             {/* Country Selector Dropdown & Mobile Number */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="mobile">
-                Mobile Number
-              </label>
-              <div className="flex gap-2">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-2.5 text-xs text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shrink-0 cursor-pointer font-semibold"
+              <div className="flex gap-2 mt-2">
+                <div 
+                  ref={countryDropdownRef}
+                  className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 shrink-0 w-[105px] cursor-pointer"
+                  onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                 >
-                  {countries.map((c) => (
-                    <option key={c.name} value={c.code}>
-                      {c.flag} {c.code}
-                    </option>
-                  ))}
-                </select>
+                  <div className="flex items-center gap-2 pointer-events-none w-full">
+                    {(() => {
+                      const selected = countries.find(c => c.code === countryCode);
+                      return selected ? (
+                        <img 
+                          src={`https://flagcdn.com/w20/${selected.iso}.png`}
+                          srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
+                          width="20"
+                          alt={selected.name}
+                          className="rounded-[2px] shadow-sm shrink-0"
+                        />
+                      ) : null;
+                    })()}
+                    <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                  </div>
+                  
+                  {isCountryDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden">
+                      <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                        <input
+                          type="text"
+                          autoFocus
+                          placeholder="Search country..."
+                          value={countrySearchQuery}
+                          onChange={(e) => setCountrySearchQuery(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                        />
+                      </div>
+                      <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
+                        {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
+                          <li 
+                            key={`${c.name}-${idx}`}
+                            className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCountryCode(c.code);
+                              if (mobileNumber.length > c.maxLength) {
+                                setMobileNumber(mobileNumber.slice(0, c.maxLength));
+                              }
+                              setIsCountryDropdownOpen(false);
+                              setCountrySearchQuery('');
+                            }}
+                          >
+                            <img 
+                              src={`https://flagcdn.com/w20/${c.iso}.png`}
+                              srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
+                              width="20"
+                              alt={c.name}
+                              className="rounded-[2px] shadow-sm shrink-0"
+                            />
+                            <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
+                            <span className="text-zinc-500 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                          </li>
+                        ))}
+                        {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
+                          <li className="px-3 py-6 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">No countries found</li>
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
 
                 <div className="relative flex-1">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
@@ -512,8 +634,11 @@ export default function RegisterPage() {
                     value={mobileNumber}
                     onChange={(e) => handleMobileChange(e.target.value)}
                     placeholder="10-digit number"
-                    className={`${inputBase} pl-10 pr-3.5 py-2.5 ${mobileError ? inputError : inputNormal}`}
+                    className={`${inputBase} pl-10 pr-3.5 py-3 ${mobileError ? inputError : inputNormal}`}
                   />
+                  <label htmlFor="mobile" className={getFloatingLabelClass(mobileNumber, !!mobileError)}>
+                    Mobile Number
+                  </label>
                 </div>
               </div>
               {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
@@ -521,39 +646,62 @@ export default function RegisterPage() {
 
             {/* Email */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
-                Email
-              </label>
-              <div className="relative">
+              <div className="relative mt-2">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                 <input
                   id="email"
                   type="text"
                   maxLength={254}
                   value={email}
-                  onChange={(event) => { setEmail(event.target.value); setEmailError(null); setFormError(null); }}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    setEmail(val);
+                    setFormError(null);
+                    
+                    const trimmed = val.trim();
+                    if (!trimmed) {
+                      setEmailError(null);
+                    } else if (trimmed.toLowerCase().endsWith('@gmail.co')) {
+                      setEmailError('Please enter the valid email address.');
+                    } else if (!isValidEmail(trimmed)) {
+                      setEmailError('Please enter the valid email address.');
+                    } else {
+                      setEmailError(null);
+                    }
+                  }}
                   placeholder="name@company.com"
-                  className={`${inputBase} pl-10 pr-3.5 py-2.5 ${emailError ? inputError : inputNormal}`}
+                  className={`${inputBase} pl-10 pr-3.5 py-3 ${emailError ? inputError : inputNormal}`}
                 />
+                <label htmlFor="email" className={getFloatingLabelClass(email, !!emailError)}>
+                  Email
+                </label>
               </div>
               {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
             </div>
 
             {/* Password */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">
-                Password
-              </label>
-              <div className="relative">
+              <div className="relative mt-2">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   maxLength={128}
                   value={password}
-                  onChange={(event) => { setPassword(event.target.value); setPasswordError(null); setFormError(null); }}
+                  onChange={(event) => {
+                    const val = event.target.value;
+                    setPassword(val);
+                    setFormError(null);
+                    if (!val) {
+                      setPasswordError(null);
+                    } else if (getPasswordValidationError(val)) {
+                      setPasswordError('Please enter the valid password.');
+                    } else {
+                      setPasswordError(null);
+                    }
+                  }}
                   placeholder="••••••••"
-                  className={`${inputBase} pl-10 pr-10 py-2.5 ${passwordError ? inputError : inputNormal}`}
+                  className={`${inputBase} pl-10 pr-10 py-3 ${passwordError ? inputError : inputNormal}`}
                 />
                 <button
                   type="button"
@@ -563,89 +711,19 @@ export default function RegisterPage() {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                 </button>
+                <label htmlFor="password" className={getFloatingLabelClass(password, !!passwordError)}>
+                  Password
+                </label>
               </div>
 
-              {/* Password Validation Checklist & Strength Meter */}
-              {password && (
-                <div className="space-y-2.5 mt-2 p-3.5 rounded-xl bg-zinc-50 dark:bg-zinc-900/60 border border-zinc-200/60 dark:border-zinc-800/80 transition-all duration-200 animate-in fade-in slide-in-from-top-1">
-                  {/* Strength Meter */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs font-semibold">
-                      <span className="text-zinc-500 dark:text-zinc-400">Password Strength:</span>
-                      <span className={`font-bold transition-colors duration-200 ${
-                        strength.level === 'Very Weak' ? 'text-red-500' :
-                        strength.level === 'Weak' ? 'text-orange-500' :
-                        strength.level === 'Medium' ? 'text-yellow-500' :
-                        strength.level === 'Strong' ? 'text-green-500' : 'text-emerald-600'
-                      }`}>{strength.level}</span>
-                    </div>
-                    <div className="flex gap-1 h-1.5 w-full rounded-full bg-zinc-200/50 dark:bg-zinc-800 overflow-hidden">
-                      {[1, 2, 3, 4, 5].map((index) => (
-                        <div
-                          key={index}
-                          className={`h-full flex-1 transition-all duration-300 ${
-                            index <= strength.barCount ? strength.colorClass : 'bg-transparent'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
 
-                  {/* Requirements checklist */}
-                  <div className="space-y-1.5 pt-1.5 text-xs text-zinc-600 dark:text-zinc-400">
-                    <div className="flex items-center gap-2 transition-colors duration-150">
-                      {reqs.hasMinMaxLen ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
-                      ) : (
-                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
-                      )}
-                      <span className={reqs.hasMinMaxLen ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>8–64 characters</span>
-                    </div>
-                    <div className="flex items-center gap-2 transition-colors duration-150">
-                      {reqs.hasUppercase ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
-                      ) : (
-                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
-                      )}
-                      <span className={reqs.hasUppercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one uppercase letter</span>
-                    </div>
-                    <div className="flex items-center gap-2 transition-colors duration-150">
-                      {reqs.hasLowercase ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
-                      ) : (
-                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
-                      )}
-                      <span className={reqs.hasLowercase ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one lowercase letter</span>
-                    </div>
-                    <div className="flex items-center gap-2 transition-colors duration-150">
-                      {reqs.hasNumber ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
-                      ) : (
-                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
-                      )}
-                      <span className={reqs.hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one number</span>
-                    </div>
-                    <div className="flex items-center gap-2 transition-colors duration-150">
-                      {reqs.hasSpecialChar ? (
-                        <Check className="h-3.5 w-3.5 text-emerald-500 shrink-0 animate-in zoom-in duration-150" />
-                      ) : (
-                        <div className="h-3.5 w-3.5 rounded-full border border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center shrink-0 text-[10px] text-zinc-400 leading-none font-bold">•</div>
-                      )}
-                      <span className={reqs.hasSpecialChar ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : ''}>At least one special character</span>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
             </div>
 
             {/* Confirm Password */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="confirmPassword">
-                Confirm password
-              </label>
-              <div className="relative">
+              <div className="relative mt-2">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                 <input
                   id="confirmPassword"
@@ -654,7 +732,7 @@ export default function RegisterPage() {
                   value={confirmPassword}
                   onChange={(event) => { setConfirmPassword(event.target.value); setConfirmPasswordError(null); setFormError(null); }}
                   placeholder="••••••••"
-                  className={`${inputBase} pl-10 pr-10 py-2.5 ${confirmPasswordError ? inputError : inputNormal}`}
+                  className={`${inputBase} pl-10 pr-10 py-3 ${confirmPasswordError ? inputError : inputNormal}`}
                 />
                 <button
                   type="button"
@@ -663,32 +741,14 @@ export default function RegisterPage() {
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+                <label htmlFor="confirmPassword" className={getFloatingLabelClass(confirmPassword, !!confirmPasswordError)}>
+                  Confirm password
+                </label>
               </div>
               {confirmPasswordError && <p className="text-sm text-red-500 font-semibold">{confirmPasswordError}</p>}
             </div>
 
-            {/* Profile Picture */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="profile-pic">
-                Profile picture <span className="text-zinc-400 dark:text-zinc-600">(optional)</span>
-              </label>
-              <div className={`flex items-center gap-3 rounded-xl border px-3 py-2 bg-white dark:bg-zinc-900 transition duration-150 ${formError?.includes('Image') ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}>
-                {profilePicture ? (
-                  <img src={profilePicture} alt="Profile preview" className="h-8 w-8 shrink-0 rounded-full object-cover" />
-                ) : (
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
-                    <ImageIcon className="h-3.5 w-3.5" />
-                  </div>
-                )}
-                <input
-                  id="profile-pic"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="w-full text-xs text-zinc-500 file:mr-3 file:rounded-xl file:border-0 file:bg-zinc-100 file:px-2.5 file:py-1.5 file:text-xs file:font-semibold file:text-zinc-700 hover:file:bg-zinc-200 dark:text-zinc-400 dark:file:bg-zinc-800 dark:file:text-zinc-200 dark:hover:file:bg-zinc-700 cursor-pointer"
-                />
-              </div>
-            </div>
+
 
             {formError && (
               <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">

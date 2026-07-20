@@ -7,16 +7,11 @@ import { AuthRequest } from '../middleware/authMiddleware';
 export async function getTasks(req: AuthRequest, res: Response) {
   const query = req.user?.role === 'admin'
     ? {}
-    : {
-        $or: [
-          { createdBy: req.user?._id },
-          { assignedTo: req.user?._id }
-        ]
-      };
+    : { assignedTo: req.user?._id };
 
   const tasks = await Task.find(query)
     .populate('assignedTo', 'name email role designation')
-    .populate('createdBy', 'name email role designation');
+    .populate('assignedBy', 'name email role designation');
 
   // Filter out tasks whose assignedTo user has been deleted (populate returns null)
   const validTasks = tasks.filter((t) => t.assignedTo !== null);
@@ -31,17 +26,11 @@ export async function getTasks(req: AuthRequest, res: Response) {
 export async function getTaskById(req: AuthRequest, res: Response) {
   const query = req.user?.role === 'admin'
     ? { _id: req.params.id }
-    : {
-        _id: req.params.id,
-        $or: [
-          { createdBy: req.user?._id },
-          { assignedTo: req.user?._id }
-        ]
-      };
+    : { _id: req.params.id, assignedTo: req.user?._id };
 
   const task = await Task.findOne(query)
     .populate('assignedTo', 'name email role')
-    .populate('createdBy', 'name email role');
+    .populate('assignedBy', 'name email role');
 
   if (!task) {
     return res.status(404).json({
@@ -59,6 +48,14 @@ export async function getTaskById(req: AuthRequest, res: Response) {
 }
 
 export async function createTask(req: AuthRequest, res: Response) {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Forbidden. Only administrators can assign tasks.',
+      errors: [],
+    });
+  }
+
   const { title, description, status, priority, dueDate, assignedTo } = req.body as {
     title: string;
     description: string;
@@ -75,7 +72,7 @@ export async function createTask(req: AuthRequest, res: Response) {
     priority: priority || 'medium',
     dueDate: new Date(dueDate),
     assignedTo,
-    createdBy: req.user?._id,
+    assignedBy: req.user?._id,
   });
 
   return res.status(201).json({
@@ -89,13 +86,7 @@ export async function updateTask(req: AuthRequest, res: Response) {
   const updates = req.body;
   const query = req.user?.role === 'admin'
     ? { _id: req.params.id }
-    : {
-        _id: req.params.id,
-        $or: [
-          { createdBy: req.user?._id },
-          { assignedTo: req.user?._id }
-        ]
-      };
+    : { _id: req.params.id, assignedTo: req.user?._id };
 
   const task = await Task.findOneAndUpdate(
     query,
@@ -103,7 +94,7 @@ export async function updateTask(req: AuthRequest, res: Response) {
     { new: true }
   )
     .populate('assignedTo', 'name email role')
-    .populate('createdBy', 'name email role');
+    .populate('assignedBy', 'name email role');
 
   if (!task) {
     return res.status(404).json({
@@ -123,7 +114,7 @@ export async function updateTask(req: AuthRequest, res: Response) {
 export async function deleteTask(req: AuthRequest, res: Response) {
   const query = req.user?.role === 'admin'
     ? { _id: req.params.id }
-    : { _id: req.params.id, createdBy: req.user?._id };
+    : { _id: req.params.id, assignedTo: req.user?._id };
 
   const task = await Task.findOneAndDelete(query);
 

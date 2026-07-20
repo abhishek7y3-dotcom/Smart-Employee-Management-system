@@ -3,7 +3,7 @@
 This guide details the structural layout of this repository and describes the purpose and function of each directory and file across the frontend and backend applications.
 
 ---
-
+# Abhishek Yadav 
 ## 📂 Root Level Configuration Files
 
 - **`package.json`**: Configures dependencies, scripts (`dev`, `build`, `start`, `lint`), and meta configuration for the Next.js frontend application.
