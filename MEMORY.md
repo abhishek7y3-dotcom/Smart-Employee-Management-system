@@ -54,3 +54,18 @@ This document serves as the contextual memory for the **Employee Task Manager** 
 - **Strict Mode:** TypeScript strict mode is enabled. Do not use `any` types unless absolutely necessary.
 - **Validation:** Always rely on `express-validator` before passing payloads to controllers.
 - **Styling:** The project utilizes TailwindCSS with dark mode (`dark:` classes) and specific visual paradigms like `backdrop-blur`. Avoid introducing external CSS files; stick to utility classes or extend the `tailwind.config.ts`.
+
+---
+
+## 6. Chatbot Enhancements & Constraints
+
+### 6.1 System Prompt Restrictions
+- **Context Lock**: The Gemini AI system prompt is heavily restricted. If a user asks general knowledge questions, recipes, or anything unrelated to the company's work, tasks, or uploaded documents, the AI is instructed to politely refuse and remind the user of its specific role as an Employee Task Manager Assistant.
+
+### 6.2 Chat History Management (ChatGPT Style)
+- **Inline Editing & Options**: The recent chats sidebar implements a hover-based action menu allowing users to Rename, Pin, Move to Project, Archive, and Delete.
+- **Archiving & Pinning**: 
+  - `isPinned`: Pinned chats automatically sort to the top of the history list across both the frontend and backend queries.
+  - `isArchived`: Archiving operates as a soft-hide feature (`isArchived: true`), pulling it out of the main recent chats list and moving it into a dedicated `ArchiveView` without permanently deleting the data.
+- **Filtering**: The `ChatsListView` includes client-side filtering capabilities to easily view 'All', 'Pinned', or 'Unpinned' chats alongside standard search queries.
+- **Settings Profile Edit**: The settings page includes a Profile Edit tab right before the Security section, allowing quick updates to user's full name and designation.

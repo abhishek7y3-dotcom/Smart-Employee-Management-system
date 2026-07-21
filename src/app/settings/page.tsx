@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock } from 'lucide-react';
+import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
@@ -262,6 +262,73 @@ export default function SettingsPage() {
 
         <div className="grid grid-cols-1 gap-6">
           
+          {/* Profile Edit Tab */}
+          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
+            <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">
+              <UserIcon className="h-4.5 w-4.5 text-blue-500" />
+              Profile Details
+            </h2>
+            <div className="max-w-xl space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Full Name</label>
+                  <input
+                    id="settings-name"
+                    type="text"
+                    defaultValue={user?.name}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditName = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-designation" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Designation</label>
+                  <input
+                    id="settings-designation"
+                    type="text"
+                    defaultValue={user?.designation}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditDesignation = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={async (e) => {
+                  const btn = e.currentTarget;
+                  const prevText = btn.innerHTML;
+                  btn.innerHTML = 'Saving...';
+                  btn.disabled = true;
+                  try {
+                    const updates: any = {};
+                    if ((window as any)._tempEditName) updates.name = (window as any)._tempEditName;
+                    if ((window as any)._tempEditDesignation) updates.designation = (window as any)._tempEditDesignation;
+                    
+                    if (Object.keys(updates).length > 0) {
+                      await updateUser(updates);
+                      toast.success('Profile updated successfully!');
+                    }
+                  } catch (err: any) {
+                    toast.error(err?.message || 'Failed to update profile');
+                  } finally {
+                    btn.innerHTML = prevText;
+                    btn.disabled = false;
+                  }
+                }}
+                className="flex items-center gap-1.5 py-2 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+
           {/* Security Tab */}
           <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
             <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">

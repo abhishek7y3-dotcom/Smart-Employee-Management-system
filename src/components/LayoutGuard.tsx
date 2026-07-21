@@ -14,8 +14,15 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
   const pathname = usePathname();
   const router = useRouter();
   const { isAuthenticated, initializing, loading } = useAuth();
+  
+  const [isSidebarOpen, setIsSidebarOpen] = React.useState(false);
 
   const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password'].includes(pathname);
+
+  // Close sidebar on route change on mobile
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!initializing && !loading && !isAuthenticated && !isAuthPage) {
@@ -47,12 +54,14 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
     );
   }
 
+  const isChatbotPage = pathname.startsWith('/chatbot');
+
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
-      <Header />
-      <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
-        <main className="flex-1 overflow-y-auto bg-zinc-50 p-4 transition-colors duration-300 dark:bg-zinc-950 md:p-8">
+      <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className="flex flex-1 overflow-hidden relative">
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        <main className={`flex-1 transition-colors duration-300 bg-zinc-50 dark:bg-zinc-950 ${isChatbotPage ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-y-auto'}`}>
           {children}
         </main>
       </div>

@@ -6,6 +6,7 @@ import { TaskProvider } from "../context/TaskContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { AuthProvider } from "../context/AuthContext";
 import { CommunicationProvider } from "../context/CommunicationContext";
+import { ChatProvider } from "../context/ChatContext";
 import { LayoutGuard } from "../components/LayoutGuard";
 import MockAuthBanner from "../components/MockAuthBanner";
 
@@ -40,11 +41,13 @@ export default function RootLayout({
           <TaskProvider>
             <ThemeProvider>
               <CommunicationProvider>
-                <LayoutGuard>
-                  {children}
-                </LayoutGuard>
-                <Toaster richColors position="top-right" closeButton />
-                <MockAuthBanner />
+                <ChatProvider>
+                  <LayoutGuard>
+                    {children}
+                  </LayoutGuard>
+                  <Toaster richColors position="top-right" closeButton />
+                  <MockAuthBanner />
+                </ChatProvider>
               </CommunicationProvider>
             </ThemeProvider>
           </TaskProvider>

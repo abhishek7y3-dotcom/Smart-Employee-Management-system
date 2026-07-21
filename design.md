@@ -77,6 +77,13 @@ Dual-layer validation is enforced:
 - **Frontend**: Real-time validation (regex, length limits, character restrictions) preventing invalid submissions.
 - **Backend**: `express-validator` middleware enforcing a strict contract on incoming request bodies prior to controller execution.
 
+### Chatbot UI & Chat Management
+- **ChatGPT-Style Sidebar**: Incorporates inline rename functionalities, pinning important chats to the top, archiving chats for a decluttered view, and nesting chats into specific project folders.
+- **Filtering & Organization**: Real-time frontend filtering (`All`, `Pinned`, `Unpinned`) and dedicated modal views (`ArchiveView`, `LibraryView`, `ProjectView`) implemented seamlessly without full page reloads.
+
+### Profile Settings Management
+- **Inline Editing**: Allows users to dynamically update their `FullName` and `Designation` directly from the Settings page, complementing the existing Security (password change) controls.
+
 ---
 
 ## 5. Design System & UI/UX Guidelines

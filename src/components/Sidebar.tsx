@@ -4,7 +4,12 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const [isMock, setIsMock] = React.useState(false);
 
@@ -52,6 +57,15 @@ export const Sidebar: React.FC = () => {
       ),
     },
     {
+      name: 'Chatbot',
+      href: '/chatbot',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+      ),
+    },
+    {
       name: 'Settings',
       href: '/settings',
       icon: (
@@ -64,11 +78,25 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 border-r border-zinc-200/60 bg-white/60 px-4 py-6 dark:border-zinc-800/60 dark:bg-zinc-950/60 flex flex-col justify-between backdrop-blur-md">
-      <div className="space-y-6">
-        <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500">
-          Workspace Navigation
-        </div>
+    <>
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-zinc-950/50 backdrop-blur-sm md:hidden"
+          onClick={onClose}
+        />
+      )}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-64 flex-col justify-between
+        border-r border-zinc-200/60 bg-white/95 px-4 py-6 
+        dark:border-zinc-800/60 dark:bg-zinc-950/95 
+        backdrop-blur-xl transition-transform duration-300 ease-in-out
+        md:static md:flex md:translate-x-0
+        ${isOpen ? 'flex translate-x-0' : '-translate-x-full md:translate-x-0 hidden'}
+      `}>
+        <div className="space-y-6">
+          <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500">
+            Workspace Navigation
+          </div>
         <nav className="space-y-1">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
@@ -102,8 +130,9 @@ export const Sidebar: React.FC = () => {
               : 'Connected to MongoDB backend database.'}
           </p>
         </div>
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 

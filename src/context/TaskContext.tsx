@@ -72,7 +72,7 @@ const buildActivity = (
 });
 
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, initializing, user } = useAuth();
+  const { isAuthenticated, initializing, user, token } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
@@ -112,6 +112,20 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!initializing) {
       fetchTasks();
     }
+  }, [isAuthenticated, initializing]);
+
+  useEffect(() => {
+    const handleTaskChange = () => {
+      fetchTasks();
+    };
+
+    window.addEventListener('TASK_CREATED', handleTaskChange);
+    window.addEventListener('TASK_UPDATED', handleTaskChange);
+
+    return () => {
+      window.removeEventListener('TASK_CREATED', handleTaskChange);
+      window.removeEventListener('TASK_UPDATED', handleTaskChange);
+    };
   }, [isAuthenticated, initializing]);
 
   const recordActivity = (activity: ActivityLog) => {
