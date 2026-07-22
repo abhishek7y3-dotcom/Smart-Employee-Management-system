@@ -57,13 +57,22 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
   const isChatbotPage = pathname.startsWith('/chatbot');
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950">
-      <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="flex flex-1 overflow-hidden relative">
-        <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-        <main className={`flex-1 transition-colors duration-300 bg-zinc-50 dark:bg-zinc-950 ${isChatbotPage ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-y-auto'}`}>
-          {children}
-        </main>
+    <div className="flex h-screen flex-col overflow-hidden bg-zinc-50 transition-colors duration-300 dark:bg-zinc-950 relative">
+      {/* Dynamic Ambient Background */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-400/20 dark:bg-blue-600/20 blur-[100px] mix-blend-multiply dark:mix-blend-lighten animate-pulse opacity-70" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-400/20 dark:bg-indigo-600/20 blur-[120px] mix-blend-multiply dark:mix-blend-lighten opacity-60" />
+        <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-purple-400/15 dark:bg-purple-600/15 blur-[80px] mix-blend-multiply dark:mix-blend-lighten" />
+      </div>
+
+      <div className="flex h-screen flex-col overflow-hidden relative z-10 w-full">
+        <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div className="flex flex-1 overflow-hidden relative">
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+          <main className={`flex-1 transition-colors duration-300 bg-transparent ${isChatbotPage ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-y-auto custom-scrollbar'}`}>
+            {children}
+          </main>
+        </div>
       </div>
     </div>
   );

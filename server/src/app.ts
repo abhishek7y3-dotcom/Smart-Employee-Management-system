@@ -7,6 +7,7 @@ import authRoutes from './routes/authRoutes';
 import taskRoutes from './routes/taskRoutes';
 import chatRoutes from './routes/chatRoutes';
 import communicationRoutes from './routes/communicationRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

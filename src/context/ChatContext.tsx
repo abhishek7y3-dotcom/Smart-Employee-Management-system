@@ -313,11 +313,25 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
+    
+    let messageText = text;
+    let attachmentData = undefined;
+
+    // Check if the text contains our custom attachment string
+    const match = text.match(/^\[ATTACHMENT:(.*?)\](.*)/s);
+    if (match) {
+      try {
+        attachmentData = JSON.parse(match[1]);
+        messageText = match[2];
+      } catch (e) {
+        console.error("Failed to parse attachment", e);
+      }
+    }
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: text,
+      content: attachmentData ? `[Attached: ${attachmentData.name}]\n\n${messageText}` : messageText,
       timestamp: new Date().toISOString(),
     };
 
@@ -327,7 +341,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (!token) throw new Error('Not authenticated');
 
-      const response = await sendChatMessage(text, token, conversationId || undefined);
+      const response = await sendChatMessage(messageText, token, conversationId || undefined, attachmentData);
 
       if (response.success && response.data) {
         const isNewConversation = !conversationId;
@@ -356,12 +370,15 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
           });
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Chat Error:', error);
+      const apiError = error?.response?.data?.message;
+      const fallbackError = 'Sorry, this request does not seem related to Employee Task Management, or an error occurred processing the file. Please ask a relevant question.';
+      
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'system',
-        content: 'Sorry, I encountered an error. Please try again.',
+        content: apiError || fallbackError,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);

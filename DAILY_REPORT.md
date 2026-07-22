@@ -22,7 +22,13 @@ Added strictly validated task states (`todo`, `in_progress`, `completed`, `overd
 ✅ **Design System & Theming**
 Built a premium, dynamic Glassmorphism UI from scratch using Tailwind CSS.
 Configured seamless Light/Dark mode transitions using custom CSS variables for backgrounds, glass borders, and shadow overlays.
-Integrated a 20-second animated mesh gradient for the authentication screens.
+Integrated a 20-second animated mesh gradient for the authentication screens and expanded this ambient background architecture globally to the internal dashboard.
+Refactored the LayoutGuard, Header, and Sidebar to utilize `backdrop-blur-xl` frosted glass panels.
+
+✅ **Real-Time Notification Engine**
+Built a robust `Notification` schema to track cross-user alerts (messages, announcements, task assignments).
+Developed the `NotificationContext` on the frontend with a background polling mechanism.
+Integrated an interactive Bell icon dropdown in the Header to display unread badge counts and live alert feeds.
 
 ✅ **Frontend Form Intelligence**
 Implemented aggressive auto-capitalization logic on the Last Name input field to trigger dynamically as the user types.
@@ -39,6 +45,16 @@ Successfully bypassed local Windows Git credential blocks to force-push the enti
 - Identifying and resolving deep database validation bugs where frontend states mismatched backend Enums.
 - Automating the creation of a massive, comprehensive markdown documentation suite mapping the entire project's architecture, memory, and rules.
 - Diagnosing Git Credential Manager GUI hangs in the background and executing complex remote branching, rebasing, and force-push commands.
+- Architecting a global Notification System connecting backend triggers to a frontend polling Context.
+- Unifying design architecture by migrating isolated premium aesthetics (ambient mesh, glassmorphism) into a global layout wrapper.
+- Resolving dark mode bugs across the Chatbot section by applying exhaustive `dark:bg-zinc-950` and `dark:text-zinc-100` classes to secondary panels.
+- Integrated fully Multimodal Document Analysis into the Chatbot allowing users to upload PDFs and Images via Base64 serialization, directly passing data to Gemini's File API to intelligently analyze and generate company-specific tasks.
+- Significantly improved backend responsiveness and loading speeds by implementing exhaustive MongoDB compound indexing across `Task`, `Notification`, `ChatHistory`, and `ConversationMemory` schemas.
+- Enhanced Chatbot error handling to properly catch unprocessable files (or out-of-scope queries) and display user-friendly refusal messages related to Employee Task Management instead of generic system faults.
+- Implemented Lazy Loading on the frontend by dynamically importing heavy components (e.g., `ChatLayout`) via `next/dynamic` to minimize initial bundle size and boost page load performance.
+- Configured Node.js Cluster Module on the backend to spawn worker instances for each CPU core, ensuring horizontal load balancing and high availability.
+- Optimized Authentication (Login/Signup/Logout) speeds by adding explicit compound and standard indexes to the `User` schema (`email`, `mobileNumber`, `role`).
+- Executed Phase 1 of Codebase Documentation by adding extensive JSDoc block comments and inline architecture notes to the core backend logic (`taskController`, `chatController`, `authController`, `User`, and `Task`).
 
 ---
 

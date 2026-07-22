@@ -3,16 +3,21 @@ import { Send, Plus, X, FileText } from 'lucide-react';
 
 export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void; disabled: boolean }) => {
   const [text, setText] = useState('');
-  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string } | null>(null);
+  const [attachedFile, setAttachedFile] = useState<{ name: string; content: string; mimeType: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if ((text.trim() || attachedFile) && !disabled) {
+      // In the new architecture, we just pass the attachment as an object to onSend
+      // instead of injecting it into the text string, but we can serialize it temporarily
+      // or modify onSend signature. We'll encode it as JSON for easy extraction, or simply
+      // rely on the Context to handle a JSON string if we don't want to break the interface.
       let finalMessage = text;
       
       if (attachedFile) {
-        finalMessage = `[Document Attached: ${attachedFile.name}]\n\n${attachedFile.content}\n\nUser Question: ${text}`;
+        // We embed the file data in a custom token block so the Context can parse it out
+        finalMessage = `[ATTACHMENT:${JSON.stringify(attachedFile)}]${text}`;
       }
       
       onSend(finalMessage);
@@ -34,10 +39,15 @@ export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void;
 
     const reader = new FileReader();
     reader.onload = (event) => {
-      const content = event.target?.result as string;
-      setAttachedFile({ name: file.name, content });
+      const dataUrl = event.target?.result as string;
+      // dataUrl looks like "data:image/png;base64,iVBORw0KGgo..."
+      const [header, base64Data] = dataUrl.split(',');
+      const mimeMatch = header.match(/:(.*?);/);
+      const mimeType = mimeMatch ? mimeMatch[1] : file.type;
+      
+      setAttachedFile({ name: file.name, content: base64Data, mimeType });
     };
-    reader.readAsText(file);
+    reader.readAsDataURL(file);
     
     // Reset the input so the same file can be uploaded again if needed
     if (fileInputRef.current) {
@@ -77,7 +87,7 @@ export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void;
             ref={fileInputRef} 
             onChange={handleFileChange} 
             className="hidden" 
-            accept=".txt,.md,.json,.csv" 
+            accept=".txt,.md,.json,.csv,.pdf,image/png,image/jpeg,image/webp" 
           />
           <textarea
             value={text}

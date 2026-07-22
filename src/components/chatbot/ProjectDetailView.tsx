@@ -55,7 +55,7 @@ export const ProjectDetailView = ({ onOpenChat }: { onOpenChat: () => void }) =>
               startNewChat(project._id);
               onOpenChat();
             }}
-            className="flex items-center gap-2 bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
+            className="flex items-center gap-2 bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
           >
             <MessageSquarePlus size={16} />
             New chat in project
@@ -72,7 +72,7 @@ export const ProjectDetailView = ({ onOpenChat }: { onOpenChat: () => void }) =>
             placeholder="Search in project..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-blue-400 rounded-lg text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-100 transition-all text-zinc-900"
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-blue-400 dark:border-zinc-700 rounded-lg text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-100 dark:focus:ring-zinc-800 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
           />
         </div>
       </div>

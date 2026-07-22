@@ -79,7 +79,7 @@ export const ArchiveView = ({ onOpenChat }: { onOpenChat: () => void }) => {
               <span className="text-sm text-zinc-500 mr-2">{selectedChats.length} selected</span>
               <button 
                 onClick={handleSelectAll}
-                className="text-zinc-700 bg-white border border-zinc-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors"
+                className="text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 {selectedChats.length === filteredChats.length && filteredChats.length > 0 ? 'Deselect all' : 'Select all'}
               </button>
@@ -87,20 +87,20 @@ export const ArchiveView = ({ onOpenChat }: { onOpenChat: () => void }) => {
               <button 
                 disabled={selectedChats.length === 0}
                 onClick={handleBulkUnarchive}
-                className="text-zinc-700 bg-white border border-zinc-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Unarchive
               </button>
               <button 
                 disabled={selectedChats.length === 0}
                 onClick={handleBulkDelete}
-                className="text-red-600 bg-white border border-zinc-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50 hover:border-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="text-red-600 dark:text-red-400 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950/30 hover:border-red-200 dark:hover:border-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Delete
               </button>
               <button 
                 onClick={handleCancel}
-                className="text-zinc-700 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-100 transition-colors"
+                className="text-zinc-700 dark:text-zinc-300 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors"
               >
                 Cancel
               </button>
@@ -109,7 +109,7 @@ export const ArchiveView = ({ onOpenChat }: { onOpenChat: () => void }) => {
             <>
               <button 
                 onClick={() => setIsSelecting(true)}
-                className="text-zinc-700 bg-white border border-zinc-200 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors"
+                className="text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 Select chats
               </button>
@@ -127,7 +127,7 @@ export const ArchiveView = ({ onOpenChat }: { onOpenChat: () => void }) => {
             placeholder="Search archived chats..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white border border-blue-400 rounded-lg text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-100 transition-all text-zinc-900"
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-blue-400 dark:border-zinc-700 rounded-lg text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-100 dark:focus:ring-zinc-800 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ export const ArchiveView = ({ onOpenChat }: { onOpenChat: () => void }) => {
                     onOpenChat();
                   }
                 }}
-                className={`flex items-center justify-between py-3 px-2 rounded-lg cursor-pointer transition-colors group ${isSelecting ? 'hover:bg-transparent' : 'hover:bg-black/5'}`}
+                className={`flex items-center justify-between py-3 px-2 rounded-lg cursor-pointer transition-colors group ${isSelecting ? 'hover:bg-transparent' : 'hover:bg-black/5 dark:hover:bg-white/5'}`}
               >
                 <div className="flex items-center gap-3">
                   {isSelecting && (
@@ -161,7 +161,7 @@ export const ArchiveView = ({ onOpenChat }: { onOpenChat: () => void }) => {
                       className="w-4 h-4 rounded border-zinc-300 text-black focus:ring-black cursor-pointer"
                     />
                   )}
-                  <h4 className={`text-sm font-medium ${isSelecting ? 'text-zinc-800' : 'text-zinc-800 group-hover:text-black'}`}>{chat.title}</h4>
+                  <h4 className={`text-sm font-medium ${isSelecting ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white'}`}>{chat.title}</h4>
                 </div>
                 <span className="text-xs text-zinc-400">{formatTimeAgo(chat.updatedAt)}</span>
               </div>

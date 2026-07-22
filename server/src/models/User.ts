@@ -26,6 +26,13 @@ export interface IUser extends Document {
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
+/**
+ * @description The User Model defines the core authentication and identity schema for all members and admins.
+ * @logic
+ * - Enforces strong password constraints (min 8 chars) and automatically hashes passwords before saving via the `pre('save')` hook.
+ * - Stores sensitive data (like `password`, `loginOtp`, `verificationOtp`) with `select: false` to ensure they are NEVER accidentally returned in an API payload.
+ * - Uses specific indexes (`email`, `mobileNumber`) to ensure extremely fast O(1) or O(log n) lookups during Login.
+ */
 const userSchema = new Schema<IUser>(
   {
     name: {
@@ -127,6 +134,12 @@ const userSchema = new Schema<IUser>(
   }
 );
 
+/**
+ * @description Mongoose Middleware (Hook) that executes automatically right before a user is saved to the database.
+ * @logic
+ * - Handles automatic concatenation of `firstName` and `lastName` into a single `name` property.
+ * - Checks if the `password` field was modified. If so, it generates a cryptographically secure salt using `bcrypt` and replaces the plaintext password with a hashed version.
+ */
 userSchema.pre<IUser>('save', async function save(next) {
   if (this.firstName || this.lastName) {
     this.name = `${this.firstName || ''} ${this.lastName || ''}`.trim() || 'User';
@@ -150,6 +163,12 @@ userSchema.methods.comparePassword = async function comparePassword(
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
+
+// Add indexes to optimize authentication flows
+userSchema.index({ email: 1 });
+userSchema.index({ mobileNumber: 1 });
+userSchema.index({ role: 1 });
+userSchema.index({ email: 1, isVerified: 1 });
 
 const User = model<IUser>('User', userSchema);
 

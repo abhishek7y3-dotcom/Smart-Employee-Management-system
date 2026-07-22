@@ -6,16 +6,23 @@ import ConversationMemory from '../models/ConversationMemory';
 import ChatLibrary from '../models/ChatLibrary';
 import ChatProject from '../models/ChatProject';
 
+/**
+ * @description Entry point for incoming chat messages from the frontend.
+ * @logic
+ * - Receives the message (or file attachment) and passes it to the `chatService`.
+ * - Validates that the payload contains at least a text message or a file.
+ * - Forwards the request to Gemini's AI processing pipeline.
+ */
 export async function handleChatMessage(req: AuthRequest, res: Response) {
   try {
-    const { message, conversationId } = req.body;
-    if (!message) {
-      return res.status(400).json({ success: false, message: 'Message is required.' });
+    const { message, conversationId, attachment } = req.body;
+    if (!message && !attachment) {
+      return res.status(400).json({ success: false, message: 'Message or attachment is required.' });
     }
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-    const response = await processChat(req.user, message, conversationId);
+    const response = await processChat(req.user, message, conversationId, attachment);
     return res.status(200).json({ success: true, data: response });
   } catch (error: any) {
     console.error('Chat API Error:', error);
@@ -23,6 +30,12 @@ export async function handleChatMessage(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Retrieves the active (non-archived) chat sessions for the current user.
+ * @logic
+ * - Filters by `userId` to ensure users cannot view each other's chats (Privacy Control).
+ * - Sorts by `updatedAt` descending to show recent chats first.
+ */
 export async function getChatHistory(req: AuthRequest, res: Response) {
   try {
     const histories = await ChatHistory.find({ userId: req.user?._id, isArchived: { $ne: true } })

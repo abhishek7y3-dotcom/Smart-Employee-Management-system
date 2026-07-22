@@ -41,4 +41,7 @@ const ChatHistorySchema: Schema = new Schema(
   }
 );
 
+// Add compound index for fetching chat history (sorted by updatedAt)
+ChatHistorySchema.index({ userId: 1, isArchived: 1, updatedAt: -1 });
+
 export default mongoose.models.ChatHistory || mongoose.model<IChatHistory>('ChatHistory', ChatHistorySchema);

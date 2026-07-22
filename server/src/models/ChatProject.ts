@@ -21,4 +21,6 @@ const chatProjectSchema = new Schema<IChatProject>(
   { timestamps: true }
 );
 
+chatProjectSchema.index({ userId: 1, isArchived: 1 });
+
 export default mongoose.model<IChatProject>('ChatProject', chatProjectSchema);

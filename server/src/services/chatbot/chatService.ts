@@ -15,9 +15,11 @@ If they are a member, they can only view their own tasks, update their own tasks
 Always use the provided tools to fetch real data before answering. Do not hallucinate task data.
 
 CRITICAL INSTRUCTION: You are strictly restricted to answering questions related to the company, employee tasks, workloads, announcements, or documents uploaded by the user. If the user asks about ANYTHING ELSE (e.g. general knowledge, casual chat unrelated to work, outside topics), you MUST politely refuse to answer and remind them that you are specifically an Employee Task Manager Assistant.
+
+When a user uploads a document or image, analyze the contents thoroughly. If it contains ANY information relevant to tasks, employees, workloads, or company projects, generate a logical answer or task breakdown. If it does NOT contain relevant information, you MUST generate an error message stating: "Sorry, this document does not contain any information relevant to Employee Task Management."
 `;
 
-export async function processChat(user: IUser, message: string, conversationId?: string) {
+export async function processChat(user: IUser, message: string = "", conversationId?: string, attachment?: { name: string, content: string, mimeType: string }) {
   let chatHistoryId = conversationId;
 
   if (!chatHistoryId) {
@@ -40,7 +42,8 @@ export async function processChat(user: IUser, message: string, conversationId?:
     chatHistoryId = newHistory._id.toString();
   }
 
-  await ConversationMemory.create({ chatHistoryId, role: 'user', content: message });
+  const savedContent = attachment ? `[Attached: ${attachment.name}]\n\n${message}` : message;
+  await ConversationMemory.create({ chatHistoryId, role: 'user', content: savedContent });
 
   const pastMessages = await ConversationMemory.find({ chatHistoryId }).sort({ createdAt: -1 }).limit(20).lean();
   let rawHistory = pastMessages.reverse().map(msg => ({
@@ -79,7 +82,16 @@ export async function processChat(user: IUser, message: string, conversationId?:
     }
   ];
 
-  const response = await sendPromptWithTools(getSystemPrompt(user), history, message, tools);
+  let promptParts: any = message;
+  
+  if (attachment) {
+    promptParts = [
+      { text: `[Attached File: ${attachment.name}]\n${message}` },
+      { inlineData: { data: attachment.content, mimeType: attachment.mimeType } }
+    ];
+  }
+
+  const response = await sendPromptWithTools(getSystemPrompt(user), history, promptParts, tools);
   
   let finalContent = '';
   try {

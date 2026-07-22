@@ -45,4 +45,7 @@ const ConversationMemorySchema: Schema = new Schema(
   }
 );
 
+// Add compound index for fetching messages sorted by time
+ConversationMemorySchema.index({ chatHistoryId: 1, createdAt: 1 });
+
 export default mongoose.models.ConversationMemory || mongoose.model<IConversationMemory>('ConversationMemory', ConversationMemorySchema);

@@ -3,6 +3,7 @@ import Conversation from '../models/Conversation';
 import Message from '../models/Message';
 import Announcement from '../models/Announcement';
 import User from '../models/User';
+import Notification from '../models/Notification';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 // ─── Employees ───────────────────────────────────────────────────────────────
@@ -174,6 +175,17 @@ export async function createConversation(req: AuthRequest, res: Response) {
       isEdited: false,
     });
 
+    const notifications = to.map((recipientId: string) => ({
+      recipientId,
+      senderId: userId,
+      senderName: sender?.name || 'You',
+      senderAvatar: sender?.profilePicture || '',
+      type: 'message',
+      referenceId: conversation._id.toString(),
+      message: `New message from ${sender?.name || 'You'}: ${content.substring(0, 50)}...`,
+    }));
+    await Notification.insertMany(notifications);
+
     return res.status(201).json({
       success: true,
       message: 'Message sent successfully.',
@@ -304,13 +316,27 @@ export async function sendMessage(req: AuthRequest, res: Response) {
     });
 
     // Update conversation's last message
-    await Conversation.findByIdAndUpdate(conversationId, {
+    const conversation = await Conversation.findByIdAndUpdate(conversationId, {
       lastMessage: content.substring(0, 80),
       lastMessageTime: new Date(),
       lastMessageSender: sender?.name || 'You',
       status: 'replied',
       updatedAt: new Date(),
     });
+
+    if (conversation) {
+      const recipients = conversation.participants.filter(p => p.toString() !== userId);
+      const notifications = recipients.map((recipientId) => ({
+        recipientId,
+        senderId: userId,
+        senderName: sender?.name || 'You',
+        senderAvatar: sender?.profilePicture || '',
+        type: 'message',
+        referenceId: conversationId,
+        message: `Reply from ${sender?.name || 'You'}: ${content.substring(0, 50)}...`,
+      }));
+      await Notification.insertMany(notifications);
+    }
 
     return res.status(201).json({
       success: true,
@@ -403,6 +429,20 @@ export async function createAnnouncement(req: AuthRequest, res: Response) {
       isPinned: false,
       readBy: [],
     });
+
+    const allUsers = await User.find({ isVerified: true, _id: { $ne: userId } }, '_id');
+    const notifications = allUsers.map(u => ({
+      recipientId: u._id.toString(),
+      senderId: userId,
+      senderName: sender?.name || 'Admin',
+      senderAvatar: sender?.profilePicture || '',
+      type: 'announcement',
+      referenceId: announcement._id.toString(),
+      message: `New announcement: ${title}`,
+    }));
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+    }
 
     return res.status(201).json({
       success: true,
@@ -611,6 +651,19 @@ export async function sendBroadcast(req: AuthRequest, res: Response) {
       mentions: [],
       isEdited: false,
     });
+
+    const notifications = participantIds.filter(id => id !== userId).map(recipientId => ({
+      recipientId,
+      senderId: userId,
+      senderName: sender?.name || 'Admin',
+      senderAvatar: sender?.profilePicture || '',
+      type: 'message',
+      referenceId: conversation._id.toString(),
+      message: `Broadcast from ${sender?.name || 'Admin'}: ${subject}`,
+    }));
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+    }
 
     return res.status(201).json({
       success: true,

@@ -2,10 +2,10 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
-export const sendChatMessage = async (message: string, token: string, conversationId?: string) => {
+export const sendChatMessage = async (message: string, token: string, conversationId?: string, attachment?: { name: string, content: string, mimeType: string }) => {
   const response = await axios.post(
     `${API_BASE_URL}/chat`,
-    { message, conversationId },
+    { message, conversationId, attachment },
     {
       headers: {
         Authorization: `Bearer ${token}`

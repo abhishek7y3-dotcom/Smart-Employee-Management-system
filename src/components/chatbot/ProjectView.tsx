@@ -15,19 +15,19 @@ export const ProjectView = ({ onOpenProjectDetail }: { onOpenProjectDetail?: () 
 
   return (
     <>
-      <div className="flex flex-col h-full bg-white dark:bg-[#FAF9F7] px-8 py-10 max-w-5xl mx-auto w-full">
+      <div className="flex flex-col h-full bg-white dark:bg-zinc-950 px-8 py-10 max-w-5xl mx-auto w-full">
         
         {/* Top Header Section */}
         <div className="flex items-center justify-between mb-8">
-          <h1 className="text-3xl font-medium text-zinc-900">Projects</h1>
+          <h1 className="text-3xl font-medium text-zinc-900 dark:text-zinc-100">Projects</h1>
           
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 text-zinc-600 bg-white border border-zinc-200 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors">
-              Sort by <span className="font-semibold text-zinc-900">Last updated</span> <ChevronDown size={14} />
+            <button className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-3 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors">
+              Sort by <span className="font-semibold text-zinc-900 dark:text-zinc-100">Last updated</span> <ChevronDown size={14} />
             </button>
             <button 
               onClick={() => setIsProjectModalOpen(true)}
-              className="bg-black text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors"
+              className="bg-black dark:bg-white text-white dark:text-black px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-800 dark:hover:bg-zinc-200 transition-colors"
             >
               New project
             </button>
@@ -43,7 +43,7 @@ export const ProjectView = ({ onOpenProjectDetail }: { onOpenProjectDetail?: () 
               placeholder="Search projects..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white border border-zinc-200 rounded-lg text-sm outline-none focus:border-zinc-300 focus:ring-4 focus:ring-zinc-100 transition-all text-zinc-900"
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm outline-none focus:border-zinc-300 dark:focus:border-zinc-700 focus:ring-4 focus:ring-zinc-100 dark:focus:ring-zinc-800/50 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
             />
           </div>
         </div>
@@ -55,13 +55,13 @@ export const ProjectView = ({ onOpenProjectDetail }: { onOpenProjectDetail?: () 
               <div className="mb-6 text-zinc-800">
                 <LayoutTemplate size={48} strokeWidth={1} />
               </div>
-              <h3 className="text-lg font-medium text-zinc-900 mb-2">Looking to start a project?</h3>
-              <p className="text-zinc-500 text-sm max-w-sm mb-6 leading-relaxed">
+              <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">Looking to start a project?</h3>
+              <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-sm mb-6 leading-relaxed">
                 Upload materials, set custom Instructions, and organize conversations in one space.
               </p>
               <button 
                 onClick={() => setIsProjectModalOpen(true)}
-                className="bg-white border border-zinc-200 text-zinc-900 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-50 transition-colors"
+                className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 px-4 py-2 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
               >
                 New project
               </button>
@@ -99,7 +99,7 @@ const ProjectCard = ({ project, onOpenProjectDetail }: { project: any, onOpenPro
 
   return (
     <div 
-      className="relative bg-white border border-zinc-200 p-4 rounded-xl hover:shadow-md transition-shadow cursor-pointer group"
+      className="relative bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-4 rounded-xl hover:shadow-md dark:hover:shadow-zinc-900/50 transition-shadow cursor-pointer group"
       onClick={() => {
         if (!isEditing && !isMenuOpen) {
           setActiveProject(project._id);
@@ -126,7 +126,7 @@ const ProjectCard = ({ project, onOpenProjectDetail }: { project: any, onOpenPro
             className="flex-1 min-w-0 bg-transparent outline-none border-b border-blue-500 font-medium text-zinc-900 mr-2"
           />
         ) : (
-          <h4 className="font-medium text-zinc-900 flex items-center gap-2">
+          <h4 className="font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
             {project.isPinned && <Pin size={14} className="text-blue-500 fill-current" />}
             {project.name}
           </h4>

@@ -8,7 +8,7 @@ import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, Ch
 import { toast } from 'sonner';
 
 export default function SettingsPage() {
-  const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp } = useAuth();
+  const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp, updateUser } = useAuth();
   const router = useRouter();
 
   // Change password states
@@ -298,6 +298,72 @@ export default function SettingsPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-email" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email Address (Read-only)</label>
+                  <input
+                    id="settings-email"
+                    type="email"
+                    defaultValue={user?.email}
+                    readOnly
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-500 dark:text-zinc-400 outline-none cursor-not-allowed"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-mobile" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number</label>
+                  <input
+                    id="settings-mobile"
+                    type="text"
+                    defaultValue={user?.mobileNumber}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditMobile = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-gender" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Gender</label>
+                  <select
+                    id="settings-gender"
+                    defaultValue={user?.gender || ''}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditGender = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  >
+                    <option value="">Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-qualification" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Qualification</label>
+                  <input
+                    id="settings-qualification"
+                    type="text"
+                    defaultValue={user?.qualification}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditQualification = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-role" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Role (Read-only)</label>
+                  <input
+                    id="settings-role"
+                    type="text"
+                    defaultValue={user?.role}
+                    readOnly
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-500 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
+                  />
+                </div>
               </div>
               <button
                 type="button"
@@ -310,6 +376,9 @@ export default function SettingsPage() {
                     const updates: any = {};
                     if ((window as any)._tempEditName) updates.name = (window as any)._tempEditName;
                     if ((window as any)._tempEditDesignation) updates.designation = (window as any)._tempEditDesignation;
+                    if ((window as any)._tempEditMobile) updates.mobileNumber = (window as any)._tempEditMobile;
+                    if ((window as any)._tempEditGender) updates.gender = (window as any)._tempEditGender;
+                    if ((window as any)._tempEditQualification) updates.qualification = (window as any)._tempEditQualification;
                     
                     if (Object.keys(updates).length > 0) {
                       await updateUser(updates);

@@ -17,4 +17,6 @@ const chatLibrarySchema = new Schema<IChatLibrary>(
   { timestamps: true }
 );
 
+chatLibrarySchema.index({ userId: 1 });
+
 export default mongoose.model<IChatLibrary>('ChatLibrary', chatLibrarySchema);

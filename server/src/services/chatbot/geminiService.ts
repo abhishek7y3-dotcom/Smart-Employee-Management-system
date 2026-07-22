@@ -31,7 +31,7 @@ const model = genAI.getGenerativeModel(
 export async function sendPromptWithTools(
   systemInstruction: string,
   history: any[],
-  prompt: string,
+  prompt: string | any[],
   tools: { functionDeclarations: FunctionDeclaration[] }[]
 ) {
   const modelConfig: any = {

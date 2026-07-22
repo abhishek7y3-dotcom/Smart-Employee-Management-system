@@ -3,17 +3,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Bell, ClipboardCheck, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
+import { AccessibilityToggle } from './AccessibilityToggle';
 import { useTasks } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotification } from '../context/NotificationContext';
 import { ProfileModal } from './profile/ProfileModal';
-import { getRecentActivities } from '../utils/dashboardUtils';
+import { useRouter } from 'next/navigation';
 
-const activityMessages: Record<string, string> = {
-  created: 'Created',
-  updated: 'Updated',
-  status_changed: 'Changed status for',
-  deleted: 'Deleted',
-};
+
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -32,9 +29,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     });
 
   const [isMounted, setIsMounted] = useState(false);
-  const { activities } = useTasks();
   const { user, logout, updateUser } = useAuth();
-  
+  const { notifications, unreadCount, markAsRead } = useNotification();
+  const router = useRouter();
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -61,16 +59,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  const recentActivities = useMemo(() => getRecentActivities(activities, 5), [activities]);
-
-  const [lastSeenId, setLastSeenId] = useState<string | null>(null);
-
   useEffect(() => {
     setIsMounted(true);
-    if (typeof window !== 'undefined') {
-      setLastSeenId(window.localStorage.getItem('last_seen_activity_id'));
-    }
-
     const handleClickOutside = (event: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsNotificationsOpen(false);
@@ -84,26 +74,28 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     return () => window.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const hasNewActivity = useMemo(() => {
-    if (recentActivities.length === 0) return false;
-    return lastSeenId !== recentActivities[0].id;
-  }, [recentActivities, lastSeenId]);
-
   const handleToggleNotifications = () => {
-    setIsNotificationsOpen((current) => {
-      const nextVal = !current;
-      if (nextVal && recentActivities.length > 0) {
-        window.localStorage.setItem('last_seen_activity_id', recentActivities[0].id);
-        setLastSeenId(recentActivities[0].id);
-      }
-      return nextVal;
-    });
+    setIsNotificationsOpen((current) => !current);
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    if (!notification.isRead) {
+      await markAsRead(notification._id);
+    }
+    setIsNotificationsOpen(false);
+
+    // Navigate based on type
+    if (notification.type === 'message' || notification.type === 'announcement') {
+      router.push('/communication');
+    } else if (notification.type === 'task') {
+      router.push('/tasks');
+    }
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200/80 bg-white px-4 shadow-sm transition-colors duration-300 dark:border-zinc-800/80 dark:bg-zinc-950 md:px-6">
-      <div 
-        className="flex min-w-0 items-center gap-3 cursor-pointer select-none" 
+    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200/40 bg-white/60 px-4 backdrop-blur-xl shadow-sm transition-colors duration-300 dark:border-zinc-800/50 dark:bg-zinc-900/60 md:px-6">
+      <div
+        className="flex min-w-0 items-center gap-3 cursor-pointer select-none"
         onClick={onMenuClick}
       >
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm hover:scale-105 transition-all duration-300">
@@ -117,6 +109,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
       <div className="flex items-center gap-3 md:gap-4" ref={containerRef}>
         <div className="hidden text-sm font-semibold text-zinc-500 dark:text-zinc-400 lg:block">{isMounted ? currentDate : ''}</div>
+        {isMounted && <AccessibilityToggle />}
         {isMounted && <ThemeToggle />}
         <div className="relative">
           <button
@@ -126,8 +119,10 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             aria-label="Notifications"
           >
             <Bell className="h-5 w-5" />
-            {isMounted && hasNewActivity && (
-              <span className="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-950 animate-pulse" />
+            {isMounted && unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
           </button>
 
@@ -135,23 +130,39 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <div className="absolute right-0 top-12 mt-1 z-50 w-80 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 dark:border-zinc-800/80 dark:bg-zinc-950">
               <div className="border-b border-zinc-200/60 px-4 py-3 dark:border-zinc-800/60">
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-zinc-950 dark:text-zinc-100 font-outfit">Recent activity</p>
+                  <p className="text-sm font-bold text-zinc-950 dark:text-zinc-100 font-outfit">Notifications</p>
                   <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-2.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                    {recentActivities.length} logs
+                    {unreadCount} unread
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Latest task updates from your team.</p>
+                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Your recent alerts and messages.</p>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-zinc-200/80 dark:divide-zinc-800/60">
-                {recentActivities.length > 0 ? (
-                  recentActivities.map((activity) => (
-                    <div key={activity.id} className="p-3.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                      <div>
-                        <span className="font-bold text-zinc-900 dark:text-zinc-100">{activity.employeeName}</span>{' '}
-                        <span className="text-zinc-500 dark:text-zinc-400">
-                          {activity.details ?? `${activityMessages[activity.action] ?? 'Performed an action on'} ${activity.taskTitle}`}
-                        </span>
+                {notifications.length > 0 ? (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification._id}
+                      onClick={() => handleNotificationClick(notification)}
+                      className={`p-3.5 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer flex gap-3 ${!notification.isRead ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
+                    >
+                      {notification.senderAvatar ? (
+                        <img src={notification.senderAvatar} alt={notification.senderName} className="h-8 w-8 rounded-full object-cover shrink-0" />
+                      ) : (
+                        <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                          <Bell className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
+                          {notification.message}
+                        </p>
+                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
+                          {new Date(notification.createdAt).toLocaleDateString()} {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
                       </div>
+                      {!notification.isRead && (
+                        <div className="h-2 w-2 rounded-full bg-blue-600 self-center shrink-0" />
+                      )}
                     </div>
                   ))
                 ) : (
@@ -185,8 +196,8 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             <div className="absolute right-0 top-12 mt-1.5 z-50 w-48 overflow-hidden rounded-2xl border border-zinc-200/80 bg-white shadow-2xl transition-all duration-300 animate-in fade-in slide-in-from-top-2 dark:border-zinc-800/80 dark:bg-zinc-950">
               <div className="p-1.5 space-y-0.5">
                 <div className="flex flex-col items-center justify-center p-4 border-b border-zinc-100 dark:border-zinc-900 mb-1">
-                  <div 
-                    className="relative cursor-pointer group rounded-full overflow-hidden" 
+                  <div
+                    className="relative cursor-pointer group rounded-full overflow-hidden"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <img
@@ -200,17 +211,17 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                       </div>
                     )}
                   </div>
-                  <button 
+                  <button
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
                     className="mt-2 text-[11px] font-semibold text-blue-600 dark:text-blue-400 hover:underline disabled:opacity-50"
                   >
                     {isUploading ? 'Uploading...' : 'Change profile picture'}
                   </button>
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    className="hidden" 
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    className="hidden"
                     accept="image/jpeg, image/png, image/webp"
                     onChange={handleProfilePicChange}
                   />

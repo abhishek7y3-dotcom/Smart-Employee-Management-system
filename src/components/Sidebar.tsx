@@ -87,10 +87,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       )}
       <aside className={`
         fixed inset-y-0 left-0 z-50 w-64 flex-col justify-between
-        border-r border-zinc-200/60 bg-white/95 px-4 py-6 
-        dark:border-zinc-800/60 dark:bg-zinc-950/95 
+        border-r border-zinc-200/40 bg-white/60 px-4 py-6 
+        dark:border-zinc-800/50 dark:bg-zinc-900/60 
         backdrop-blur-xl transition-transform duration-300 ease-in-out
-        md:static md:flex md:translate-x-0
+        md:static md:flex md:translate-x-0 shadow-lg shadow-zinc-200/20 dark:shadow-black/20
         ${isOpen ? 'flex translate-x-0' : '-translate-x-full md:translate-x-0 hidden'}
       `}>
         <div className="space-y-6">

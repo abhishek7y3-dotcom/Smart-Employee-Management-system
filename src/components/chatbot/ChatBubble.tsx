@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, User } from 'lucide-react';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 export const ChatBubble = ({ role, content, timestamp }: { role: string; content: string; timestamp: string }) => {
   const isUser = role === 'user';
@@ -24,7 +25,11 @@ export const ChatBubble = ({ role, content, timestamp }: { role: string; content
         
         <div className="flex flex-col gap-1 flex-1">
           <div className="text-zinc-900 dark:text-zinc-100 text-[15px] pt-1">
-            <div className="whitespace-pre-wrap leading-relaxed font-normal">{content}</div>
+            {isUser ? (
+              <div className="whitespace-pre-wrap leading-relaxed font-normal">{content}</div>
+            ) : (
+              <MarkdownRenderer content={content} />
+            )}
           </div>
         </div>
       </div>

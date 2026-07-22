@@ -6,6 +6,15 @@ import { uploadToCloudinary } from '../utils/cloudinary';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { encrypt, decrypt } from '../utils/crypto';
 
+/**
+ * @description Registers a new user in the system.
+ * @logic
+ * - Extracts personal details and credentials from the payload.
+ * - Performs a MongoDB lookup to ensure the email or mobile number isn't already taken (Conflict Prevention).
+ * - Hashes the password (handled automatically via the Mongoose pre-save hook in `User.ts`).
+ * - Uploads the profile picture to Cloudinary if provided.
+ * - Generates a 6-digit OTP for email verification and sends it via Nodemailer.
+ */
 export async function register(req: Request, res: Response) {
   const { name, email, password, profilePicture, firstName, lastName, gender, qualification, mobileNumber, countryCode } = req.body as {
     name: string;

@@ -237,7 +237,7 @@ export default function LoginPage() {
         <div className="backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border border-white/40 dark:border-zinc-800/50 p-8 sm:p-10 rounded-3xl shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 transition-all duration-300">
         {/* Logo */}
         <div className="flex flex-col items-center mb-10">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/30 mb-5 ring-4 ring-white/50 dark:ring-zinc-800/50">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg shadow-zinc-900/30 dark:shadow-white/30 mb-5 ring-4 ring-white/50 dark:ring-zinc-800/50">
             <ClipboardCheck className="h-7 w-7" />
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 font-outfit text-center">
