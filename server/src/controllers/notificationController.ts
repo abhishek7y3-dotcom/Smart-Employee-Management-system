@@ -1,6 +1,13 @@
 import { Request, Response } from 'express';
 import Notification from '../models/Notification';
 
+/**
+ * @description Retrieves all notifications for the currently logged-in user.
+ * @logic 
+ * - Fetches the last 50 notifications for the user.
+ * - Sorts them so unread notifications appear first, followed by newest ones.
+ * - Also returns the total count of unread notifications.
+ */
 export const getNotifications = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id.toString();
@@ -21,6 +28,12 @@ export const getNotifications = async (req: Request, res: Response): Promise<voi
   }
 };
 
+/**
+ * @description Marks a specific notification as read.
+ * @logic 
+ * - Finds the notification by ID and ensures it belongs to the current user.
+ * - Updates `isRead` to true.
+ */
 export const markAsRead = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id.toString();
@@ -43,6 +56,11 @@ export const markAsRead = async (req: Request, res: Response): Promise<void> => 
   }
 };
 
+/**
+ * @description Marks all unread notifications of the user as read.
+ * @logic 
+ * - Uses `updateMany` to efficiently update all matching documents in one query.
+ */
 export const markAllAsRead = async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = (req as any).user._id.toString();

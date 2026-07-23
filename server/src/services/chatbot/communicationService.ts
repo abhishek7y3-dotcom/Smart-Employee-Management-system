@@ -5,6 +5,7 @@ import { IUser } from '../../models/User';
 // ---------------------------------------------------------------------------
 // 1. CREATE ANNOUNCEMENT
 // ---------------------------------------------------------------------------
+// AI Bot ke liye 'createAnnouncement' tool ka schema
 export const createAnnouncementDeclaration: FunctionDeclaration = {
   name: 'createAnnouncement',
   description: 'Creates a new workspace-wide announcement. ADMIN ONLY.',
@@ -19,6 +20,7 @@ export const createAnnouncementDeclaration: FunctionDeclaration = {
   },
 };
 
+// Asli function jo Admin ke kehne par company-wide notice (announcement) database me banata hai
 export async function handleCreateAnnouncement(user: IUser, args: { title: string; content: string; priority?: string }) {
   if (user.role !== 'admin') {
     return { error: 'UNAUTHORIZED: Only administrators can create announcements.' };
@@ -37,6 +39,7 @@ export async function handleCreateAnnouncement(user: IUser, args: { title: strin
 // ---------------------------------------------------------------------------
 // 2. FETCH ANNOUNCEMENTS
 // ---------------------------------------------------------------------------
+// AI Bot ke liye 'fetchAnnouncements' tool ka schema
 export const fetchAnnouncementsDeclaration: FunctionDeclaration = {
   name: 'fetchAnnouncements',
   description: 'Fetches recent workspace announcements.',
@@ -48,6 +51,7 @@ export const fetchAnnouncementsDeclaration: FunctionDeclaration = {
   },
 };
 
+// Function jo database se naye announcements laata hai aur AI ko deta hai
 export async function handleFetchAnnouncements(user: IUser, args: { limit?: number }) {
   const announcements = await Announcement.find()
     .sort({ createdAt: -1 })

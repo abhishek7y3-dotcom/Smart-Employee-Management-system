@@ -1,15 +1,13 @@
 import { GoogleGenerativeAI, FunctionDeclaration } from '@google/generative-ai';
 
-// Initialize the SDK. It will throw if the key is missing when called, 
-// which is handled gracefully in the orchestrator.
+// Gemini API SDK ko initialize karna. Agar key .env me nahi hai toh error dega.
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'MISSING_KEY');
 
-// We use a custom fetch interceptor because the Gemini SDK incorrectly 
-// classifies new 'AQ.' API keys as OAuth tokens and puts them in the 
-// Authorization header instead of the URL query string.
+// Gemini SDK me kabhi kabhi naye keys ke sath issue aata hai, 
+// isliye hum customFetch banate hain taaki API key strictly URL me jaye.
 const customFetch = async (url: string | URL | Request, init?: RequestInit) => {
   const urlObj = new URL(url.toString());
-  // Force the API key back into the query string
+  // URL parameters me key add karna
   urlObj.searchParams.set('key', process.env.GEMINI_API_KEY || '');
   
   // Create new headers and remove the invalid Bearer token
@@ -22,17 +20,18 @@ const customFetch = async (url: string | URL | Request, init?: RequestInit) => {
   });
 };
 
-// We use the modern gemini-flash-latest model which supports function calling
+// AI model set karna, yahan 'gemini-flash-latest' use kiya gaya hai jo fast hai aur functions call kar sakta hai
 const model = genAI.getGenerativeModel(
   { model: 'gemini-flash-latest' },
-  { customFetch }
+  { customFetch } as any
 );
 
+// Ye main function hai jo user ki chat ko Gemini AI tak bhejta hai
 export async function sendPromptWithTools(
-  systemInstruction: string,
-  history: any[],
-  prompt: string | any[],
-  tools: { functionDeclarations: FunctionDeclaration[] }[]
+  systemInstruction: string, // AI ko samjhana ki uska role kya hai
+  history: any[], // Purani baatein (Context)
+  prompt: string | any[], // Naya message
+  tools: { functionDeclarations: FunctionDeclaration[] }[] // AI ko diye gaye tools (actions)
 ) {
   const modelConfig: any = {
     model: 'gemini-flash-latest',
@@ -45,7 +44,7 @@ export async function sendPromptWithTools(
 
   const modelWithConfig = genAI.getGenerativeModel(
     modelConfig,
-    { customFetch }
+    { customFetch } as any
   );
 
   const chat = modelWithConfig.startChat({

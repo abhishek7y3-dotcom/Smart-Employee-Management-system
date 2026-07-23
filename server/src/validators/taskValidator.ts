@@ -4,6 +4,7 @@ import { VALIDATION_MESSAGES } from '../constants/validationMessages';
 const statusValues = ['todo', 'in_progress', 'completed', 'overdue', 'cancelled'];
 const priorityValues = ['low', 'medium', 'high'];
 
+// Naya task banate waqt title, description aur date jaise zaroori fields ko check karne ke rules
 export const taskCreateValidation = [
   body('title')
     .trim()
@@ -37,6 +38,7 @@ export const taskCreateValidation = [
     .withMessage(VALIDATION_MESSAGES.TASK.ASSIGNED_TO_INVALID),
 ];
 
+// Kisi existing task ko update (edit) karte waqt sirf bheji gayi fields ko check karne ke rules
 export const taskUpdateValidation = [
   body('title')
     .optional()

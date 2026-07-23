@@ -1,10 +1,11 @@
 import { Response } from 'express';
-import { AuthRequest } from '../../middleware/authMiddleware';
+import { AuthRequest } from '../middleware/authMiddleware';
 import { processChat } from '../services/chatbot/chatService';
 import ChatHistory from '../models/ChatHistory';
 import ConversationMemory from '../models/ConversationMemory';
 import ChatLibrary from '../models/ChatLibrary';
 import ChatProject from '../models/ChatProject';
+import { generateGreeting } from '../services/chatbot/greetingService';
 
 /**
  * @description Entry point for incoming chat messages from the frontend.
@@ -47,6 +48,10 @@ export async function getChatHistory(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Retrieves archived chat sessions.
+ * @logic Only fetches chats marked as isArchived for the logged-in user.
+ */
 export async function getArchivedChats(req: AuthRequest, res: Response) {
   try {
     const histories = await ChatHistory.find({ userId: req.user?._id, isArchived: true })
@@ -58,6 +63,29 @@ export async function getArchivedChats(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Generates a contextual, zero-latency greeting for the user.
+ * @logic Checks if the user has previous history to determine if they are new or returning.
+ */
+export async function getGreeting(req: AuthRequest, res: Response) {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+    const historyCount = await ChatHistory.countDocuments({ userId: req.user._id });
+    const hasHistory = historyCount > 0;
+    const greeting = generateGreeting(req.user as any, hasHistory);
+    return res.status(200).json({ success: true, data: { greeting } });
+  } catch (error) {
+    console.error('Error fetching greeting:', error);
+    return res.status(500).json({ success: false, message: 'Failed to fetch greeting' });
+  }
+}
+
+/**
+ * @description Retrieves a specific conversation's full history.
+ * @logic Fetches the ChatHistory document and all associated ConversationMemory messages.
+ */
 export async function getConversation(req: AuthRequest, res: Response) {
   try {
     const { conversationId } = req.params;
@@ -72,6 +100,10 @@ export async function getConversation(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Deletes a chat session permanently.
+ * @logic Removes the ChatHistory, deletes all linked messages, and removes references from Projects/Libraries.
+ */
 export async function deleteChat(req: AuthRequest, res: Response) {
   try {
     const { chatId } = req.params;
@@ -93,6 +125,9 @@ export async function deleteChat(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Creates a new library folder to organize chats.
+ */
 export async function createLibrary(req: AuthRequest, res: Response) {
   try {
     const { name } = req.body;
@@ -132,6 +167,9 @@ export async function addChatToLibrary(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Creates a new project folder for grouping related AI chats.
+ */
 export async function createProject(req: AuthRequest, res: Response) {
   try {
     const { name } = req.body;
@@ -171,6 +209,9 @@ export async function addChatToProject(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Updates the title of an existing chat.
+ */
 export async function renameChat(req: AuthRequest, res: Response) {
   try {
     const { chatId } = req.params;
@@ -185,6 +226,9 @@ export async function renameChat(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Toggles the pinned status of a chat (pins/unpins it).
+ */
 export async function pinChat(req: AuthRequest, res: Response) {
   try {
     const { chatId } = req.params;
@@ -200,6 +244,9 @@ export async function pinChat(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * @description Toggles the archived status of a chat (archives/unarchives it).
+ */
 export async function archiveChat(req: AuthRequest, res: Response) {
   try {
     const { chatId } = req.params;

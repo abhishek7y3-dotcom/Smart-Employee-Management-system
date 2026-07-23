@@ -10,9 +10,19 @@ The chatbot follows a hybrid **Retrieval-Augmented Generation (RAG) & Tool-Calli
 
 ```mermaid
 graph TD
-    UI[Chat UI (Next.js)] -->|HTTP POST| API(Express API)
+    UI[Chat UI (Next.js)] -->|HTTP GET /greeting| GREETING_ENGINE[Greeting Engine]
+    GREETING_ENGINE -->|0ms Cache| UI
+    
+    UI -->|HTTP POST| API(Express API)
     API --> AUTH[JWT Authentication]
-    AUTH --> ORCHESTRATOR{Orchestrator Service}
+    
+    AUTH --> GIBBERISH[Gibberish Detector]
+    GIBBERISH -->|Rejects 'asdf'| API
+    
+    GIBBERISH --> FAST_TRACK[Fast Track Semantic Cache]
+    FAST_TRACK -->|0.5 Overlap Hit| API
+    
+    FAST_TRACK --> ORCHESTRATOR{Orchestrator Service}
     
     ORCHESTRATOR -->|Tool Request| DB_TOOLS[Domain Tool Wrappers]
     DB_TOOLS --> MONGO[(MongoDB)]
@@ -34,7 +44,9 @@ When a user types a message (e.g., *"Show me all high-priority tasks assigned to
 
 1. **Client Submission**: The Next.js client sends the raw text to `POST /api/chat`.
 2. **Security & Context Extraction**: The backend verifies the JWT and extracts the `userId` and `role`. This is critical—the AI only operates on data the user is authorized to see.
-3. **Memory Retrieval**: The `conversationService` fetches the last 10 messages from `ConversationMemory` to provide context to the LLM.
+3. **Gibberish Detection (Pre-Flight)**: The input is checked for random keyboard mashing (`asdfgh`). If detected, it is rejected immediately to save LLM tokens.
+4. **Fast Track Semantic Cache (V2)**: The input is tokenized and scored against 18+ hardcoded Enterprise policies. If the overlap score crosses `0.5` and the user's role matches, it instantly returns the cached answer (`FAST_TRACK_CACHE_HIT`), bypassing the LLM entirely.
+5. **Memory Retrieval**: If no cache hit occurs, the `conversationService` fetches the last 10 messages from `ConversationMemory` to provide context to the LLM.
 4. **Intent Detection & Decision (Gemini Function Calling)**:
    - The Orchestrator sends the prompt, context, and a list of **Available Tools** (JSON schemas of our backend services) to Gemini.
    - Gemini decides if it needs to call a tool (e.g., `fetchUserTasks(userId: "John", priority: "high")`) or just respond conversationally.

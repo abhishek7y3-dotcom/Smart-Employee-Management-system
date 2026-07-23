@@ -1,10 +1,11 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 export type Theme = 'light' | 'dark';
 export type ThemePreference = 'light' | 'dark' | 'auto';
 
+// App ki current theme aur usko change karne ke sabhi available functions (Context ki type definition)
 interface ThemeContextType {
   theme: Theme;
   themePreference: ThemePreference;
@@ -15,6 +16,7 @@ interface ThemeContextType {
 const STORAGE_KEY = 'theme_preference';
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+// System ka time check karke subah ke waqt (6am - 6pm) 'light' aur sham ke waqt 'dark' theme set karne ka logic
 const getAutoTheme = (): Theme => {
   const hour = new Date().getHours();
   return hour >= 6 && hour < 18 ? 'light' : 'dark';
@@ -29,6 +31,7 @@ const getStoredPreference = (): ThemePreference => {
 const resolveTheme = (preference: ThemePreference): Theme =>
   preference === 'auto' ? getAutoTheme() : preference;
 
+// Asal me HTML ke tag par 'dark' class lagana taaki CSS me dark mode colors activate ho jayein
 const applyThemeClass = (theme: Theme) => {
   document.documentElement.classList.toggle('dark', theme === 'dark');
   document.documentElement.style.colorScheme = theme;
@@ -47,6 +50,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     applyThemeClass(theme);
   }, [theme]);
 
+  // Agar user ne 'Auto' theme select ki hai toh time ke hisaab se theme update karna
   useEffect(() => {
     if (themePreference !== 'auto') return;
 

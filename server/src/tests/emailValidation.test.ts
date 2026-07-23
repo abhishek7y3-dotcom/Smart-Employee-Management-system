@@ -1,5 +1,6 @@
-import { isValidEmail } from '../src/utils/emailValidator';
+import { isValidEmail } from '../utils/emailValidator';
 
+// Email validation logic ki poori testing yahan likhi hai (Jest testing framework use karke)
 describe('isValidEmail Enterprise Utility', () => {
   describe('Valid Emails (should return true)', () => {
     it('accepts standard emails', () => {
@@ -27,6 +28,7 @@ describe('isValidEmail Enterprise Utility', () => {
     });
   });
 
+  // Galat format wale emails ki testing, in par hamesha false aana chahiye
   describe('Invalid Emails (should return false)', () => {
     it('rejects missing or multiple @ symbols', () => {
       expect(isValidEmail('testexample.com')).toBe(false);
@@ -55,6 +57,7 @@ describe('isValidEmail Enterprise Utility', () => {
     });
   });
 
+  // Hackers wale (malicious, XSS ya SQLi) emails ki testing, jisse app secure rahe
   describe('Malicious Payloads & Injection Protection (should return false)', () => {
     it('rejects spaces in the email', () => {
       expect(isValidEmail('test name@example.com')).toBe(false);

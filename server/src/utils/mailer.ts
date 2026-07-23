@@ -46,6 +46,7 @@ async function getTransporter(): Promise<nodemailer.Transporter> {
   return testAccountTransporter;
 }
 
+// User ko naya account verify karne ke liye 6-digit OTP email par bhejna
 export async function sendVerificationOtp(email: string, name: string, otp: string): Promise<void> {
   try {
     const transporter = await getTransporter();
@@ -100,6 +101,7 @@ export async function sendVerificationOtp(email: string, name: string, otp: stri
   }
 }
 
+// Agar user password bhool jaye, toh password reset karne ke liye email par OTP bhejna
 export async function sendResetPasswordOtp(email: string, name: string, otp: string): Promise<void> {
   try {
     const transporter = await getTransporter();

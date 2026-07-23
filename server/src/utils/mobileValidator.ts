@@ -9,6 +9,7 @@
  * Validates a mobile number dynamically based on country code.
  * Rejects emojis, letters, symbols, whitespace, and validates length/prefixes.
  */
+// Mobile number check karna (sirf numbers hone chahiye aur India ke hisaab se exactly 10 digits hone chahiye)
 export const isValidMobileNumber = (mobileNumber: string, countryCode: string = '+91'): boolean => {
   if (!mobileNumber || typeof mobileNumber !== 'string') return false;
 

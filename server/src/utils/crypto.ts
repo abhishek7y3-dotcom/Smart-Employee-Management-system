@@ -1,3 +1,4 @@
+// Yeh file sensitive data (jaise messages) ko encrypt aur decrypt karne ke kaam aati hai
 import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 const ALGORITHM = 'aes-256-gcm';
@@ -19,6 +20,7 @@ function getKey(): Buffer {
  * Returns a single colon-delimited string: `iv:authTag:ciphertext` (all hex-encoded).
  * A fresh random IV is generated per call, so identical inputs produce different ciphertext.
  */
+// Data ko safe (encrypt) karna taaki koi aur ise padh na sake
 export function encrypt(plaintext: string): string {
   const key = getKey();
   const iv = randomBytes(IV_LENGTH);
@@ -41,6 +43,7 @@ export function encrypt(plaintext: string): string {
  * Decrypts a string previously produced by `encrypt()`.
  * Verifies the GCM auth tag — throws if the ciphertext has been tampered with.
  */
+// Encrypted data ko wapas normal text me badalna (decrypt karna)
 export function decrypt(ciphertext: string): string {
   const key = getKey();
   const parts = ciphertext.split(':');

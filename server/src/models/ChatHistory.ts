@@ -12,25 +12,30 @@ export interface IChatHistory extends Document {
 
 const ChatHistorySchema: Schema = new Schema(
   {
+    // Ye chat history kis user ki hai uski ID
     userId: { 
       type: Schema.Types.ObjectId, 
       ref: 'User', 
       required: true,
       index: true 
     },
+    // Chat ka title ya heading (by default 'New Conversation')
     title: { 
       type: String, 
       required: true,
       default: 'New Conversation'
     },
+    // AI se generate hui chat ki choti si summary
     summary: { 
       type: String,
       required: false 
     },
+    // Kya is chat ko archive kar diya gaya hai?
     isArchived: {
       type: Boolean,
       default: false
     },
+    // Kya ye chat important mark (pin) ki gayi hai?
     isPinned: {
       type: Boolean,
       default: false

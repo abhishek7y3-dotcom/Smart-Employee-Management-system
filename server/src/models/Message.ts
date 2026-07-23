@@ -24,11 +24,13 @@ export interface IMessage extends Document {
 
 const messageSchema = new Schema<IMessage>(
   {
+    // Ye message kis conversation/chat ka hissa hai uski ID
     conversationId: {
       type: String,
       required: true,
       index: true,
     },
+    // Kis user ne ye message bheja hai uski ID
     senderId: {
       type: String,
       required: true,
@@ -41,6 +43,7 @@ const messageSchema = new Schema<IMessage>(
       type: String,
       default: '',
     },
+    // Message me actual me kya likha hai
     content: {
       type: String,
       required: true,
@@ -54,6 +57,7 @@ const messageSchema = new Schema<IMessage>(
       enum: ['sent', 'delivered', 'read', 'unread', 'replied', 'archived'],
       default: 'sent',
     },
+    // Agar message me koi files (images, pdf) attached hain, unki details
     attachments: [{
       id: String,
       name: String,
@@ -65,13 +69,16 @@ const messageSchema = new Schema<IMessage>(
       url: String,
       size: Number,
     }],
+    // Jin users ko is message me mention kiya gaya hai
     mentions: [{
       type: String,
     }],
+    // Kya bhejne ke baad message edit kiya gaya hai?
     isEdited: {
       type: Boolean,
       default: false,
     },
+    // Agar kisi purane message ka reply hai, toh us purane message ki ID
     replyToId: {
       type: String,
       default: null,

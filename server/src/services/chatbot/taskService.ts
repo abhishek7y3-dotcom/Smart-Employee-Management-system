@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 // ---------------------------------------------------------------------------
 // 1. FETCH TASKS
 // ---------------------------------------------------------------------------
+// AI Bot ke liye 'fetchTasks' tool ka schema
 export const fetchTasksDeclaration: FunctionDeclaration = {
   name: 'fetchTasks',
   description: 'Fetches a list of tasks assigned to users. Can filter by status and priority.',
@@ -24,8 +25,10 @@ export const fetchTasksDeclaration: FunctionDeclaration = {
   },
 };
 
+// Asli function jo database se tasks nikalta hai
 export async function handleFetchTasks(user: IUser, args: { status?: string; priority?: string }) {
   const query: any = {};
+  // Agar user admin nahi hai, toh use sirf apne tasks dikhenge
   if (user.role !== 'admin') {
     query.assignedTo = user._id;
   }
@@ -50,6 +53,7 @@ export async function handleFetchTasks(user: IUser, args: { status?: string; pri
 // ---------------------------------------------------------------------------
 // 2. CREATE TASK
 // ---------------------------------------------------------------------------
+// AI Bot ke liye 'createTask' tool ka schema
 export const createTaskDeclaration: FunctionDeclaration = {
   name: 'createTask',
   description: 'Creates a new task and assigns it to a user. ADMIN ONLY.',
@@ -66,7 +70,9 @@ export const createTaskDeclaration: FunctionDeclaration = {
   },
 };
 
+// AI (Admin ke kehne par) naya task database me banata hai
 export async function handleCreateTask(user: IUser, args: { title: string; description: string; assigneeName: string; priority?: string; dueDateDays?: number }) {
+  // Sirf admin tasks assign kar sakta hai
   if (user.role !== 'admin') {
     return { error: 'UNAUTHORIZED: Only administrators can create tasks.' };
   }
@@ -96,6 +102,7 @@ export async function handleCreateTask(user: IUser, args: { title: string; descr
 // ---------------------------------------------------------------------------
 // 3. UPDATE TASK STATUS
 // ---------------------------------------------------------------------------
+// AI Bot ke liye 'updateTaskStatus' tool ka schema
 export const updateTaskStatusDeclaration: FunctionDeclaration = {
   name: 'updateTaskStatus',
   description: 'Updates the status of an existing task.',
@@ -109,14 +116,16 @@ export const updateTaskStatusDeclaration: FunctionDeclaration = {
   },
 };
 
+// Task ka status badalne ke liye function (jaise todo se in_progress karna)
 export async function handleUpdateTaskStatus(user: IUser, args: { taskId: string; newStatus: string }) {
   if (!mongoose.Types.ObjectId.isValid(args.taskId)) {
     return { error: 'Invalid task ID format.' };
   }
 
   const query: any = { _id: args.taskId };
+  // Members sirf apne tasks ko update kar sakte hain
   if (user.role !== 'admin') {
-    query.assignedTo = user._id; // Members can only update their own tasks
+    query.assignedTo = user._id; 
   }
 
   const task = await Task.findOneAndUpdate(query, { status: args.newStatus }, { new: true });

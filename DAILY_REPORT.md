@@ -34,6 +34,11 @@ Integrated an interactive Bell icon dropdown in the Header to display unread bad
 Implemented aggressive auto-capitalization logic on the Last Name input field to trigger dynamically as the user types.
 Engineered a custom country dial-code dropdown featuring an integrated search bar to filter global regions.
 
+✅ **Enterprise AI Pipeline & Optimization**
+- **Module 1 (Greeting Engine):** Implemented a zero-latency contextual greeting API (`GET /api/chat/greeting`) that resolves the user's name, time of day, and chat history locally without consuming LLM tokens.
+- **Module 2 (Fast Track Cache V2):** Engineered a Semantic Cache checking user queries against 18+ hardcoded HR/EMS policies (Leave, WFH, Overtime) using Mathematical Token Overlap Scoring (>= 0.5 ratio) and Role-Based Access Control to bypass LLM inference completely.
+- **Module 4 (Gibberish Detection):** Implemented a pre-flight validator to catch and reject random keyboard mashing (e.g., `asdfgh`), protecting the LLM from processing noise.
+
 ✅ **Extensive Project Documentation**
 Generated comprehensive, open-source ready documentation including `README.md`, `design.md`, `RULES.md`, `MEMORY.md`, `phases.md`, and `structure.md`.
 Successfully bypassed local Windows Git credential blocks to force-push the entire finalized codebase to GitLab and GitHub.

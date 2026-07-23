@@ -15,18 +15,23 @@ dotenv.config();
 
 const app = express();
 
+// Security headers add karta hai taaki basic attacks (jaise XSS) se bacha ja sake
 app.use(helmet());
+// Frontend (React/Next) ko backend se API call karne ki permission deta hai (CORS policy)
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000', credentials: true }));
 app.use(json());
 app.use(urlencoded({ extended: true }));
 
+// Sabhi APIs ke main Routes yahan define kiye gaye hain
 app.use('/api/auth', authRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Agar user koi galat URL access kare (jo bani hi nahi hai) toh usko handle karna
 app.use(notFoundHandler);
+// Poore app me kahin bhi error aaye, toh server crash hone ke bajaye yahan se error response handle hota hai
 app.use(errorHandler);
 
 export default app;

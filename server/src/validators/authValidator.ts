@@ -3,6 +3,7 @@ import { VALIDATION_MESSAGES } from '../constants/validationMessages';
 import { isValidMobileNumber } from '../utils/mobileValidator';
 import { isValidEmail } from '../utils/emailValidator';
 
+// Naya user register (signup) karte waqt frontend se aaye hue data ko check karne ke rules
 export const registerValidation = [
   body('email')
     .trim()

@@ -35,6 +35,7 @@ export interface IUser extends Document {
  */
 const userSchema = new Schema<IUser>(
   {
+    // User ka mukammal naam (First Name + Last Name)
     name: {
       type: String,
       required: true,
@@ -62,6 +63,7 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: '',
     },
+    // Employee ka unique mobile number
     mobileNumber: {
       type: String,
       trim: true,
@@ -73,6 +75,7 @@ const userSchema = new Schema<IUser>(
       trim: true,
       default: '',
     },
+    // Email ID jo login ke kaam aayegi, ye hamesha unique hogi aur lowercase me save hogi
     email: {
       type: String,
       required: true,
@@ -81,12 +84,14 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       maxlength: 255,
     },
+    // User ka password, select: false ka matlab hai ki API response me ye field automatically nahi jayegi
     password: {
       type: String,
       required: true,
       minlength: 8,
       select: false,
     },
+    // User ka role, by default har naya user 'member' (employee) banega
     role: {
       type: String,
       enum: ['member', 'admin'],
@@ -100,6 +105,7 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: '',
     },
+    // OTP verification status, account create hone par by default false hota hai
     isVerified: {
       type: Boolean,
       default: false,
@@ -140,15 +146,19 @@ const userSchema = new Schema<IUser>(
  * - Handles automatic concatenation of `firstName` and `lastName` into a single `name` property.
  * - Checks if the `password` field was modified. If so, it generates a cryptographically secure salt using `bcrypt` and replaces the plaintext password with a hashed version.
  */
+// Ye hook data database me save hone se theek pehle chalta hai
 userSchema.pre<IUser>('save', async function save(next) {
+  // 1. Agar user ne firstName aur lastName update kiya hai, toh dono ko jod kar 'name' bana dena
   if (this.firstName || this.lastName) {
     this.name = `${this.firstName || ''} ${this.lastName || ''}`.trim() || 'User';
   }
 
+  // 2. Agar password change nahi hua hai, toh seedha agle step par chale jao (bcrypt avoid karna)
   if (!this.isModified('password')) {
     return next();
   }
 
+  // 3. Agar naya password diya gaya hai, toh usko encrypt (hash) karke save karna
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);

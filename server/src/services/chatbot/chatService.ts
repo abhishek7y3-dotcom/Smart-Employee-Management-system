@@ -6,19 +6,11 @@ import { fetchTasksDeclaration, handleFetchTasks, createTaskDeclaration, handleC
 import { getEmployeeWorkloadDeclaration, handleGetEmployeeWorkload } from './employeeService';
 import { createAnnouncementDeclaration, handleCreateAnnouncement, fetchAnnouncementsDeclaration, handleFetchAnnouncements } from './communicationService';
 
-// Define the system prompt
-const getSystemPrompt = (user: IUser) => `
-You are the Employee Task Manager Assistant. 
-The user is a ${user.role}. 
-If they are an admin, they can view all tasks, create tasks, evaluate employee workloads, and broadcast announcements.
-If they are a member, they can only view their own tasks, update their own tasks, and view announcements.
-Always use the provided tools to fetch real data before answering. Do not hallucinate task data.
+import { getSystemPrompt } from '../../constants/prompts';
+import { isGibberish } from '../../utils/gibberishDetector';
+import { matchFastTrack } from '../../utils/fastTrackMatcher';
 
-CRITICAL INSTRUCTION: You are strictly restricted to answering questions related to the company, employee tasks, workloads, announcements, or documents uploaded by the user. If the user asks about ANYTHING ELSE (e.g. general knowledge, casual chat unrelated to work, outside topics), you MUST politely refuse to answer and remind them that you are specifically an Employee Task Manager Assistant.
-
-When a user uploads a document or image, analyze the contents thoroughly. If it contains ANY information relevant to tasks, employees, workloads, or company projects, generate a logical answer or task breakdown. If it does NOT contain relevant information, you MUST generate an error message stating: "Sorry, this document does not contain any information relevant to Employee Task Management."
-`;
-
+// Ye main function hai jo user ki chat ko handle karta hai (New chat banana, message AI ko bhejna, aur tool call karna)
 export async function processChat(user: IUser, message: string = "", conversationId?: string, attachment?: { name: string, content: string, mimeType: string }) {
   let chatHistoryId = conversationId;
 
@@ -45,6 +37,31 @@ export async function processChat(user: IUser, message: string = "", conversatio
   const savedContent = attachment ? `[Attached: ${attachment.name}]\n\n${message}` : message;
   await ConversationMemory.create({ chatHistoryId, role: 'user', content: savedContent });
 
+  if (!attachment && isGibberish(message)) {
+    const fallbackMessage = "I'm sorry, I couldn't understand your message. Could you please rephrase it?";
+    const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fallbackMessage });
+    return {
+      conversationId: chatHistoryId,
+      message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt },
+      systemEvents: []
+    };
+  }
+
+  // FAST TRACK: Instant responses for common EMS queries (Bypass LLM)
+  if (!attachment) {
+    const fastTrackResult = matchFastTrack(message, user.role);
+    if (fastTrackResult && fastTrackResult.hit) {
+      const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fastTrackResult.answer });
+      console.log(`[ANALYTICS] FAST_TRACK_CACHE_HIT | Intent: ${fastTrackResult.matchedIntentId} | User: ${user._id}`);
+      return {
+        conversationId: chatHistoryId,
+        message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt },
+        systemEvents: [fastTrackResult.source]
+      };
+    }
+  }
+
+  // Chat history (purani baatein) database se nikal kar AI ke samajhne wale format me convert karna
   const pastMessages = await ConversationMemory.find({ chatHistoryId }).sort({ createdAt: -1 }).limit(20).lean();
   let rawHistory = pastMessages.reverse().map(msg => ({
     role: msg.role === 'assistant' ? 'model' : 'user',
@@ -103,6 +120,7 @@ export async function processChat(user: IUser, message: string = "", conversatio
   const functionCall = response.functionCalls()?.[0];
   let systemEvents: string[] = [];
 
+  // Agar AI ne decide kiya ki koi tool/function chalana chahiye (jaise task banana ya workload check karna)
   if (functionCall) {
     let resultJSON: any = null;
     const args = functionCall.args as any;

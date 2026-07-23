@@ -4,10 +4,11 @@ import { authenticate } from '../middleware/authMiddleware';
 
 const router = express.Router();
 
-router.use(authenticate); // Require authentication for all notification routes
+// Notifications check karne ke liye user ka login hona zaroori hai
+router.use(authenticate); 
 
-router.get('/', getNotifications);
-router.put('/read-all', markAllAsRead);
-router.put('/:id/read', markAsRead);
+router.get('/', getNotifications); // User ki saari nayi aur purani notifications lana
+router.put('/read-all', markAllAsRead); // Ek click me sabhi notifications ko "read" (padh liya) mark karna
+router.put('/:id/read', markAsRead); // Kisi ek specific notification par click karke usko read karna
 
 export default router;

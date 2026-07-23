@@ -26,20 +26,24 @@ export interface IConversation extends Document {
 
 const conversationSchema = new Schema<IConversation>(
   {
+    // Conversation kis type ki hai (direct chat, ya announcement waghera)
     type: {
       type: String,
       enum: ['direct', 'announcement', 'broadcast'],
       default: 'direct',
     },
+    // Conversation ka subject ya title
     subject: {
       type: String,
       required: true,
       trim: true,
     },
+    // Kya ye kisi specific project se judi hai
     project: {
       type: String,
       default: '',
     },
+    // Kya ye kisi task ke bare me chat ho rahi hai? (Task ID)
     relatedTaskId: {
       type: String,
       default: '',
@@ -48,11 +52,13 @@ const conversationSchema = new Schema<IConversation>(
       type: String,
       default: '',
     },
+    // Is chat ki importance/priority
     priority: {
       type: String,
       enum: ['low', 'medium', 'high', 'urgent'],
       default: 'medium',
     },
+    // Kin kin users ke beech ye baat ho rahi hai (unke IDs)
     participants: [{
       type: String,
     }],
@@ -62,6 +68,7 @@ const conversationSchema = new Schema<IConversation>(
     participantAvatars: [{
       type: String,
     }],
+    // Aakhri bheja gaya message kya tha (UI me chat preview ke liye)
     lastMessage: {
       type: String,
       default: '',
@@ -70,6 +77,7 @@ const conversationSchema = new Schema<IConversation>(
       type: Date,
       default: Date.now,
     },
+    // Aakhri message kisne bheja tha
     lastMessageSender: {
       type: String,
       default: '',
@@ -82,6 +90,7 @@ const conversationSchema = new Schema<IConversation>(
       type: Boolean,
       default: false,
     },
+    // Kya chat ko upar pin kiya gaya hai?
     isPinned: {
       type: Boolean,
       default: false,
@@ -99,6 +108,7 @@ const conversationSchema = new Schema<IConversation>(
       enum: ['sent', 'delivered', 'read', 'unread', 'replied', 'archived'],
       default: 'sent',
     },
+    // Kis user ne ye chat start ki thi
     createdBy: {
       type: String,
       required: true,

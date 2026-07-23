@@ -1,3 +1,4 @@
+// Cloudinary SDK (Image aur files cloud par save karne ki service)
 import { v2 as cloudinary } from 'cloudinary';
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
@@ -6,6 +7,7 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const isCloudinaryConfigured = Boolean(CLOUD_NAME && API_KEY && API_SECRET);
 
+// Agar server me Cloudinary ki keys daali gayi hain, toh use activate karna
 if (isCloudinaryConfigured) {
   cloudinary.config({
     cloud_name: CLOUD_NAME,
@@ -17,7 +19,9 @@ if (isCloudinaryConfigured) {
   console.log('cloudinary.ts: Warning - Cloudinary environment variables are missing. File uploads will fallback to default placeholder avatars.');
 }
 
+// Ye function user ki profile picture (avatar) upload karne ka kaam karta hai
 export async function uploadToCloudinary(base64Image: string, userName: string): Promise<string> {
+  // Agar koi image upload nahi ki, toh uske naam ka pehla akshar dikhane wala avatar use hoga
   const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=2563eb&color=fff&size=200&bold=true`;
 
   if (!base64Image) {
@@ -31,6 +35,7 @@ export async function uploadToCloudinary(base64Image: string, userName: string):
   try {
     // base64Image can be in format: "data:image/png;base64,iVBORw0KGgoAAAANS..." or plain base64.
     // Cloudinary upload API accepts data URI format or base64.
+    // Image cloud par 'employee_task_manager_avatars' folder me bhejna aur crop karna
     const uploadResponse = await cloudinary.uploader.upload(base64Image, {
       folder: 'employee_task_manager_avatars',
       transformation: [{ width: 200, height: 200, crop: 'fill', gravity: 'face' }],
@@ -39,7 +44,7 @@ export async function uploadToCloudinary(base64Image: string, userName: string):
     return uploadResponse.secure_url;
   } catch (error) {
     console.error('cloudinary.ts: Error uploading image to Cloudinary:', error);
-    // Graceful fallback to default avatar so that user registration does not crash
+    // Error aane par server crash hone se bachana aur wapas normal avatar de dena
     return defaultAvatar;
   }
 }

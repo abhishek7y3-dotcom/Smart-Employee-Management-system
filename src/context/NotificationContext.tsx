@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import axiosInstance from '../services/axios';
 import { useAuth } from './AuthContext';
 
+// Notification object ka structure (TypeScript interface) - backend se kis tarah ka data aayega
 export interface Notification {
   _id: string;
   type: string;
@@ -30,6 +31,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Backend se notifications lakar state (UI) me set karne ka function
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
@@ -43,6 +45,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [user]);
 
+  // Jab user kisi ek notification par click kare toh use 'read' mark karna
   const markAsRead = async (id: string) => {
     try {
       await axiosInstance.put(`/notifications/${id}/read`);
@@ -53,6 +56,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   };
 
+  // Ek button click se sabhi unread notifications ko 'read' kar dena
   const markAllAsRead = async () => {
     try {
       await axiosInstance.put('/notifications/read-all');
@@ -65,6 +69,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     fetchNotifications();
+    // Har 15 second mein background mein check karna ki koi naya notification aaya hai ya nahi (Polling mechanism)
     const interval = setInterval(() => {
       fetchNotifications();
     }, 15000); // Poll every 15 seconds
