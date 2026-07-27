@@ -5,27 +5,28 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { verifyOtp, resendVerificationOtp } from '../../api/auth';
 import { countries } from '@/constants/countries';
-import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone, Check, Plus } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone, Check, Plus, Briefcase, Network, CheckCircle } from 'lucide-react';
 import { checkRequirements, isPasswordValid, calculatePasswordStrength, getPasswordValidationError } from '../../utils/passwordValidator';
 import { isValidEmail } from '../../utils/emailValidator';
+import { validateMobileNumber } from '../../utils/phoneValidator';
 
 const inputBase =
-  'peer w-full rounded-xl border text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-400 dark:focus:placeholder-zinc-600';
+  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-400 dark:focus:placeholder-zinc-600';
 
 const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: string = 'left-9') =>
   `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
   `${!value ? `top-3 ${leftInset} text-sm text-zinc-400` : '-top-2.5 left-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400'} ` +
   `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
-  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-blue-500'}`;
+  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-teal-700 dark:text-teal-500'}`;
 const inputNormal =
-  'border-zinc-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/20';
+  'border-zinc-300 dark:border-zinc-600 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-400 dark:hover:border-zinc-500';
 const inputError =
   'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
 
 const validateNameField = (value: string, fieldName: string, allowSpace: boolean = true): string | null => {
   const trimmed = value.trim();
-  if (!trimmed) return `${fieldName} is required`;
+  if (!trimmed) return `Please enter your ${fieldName.toLowerCase()}.`;
   if (trimmed.length < 2) return `${fieldName} must be at least 2 characters long`;
   if (trimmed.length > 50) return `${fieldName} must be at most 50 characters long`;
   if (!/^[A-Z]/.test(trimmed)) return `${fieldName} must start with a capital letter`;
@@ -56,12 +57,17 @@ export default function RegisterPage() {
 
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const [isQualDropdownOpen, setIsQualDropdownOpen] = useState(false);
+  const qualDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
         setIsCountryDropdownOpen(false);
         setCountrySearchQuery('');
+      }
+      if (qualDropdownRef.current && !qualDropdownRef.current.contains(event.target as Node)) {
+        setIsQualDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -149,21 +155,15 @@ export default function RegisterPage() {
     }
     
     // Indian mobile numbers must start with 6, 7, 8, or 9
-    // If it doesn't, we return early WITHOUT setting state to physically block typing
     if (countryCode === '+91' && !/^[6-9]/.test(digitsOnly)) {
-      return;
+      return; // block typing
     }
     
     setMobileNumber(digitsOnly);
     
-    // Real-time validation
-    if (countryCode === '+91' && digitsOnly.length < 10) {
-      setMobileError('Please enter a valid 10-digit Indian mobile number.');
-    } else if (countryCode !== '+91' && (digitsOnly.length < 6 || digitsOnly.length > selectedCountry.maxLength)) {
-      setMobileError(`Please enter a valid mobile number for ${selectedCountry.name}.`);
-    } else {
-      setMobileError(null);
-    }
+    // Real-time robust validation using libphonenumber-js
+    const errorMsg = validateMobileNumber(digitsOnly, selectedCountry.iso);
+    setMobileError(errorMsg);
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -206,20 +206,15 @@ export default function RegisterPage() {
 
     const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
 
-    if (!mobileNumber.trim()) {
-      setMobileError('Please enter your Mobile number.');
-      hasError = true;
-    } else if (countryCode === '+91' && !/^[6-9]\d{9}$/.test(mobileNumber)) {
-      setMobileError('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
-      hasError = true;
-    } else if (countryCode !== '+91' && (mobileNumber.length < 6 || mobileNumber.length > selectedCountry.maxLength)) {
-      setMobileError(`Mobile number must be between 6 and ${selectedCountry.maxLength} digits.`);
+    const mobileValidationErr = validateMobileNumber(mobileNumber, selectedCountry.iso);
+    if (mobileValidationErr) {
+      setMobileError(mobileValidationErr);
       hasError = true;
     }
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      setEmailError('Please enter an email address.');
+      setEmailError('Please enter your email.');
       hasError = true;
     } else if (!isValidEmail(trimmedEmail)) {
       setEmailError('Please enter a valid email address (e.g., user@example.com).');
@@ -341,13 +336,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4 py-8 font-sans transition-colors duration-300">
-      {/* Subtle ambient glow */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute -top-48 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-blue-500/5 blur-3xl dark:bg-blue-600/5" />
-      </div>
-
-      <div className="w-full max-w-md relative z-10 bg-white dark:bg-zinc-900 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] border border-zinc-100 dark:border-zinc-800/50 rounded-3xl p-6 sm:p-8 my-4 sm:my-0">
+    <div className="min-h-screen flex font-sans transition-colors duration-500 overflow-hidden relative">
+      {/* ── LEFT COLUMN (45%) ── */}
+      <div className="w-full lg:w-[45%] flex flex-col justify-center px-8 sm:px-16 xl:px-24 py-12 relative z-10 bg-white dark:bg-zinc-950 min-h-screen shadow-2xl lg:shadow-none overflow-y-auto">
+        <div className="w-full max-w-[440px] mx-auto">
         {/* Profile Picture Upload & Title */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-2">
@@ -393,7 +385,7 @@ export default function RegisterPage() {
             <div className="space-y-4 text-center">
               <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-4 py-6 text-sm text-emerald-700 dark:text-emerald-400 animate-in zoom-in-95">
                 <p className="font-semibold text-base mb-1">Email verified</p>
-                <p>Your account is verified. Redirecting to login…</p>
+                <p>Your account is verified. Redirecting to loginâ€¦</p>
               </div>
             </div>
           ) : (
@@ -421,7 +413,7 @@ export default function RegisterPage() {
                       value={digit}
                       onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
                       onKeyDown={(e) => handleOtpDigitKeyDown(idx, e)}
-                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 text-zinc-950 dark:text-zinc-50"
+                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700 text-zinc-950 dark:text-zinc-50"
                     />
                   ))}
                 </div>
@@ -432,9 +424,9 @@ export default function RegisterPage() {
               <button
                 type="submit"
                 disabled={otpDigits.some((d) => !d) || otpLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-3 text-base font-semibold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] px-4 py-3 text-base font-semibold text-white transition-all duration-150 hover:bg-[#0c3128] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
-                {otpLoading ? 'Verifying…' : 'Verify email'} <ArrowRight className="h-4 w-4" />
+                {otpLoading ? 'Verifyingâ€¦' : 'Verify email'} <ArrowRight className="h-4 w-4" />
               </button>
 
               <div className="flex items-center justify-center text-sm">
@@ -444,7 +436,7 @@ export default function RegisterPage() {
                   disabled={resendCooldown > 0 || resendLoading}
                   className="text-zinc-400 hover:text-zinc-650 transition-colors disabled:opacity-40 cursor-pointer text-sm font-semibold"
                 >
-                  {resendLoading ? 'Sending…' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
+                  {resendLoading ? 'Sendingâ€¦' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
                 </button>
               </div>
 
@@ -454,7 +446,7 @@ export default function RegisterPage() {
             </form>
           )
         ) : (
-          <form className="space-y-4" onSubmit={handleSubmit}>
+          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
             {/* First Name & Last Name */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
@@ -514,8 +506,8 @@ export default function RegisterPage() {
                         onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
                         className="peer sr-only"
                       />
-                      <div className="w-4 h-4 rounded-full border-2 border-zinc-300 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500/50 peer-checked:border-blue-500 peer-checked:bg-blue-500 flex items-center justify-center transition-all">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white scale-0 peer-checked:scale-100 transition-transform" />
+                      <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-300 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-700/50 peer-checked:border-teal-700 peer-checked:[&>div]:scale-100 bg-white dark:bg-zinc-900 flex items-center justify-center transition-all">
+                        <div className="w-[10px] h-[10px] rounded-full bg-teal-700 scale-0 transition-transform duration-200" />
                       </div>
                       <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
                         {g}
@@ -531,24 +523,42 @@ export default function RegisterPage() {
                 <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1 opacity-0 pointer-events-none hidden sm:block">
                   Qualification
                 </label>
-                <div className="relative">
-                  <select
-                    value={qualification}
-                    onChange={(e) => { setQualification(e.target.value); setQualificationError(null); }}
-                    className={`${inputBase} px-3 py-3 ${qualificationError ? inputError : inputNormal} appearance-none cursor-pointer`}
+                <div className="relative" ref={qualDropdownRef}>
+                  <div
+                    onClick={() => setIsQualDropdownOpen(!isQualDropdownOpen)}
+                    className={`${inputBase} px-3 py-3 flex items-center justify-between cursor-pointer select-none ${qualificationError ? inputError : inputNormal}`}
                   >
-                    <option value="" disabled hidden>Select Qualification</option>
-                    <optgroup label="Highest Qualification">
-                      {['10th', '12th', 'Bachelor\'s', 'Master\'s', 'PhD', 'Other'].map(q => (
-                        <option key={q} value={q}>{q}</option>
-                      ))}
-                    </optgroup>
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-zinc-500">
-                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <span className={qualification ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500'}>
+                      {qualification || 'Select Qualification'}
+                    </span>
+                    <svg className={`h-4 w-4 text-zinc-500 transition-transform duration-200 ${isQualDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
+
+                  {isQualDropdownOpen && (
+                    <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                      <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800 text-xs font-bold text-black dark:text-white uppercase tracking-wider">
+                        Highest Qualification
+                      </div>
+                      <ul className="max-h-56 overflow-y-auto py-1">
+                        {['10th', '12th', 'Bachelor\'s', 'Master\'s', 'PhD', 'Other'].map(q => (
+                          <li
+                            key={q}
+                            onClick={() => {
+                              setQualification(q);
+                              setQualificationError(null);
+                              setIsQualDropdownOpen(false);
+                            }}
+                            className={`px-3 py-2.5 cursor-pointer text-sm font-medium transition-colors flex items-center justify-between ${qualification === q ? 'bg-blue-50 dark:bg-blue-900/20 text-teal-800 dark:text-teal-400' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                          >
+                            <span>{q}</span>
+                            {qualification === q && <Check className="h-4 w-4" />}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
                 {qualificationError && <p className="text-sm text-red-500 font-semibold px-1">{qualificationError}</p>}
               </div>
@@ -559,7 +569,7 @@ export default function RegisterPage() {
               <div className="flex gap-2 mt-2">
                 <div 
                   ref={countryDropdownRef}
-                  className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 shrink-0 w-[105px] cursor-pointer"
+                  className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-300 dark:border-zinc-600 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
                   onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                 >
                   <div className="flex items-center gap-2 pointer-events-none w-full">
@@ -588,7 +598,7 @@ export default function RegisterPage() {
                           value={countrySearchQuery}
                           onChange={(e) => setCountrySearchQuery(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                          className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
                         />
                       </div>
                       <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
@@ -651,6 +661,7 @@ export default function RegisterPage() {
                 <input
                   id="email"
                   type="text"
+                  autoComplete="new-email"
                   maxLength={254}
                   value={email}
                   onChange={(event) => {
@@ -660,13 +671,16 @@ export default function RegisterPage() {
                     
                     const trimmed = val.trim();
                     if (!trimmed) {
-                      setEmailError(null);
-                    } else if (trimmed.toLowerCase().endsWith('@gmail.co')) {
-                      setEmailError('Please enter the valid email address.');
+                      setEmailError('Please enter your email.');
                     } else if (!isValidEmail(trimmed)) {
                       setEmailError('Please enter the valid email address.');
                     } else {
                       setEmailError(null);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    if (!e.target.value.trim()) {
+                      setEmailError('Please enter your email.');
                     }
                   }}
                   placeholder="name@company.com"
@@ -686,6 +700,7 @@ export default function RegisterPage() {
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   maxLength={128}
                   value={password}
                   onChange={(event) => {
@@ -700,13 +715,13 @@ export default function RegisterPage() {
                       setPasswordError(null);
                     }
                   }}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className={`${inputBase} pl-10 pr-10 py-3 ${passwordError ? inputError : inputNormal}`}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-blue-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-teal-700 dark:text-teal-500"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
@@ -728,10 +743,11 @@ export default function RegisterPage() {
                 <input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
                   maxLength={128}
                   value={confirmPassword}
                   onChange={(event) => { setConfirmPassword(event.target.value); setConfirmPasswordError(null); setFormError(null); }}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className={`${inputBase} pl-10 pr-10 py-3 ${confirmPasswordError ? inputError : inputNormal}`}
                 />
                 <button
@@ -764,9 +780,9 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 dark:bg-white px-4 py-2.5 text-xs font-bold text-white dark:text-zinc-900 transition-all duration-150 hover:bg-zinc-700 dark:hover:bg-zinc-100 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] px-4 py-2.5 text-xs font-bold text-white transition-all duration-150 hover:bg-[#0c3128] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
-              {loading ? 'Creating account…' : 'Create account'} <ArrowRight className="h-4 w-4" />
+              {loading ? 'Creating accountâ€¦' : 'Create account'}
             </button>
           </form>
         )}
@@ -774,11 +790,78 @@ export default function RegisterPage() {
         {/* Footer */}
         <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
           Already have an account?{' '}
-          <a href="/login" className="font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors">
+          <a href="/login" className="font-semibold text-teal-800 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline transition-colors">
             Sign in
           </a>
+        </div>
+      </div>
+      </div>
+      {/* ── RIGHT COLUMN (55%) ── */}
+      <div className="hidden lg:flex lg:w-[55%] bg-[#061f17] relative flex-col justify-between px-16 xl:px-24 py-16 overflow-hidden">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-600/20 blur-[100px] animate-[pulse_6s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-700/10 blur-[120px] animate-[pulse_8s_ease-in-out_infinite_alternate]" />
+        <div className="absolute top-[30%] right-[20%] w-[30%] h-[30%] rounded-full bg-teal-400/5 blur-[80px] animate-[pulse_10s_ease-in-out_infinite_alternate]" />
+
+        {/* Top Floating Dots */}
+        <div className="relative z-10 flex justify-end">
+          <div className="flex space-x-2">
+            {[1, 2, 3].map((dot) => (
+              <div key={dot} className="w-2 h-2 rounded-full bg-teal-500/30" />
+            ))}
+          </div>
+        </div>
+
+        {/* Central Animated Solar System */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center items-center w-full min-h-[400px] overflow-hidden my-4">
+          <div className="relative flex items-center justify-center w-[400px] h-[400px] scale-75 md:scale-90 lg:scale-100">
+            
+            {/* Center Core */}
+            <div className="absolute w-20 h-20 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-full shadow-[0_0_60px_rgba(45,212,191,0.6)] z-20 flex items-center justify-center animate-[pulse_4s_ease-in-out_infinite]">
+              <Network className="w-8 h-8 text-white" />
+            </div>
+
+            {/* Orbit 1 (Inner) */}
+            <div className="absolute w-[180px] h-[180px] rounded-full border border-teal-500/30 animate-[spin_10s_linear_infinite]">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#0a2b20] border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_10s_linear_infinite_reverse]">
+                  <User className="w-4 h-4 text-teal-400" />
+              </div>
+            </div>
+
+            {/* Orbit 2 (Middle) */}
+            <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-teal-500/20 animate-[spin_15s_linear_infinite_reverse]">
+              <div className="absolute top-1/2 -right-5 -translate-y-1/2 w-10 h-10 bg-teal-900 border border-teal-400/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
+                  <Briefcase className="w-4 h-4 text-teal-300" />
+              </div>
+              <div className="absolute top-1/2 -left-4 -translate-y-1/2 w-8 h-8 bg-teal-800 border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
+                  <User className="w-4 h-4 text-white" />
+              </div>
+            </div>
+
+            {/* Orbit 3 (Outer) */}
+            <div className="absolute w-[380px] h-[380px] rounded-full border border-teal-500/10 animate-[spin_25s_linear_infinite]">
+              <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#0e372e] border border-teal-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
+                  <CheckCircle className="w-4 h-4 text-teal-400" />
+              </div>
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-emerald-900 border border-emerald-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
+                  <User className="w-4 h-4 text-emerald-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Content / Testimonial Style */}
+        <div className="relative z-10 flex flex-col items-start">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white font-outfit mb-4 leading-tight">
+            Elevate your <br />
+            <span className="text-teal-400">enterprise productivity.</span>
+          </h2>
+          <p className="text-teal-100/70 text-[15px] max-w-[400px] leading-relaxed">
+            Experience our industry-grade platform designed for seamless team collaboration, task tracking, and powerful analytics at scale.
+          </p>
         </div>
       </div>
     </div>
   );
 }
+

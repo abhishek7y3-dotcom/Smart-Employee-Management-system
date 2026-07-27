@@ -35,10 +35,35 @@ export const isValidEmail = (email: string): boolean => {
 
   // 9. Strict Regex for valid characters (Protects against XSS, SQLi, Control Chars, Spaces, Emojis)
   // Local part: alphanumeric and specific special characters (RFC 5322 standard without quotes)
-  // Domain part: alphanumeric and hyphens, at least one dot separating TLD
-  const emailRegex = /^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+$/;
+  // Domain part: alphanumeric and hyphens, at least one dot separating TLD (2-4 characters)
+  const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
   
   if (!emailRegex.test(trimmed)) return false;
+
+  // Additional typo checks
+  const lowerTrimmed = trimmed.toLowerCase();
+  
+  // Known invalid TLD typos
+  const invalidTLDs = ['.cov', '.con', '.cm', '.cpm', '.co.n', '.comn', '.comm', '.co.uk.co', '.co.in.co'];
+  if (invalidTLDs.some(tld => lowerTrimmed.endsWith(tld))) return false;
+
+  // Domain specific strict checks
+  const domain = lowerTrimmed.split('@')[1];
+  if (domain) {
+    // If it looks like gmail, ensure it's exactly gmail.com
+    if (domain.startsWith('gmail.') && domain !== 'gmail.com') return false;
+    if (domain.startsWith('googlemail.') && domain !== 'googlemail.com') return false;
+    
+    // Yahoo
+    if (domain.startsWith('yahoo.') && !['yahoo.com', 'yahoo.co.in', 'yahoo.co.uk', 'yahoo.ca'].includes(domain)) return false;
+    
+    // Hotmail / Outlook
+    if (domain.startsWith('hotmail.') && !['hotmail.com', 'hotmail.co.uk'].includes(domain)) return false;
+    if (domain.startsWith('outlook.') && !['outlook.com', 'outlook.co.in'].includes(domain)) return false;
+  }
+
+  // Legacy hardcoded typos
+  if (lowerTrimmed.endsWith('@gmail.co') || lowerTrimmed.endsWith('@yahoo.co') || lowerTrimmed.endsWith('@hotmail.co')) return false;
 
   return true;
 };

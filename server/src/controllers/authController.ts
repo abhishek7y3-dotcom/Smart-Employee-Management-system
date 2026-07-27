@@ -178,6 +178,9 @@ export async function login(req: Request, res: Response) {
 
     const token = signToken({ id: user._id, email: user.email });
 
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
+
     return res.status(200).json({
       success: true,
       message: 'Login successful.',

@@ -21,6 +21,12 @@ export interface IUser extends Document {
   loginOtp?: string;
   loginOtpExpires?: Date;
   designation?: string;
+  department?: string;
+  lastLogin?: Date;
+  notificationPreferences?: {
+    email: boolean;
+    inApp: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -101,6 +107,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: 'Employee',
     },
+    department: {
+      type: String,
+      default: 'Unassigned',
+    },
     profilePicture: {
       type: String,
       default: '',
@@ -134,6 +144,13 @@ const userSchema = new Schema<IUser>(
       type: Date,
       select: false,
     },
+    lastLogin: {
+      type: Date,
+    },
+    notificationPreferences: {
+      email: { type: Boolean, default: true },
+      inApp: { type: Boolean, default: true }
+    }
   },
   {
     timestamps: true,

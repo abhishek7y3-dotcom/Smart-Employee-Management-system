@@ -15,7 +15,7 @@ export function isGibberish(text: string): boolean {
   }
 
   // 2. Check for common keyboard mashing sequences
-  const mashingRegex = /asdf|qwer|zxcv|hjkl|uiop|tyui|ghjk|vbnm|lkjh|mnbv|poiu|qwpo|qaz|wsx|edc/i;
+  const mashingRegex = /asdf|qwer|zxcv|hjkl|uiop|tyui|ghjk|vbnm|lkjh|mnbv|poiu|qwpo|qaz|wsx|edc|fdsa|rewq|vcxz|qwerty|poiuy|zxcvb|lkjhg|mnbvc|1234|2345|3456|4567|5678|6789|7890|0987|9876|8765|7654|6543|5432|4321|abcde|bcdef|testtest|dummy|blah|ajsd|laks|kjas|skld/i;
   // If the message is relatively short and contains a mash pattern, it's likely gibberish
   if (trimmed.length < 20 && mashingRegex.test(trimmed)) {
     return true;

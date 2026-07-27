@@ -7,7 +7,6 @@ import { AccessibilityToggle } from './AccessibilityToggle';
 import { useTasks } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
-import { ProfileModal } from './profile/ProfileModal';
 import { useRouter } from 'next/navigation';
 
 
@@ -56,7 +55,6 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -228,7 +226,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
                 <button
                   onClick={() => {
-                    setIsProfileModalOpen(true);
+                    router.push('/profile');
                     setIsProfileDropdownOpen(false);
                   }}
                   className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors cursor-pointer text-left outline-none"
@@ -252,11 +250,6 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           )}
         </div>
       </div>
-
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-      />
     </header>
   );
 };

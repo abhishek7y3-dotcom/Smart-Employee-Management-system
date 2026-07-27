@@ -237,6 +237,117 @@ export const FAST_TRACK_DATA: FastTrackEntry[] = [
     intentKeywords: ['emergency', 'contact', 'hr', 'admin', 'help', 'urgent', 'phone'],
     canonicalQuestion: 'Who do I contact in an emergency?',
     answer: '**Emergency Contacts:**\n- **HR Head:** hr-emergency@company.com\n- **IT Security:** 1800-IT-HELP\n- **Office Admin:** admin-desk@company.com\n*If you are facing a medical emergency, please inform your manager as soon as possible.*',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'onboarding_process',
+    intentKeywords: ['onboarding', 'new', 'joiner', 'induction', 'orientation', 'start'],
+    canonicalQuestion: 'What is the onboarding process for new joiners?',
+    answer: '**Onboarding:**\nNew joiners must attend the 2-day orientation program starting at 10:00 AM on their first Monday. HR will send a welcome email with the detailed schedule and introductory documents.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'probation_period',
+    intentKeywords: ['probation', 'confirmation', 'confirm', 'duration', 'months'],
+    canonicalQuestion: 'How long is the probation period?',
+    answer: '**Probation Period:**\nAll new employees have a standard probation period of **6 months**. Upon successful completion, a formal confirmation letter is issued following a review with your manager.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'cafeteria_food',
+    intentKeywords: ['food', 'cafeteria', 'lunch', 'canteen', 'meal', 'coupon', 'dining'],
+    canonicalQuestion: 'Is food provided in the office cafeteria?',
+    answer: '**Cafeteria:**\nThe office cafeteria serves subsidized breakfast and lunch. You can load money onto your ID card at the reception or use UPI to pay at the food counters. Free snacks and beverages are available in the pantry on every floor.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'parking_facility',
+    intentKeywords: ['parking', 'vehicle', 'car', 'bike', 'slot', 'park'],
+    canonicalQuestion: 'How do I get a parking slot?',
+    answer: '**Parking:**\nEmployees can register their vehicles (two-wheelers and four-wheelers) on the Admin portal to get a parking sticker. Parking is on a first-come, first-served basis in the basement parking lot.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'office_transport',
+    intentKeywords: ['transport', 'cab', 'bus', 'shuttle', 'commute', 'pickup', 'drop'],
+    canonicalQuestion: 'Does the company provide transport or cab facilities?',
+    answer: '**Office Transport:**\nWe offer a free shuttle service from the nearest Metro station every 30 minutes during peak hours. For employees working late (post 9:00 PM), a drop facility can be requested via the Transport Helpdesk.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'final_settlement',
+    intentKeywords: ['fnf', 'settlement', 'clearance', 'exit', 'interview', 'dues'],
+    canonicalQuestion: 'When is the Full & Final (FnF) settlement processed?',
+    answer: '**Final Settlement (FnF):**\nThe Full & Final settlement is processed within **45 days** of your last working day, provided all clearances (IT, Finance, Admin) are completed. Exit interviews are mandatory.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'meeting_room_booking',
+    intentKeywords: ['meeting', 'room', 'book', 'conference', 'reserve'],
+    canonicalQuestion: 'How do I book a meeting room?',
+    answer: '**Meeting Rooms:**\nYou can book conference rooms via the integrated Office Calendar or the internal Meeting Room app. Please cancel your booking if the meeting is rescheduled to free up the room.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'posh_policy',
+    intentKeywords: ['posh', 'harassment', 'ethics', 'conduct', 'complaint', 'committee'],
+    canonicalQuestion: 'What is the POSH policy and how do I report an issue?',
+    answer: '**POSH & Ethics:**\nWe maintain a zero-tolerance policy against workplace harassment. You can report any grievances anonymously or directly to the Internal Complaints Committee (ICC) at icc@company.com.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'variable_pay',
+    intentKeywords: ['bonus', 'variable', 'pay', 'payout', 'performance', 'incentive'],
+    canonicalQuestion: 'When is the variable pay or performance bonus paid?',
+    answer: '**Variable Pay:**\nPerformance bonuses and variable pay are disbursed annually with the **May payroll**, based on the individual rating received during the April appraisal cycle and company performance.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'provident_fund',
+    intentKeywords: ['pf', 'provident', 'fund', 'uan', 'transfer', 'epfo'],
+    canonicalQuestion: 'Where can I find my UAN or PF details?',
+    answer: '**Provident Fund (PF):**\nYour UAN (Universal Account Number) is mentioned on your payslip. You can manage your PF transfers or withdrawals directly on the EPFO portal using your UAN.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'leave_encashment',
+    intentKeywords: ['encash', 'encashment', 'pending', 'leaves', 'balance', 'carry', 'forward'],
+    canonicalQuestion: 'Can I encash my unused leaves?',
+    answer: '**Leave Encashment:**\nEarned Leaves (EL) can be carried forward up to a maximum of 45 days. Any excess EL at the end of the year can be encashed. Casual and Sick leaves lapse at the end of the calendar year.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'marriage_leave',
+    intentKeywords: ['marriage', 'wedding', 'special', 'leave'],
+    canonicalQuestion: 'Is there any special leave for marriage?',
+    answer: '**Marriage Leave:**\nEmployees are entitled to **5 days of special paid leave** for their own wedding. Please apply for this under the "Special Leave" category on the Leave Dashboard with your manager\'s approval.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'relocation_policy',
+    intentKeywords: ['relocation', 'move', 'transfer', 'expenses', 'shifting', 'reimburse'],
+    canonicalQuestion: 'What is the relocation policy?',
+    answer: '**Relocation Policy:**\nIf you are transferring to a different office branch at the company\'s request, relocation expenses (flight tickets, initial 15-day accommodation, and goods transportation) are covered up to your grade limit.',
+    requiresRole: 'any',
+    lastUpdated: new Date()
+  },
+  {
+    id: 'corporate_discounts',
+    intentKeywords: ['discount', 'corporate', 'offer', 'perk', 'gym', 'brand'],
+    canonicalQuestion: 'What corporate discounts do we have?',
+    answer: '**Corporate Perks:**\nEmployees can avail exclusive discounts on various brands (electronics, gyms, flight bookings) via the Employee Perks portal using their corporate email address.',
     requiresRole: 'any',
     lastUpdated: new Date()
   }

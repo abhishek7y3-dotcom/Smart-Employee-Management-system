@@ -8,6 +8,10 @@ import taskRoutes from './routes/taskRoutes';
 import chatRoutes from './routes/chatRoutes';
 import communicationRoutes from './routes/communicationRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import holidayRoutes from './routes/holidayRoutes';
+import attendanceRoutes from './routes/attendanceRoutes';
+import leaveRoutes from './routes/leaveRoutes';
+import profileRoutes from './routes/profileRoutes';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -28,6 +32,10 @@ app.use('/api/tasks', taskRoutes);
 app.use('/api/communication', communicationRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/holidays', holidayRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/leaves', leaveRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Agar user koi galat URL access kare (jo bani hi nahi hai) toh usko handle karna
 app.use(notFoundHandler);

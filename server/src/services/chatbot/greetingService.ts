@@ -31,7 +31,13 @@ export function generateGreeting(user: IUser, hasHistory: boolean): string {
     "Tip: Did you know you can ask me about the IT Support contact?",
     "Tip: I can instantly tell you about the Work From Home (WFH) policy.",
     "Tip: Ask me 'How to apply for leave' if you need a break!",
-    "Tip: Need to update your bank details? Just ask me how."
+    "Tip: Need to update your bank details? Just ask me how.",
+    "Tip: Wondering about your FnF settlement? I have the answers.",
+    "Tip: Having trouble finding a parking slot? Ask me about the parking facility.",
+    "Tip: Need a new laptop? Ask me about the IT Equipment policy.",
+    "Tip: You can ask me 'What is the WiFi password?' to get connected.",
+    "Tip: Did you know you get 5 days of special leave for your wedding?",
+    "Tip: You can encash your unused Earned Leaves. Ask me how!"
   ];
   const randomTip = tips[Math.floor(Math.random() * tips.length)];
 

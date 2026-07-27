@@ -4,22 +4,26 @@ import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { requestLoginOtp, loginWithOtp } from '../../api/auth';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, ClipboardCheck, Phone, Clock, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ClipboardCheck, Phone, Clock, ArrowLeft, User, Briefcase, Network, CheckCircle } from 'lucide-react';
+import { validateMobileNumber } from '../../utils/phoneValidator';
+import { countries } from '../../constants/countries';
+
+const inputBase =
+  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-400 dark:focus:placeholder-zinc-600';
+
+const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: string = 'left-9') =>
+  `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
+  `${!value ? `top-3 ${leftInset} text-sm text-zinc-400` : '-top-2.5 left-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400'} ` +
+  `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
+  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-teal-700 dark:peer-focus:text-teal-500'}`;
+
+const inputNormal =
+  'border-zinc-300 dark:border-zinc-700 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-400 dark:hover:border-zinc-600';
+const inputError =
+  'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
 type LoginMode = 'initial' | 'email' | 'phone';
 type SubTab = 'password' | 'otp';
-
-const countries = [
-  { name: 'India', code: '+91', flag: 'IN' },
-  { name: 'United States', code: '+1', flag: 'US' },
-  { name: 'United Kingdom', code: '+44', flag: 'UK' },
-  { name: 'Canada', code: '+1', flag: 'CA' },
-  { name: 'Australia', code: '+61', flag: 'AU' },
-  { name: 'Germany', code: '+49', flag: 'DE' },
-  { name: 'France', code: '+33', flag: 'FR' },
-  { name: 'Singapore', code: '+65', flag: 'SG' },
-  { name: 'Japan', code: '+81', flag: 'JP' },
-];
 
 export default function LoginPage() {
   const { login, loading, error, persistAuth } = useAuth() as any;
@@ -225,340 +229,404 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4 py-16 font-sans transition-colors duration-500 overflow-hidden relative">
-      {/* Dynamic Ambient Background */}
-      <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-400/20 dark:bg-blue-600/20 blur-[100px] mix-blend-multiply dark:mix-blend-lighten animate-pulse opacity-70" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-indigo-400/20 dark:bg-indigo-600/20 blur-[120px] mix-blend-multiply dark:mix-blend-lighten opacity-60" />
-        <div className="absolute top-[20%] right-[10%] w-[300px] h-[300px] rounded-full bg-purple-400/15 dark:bg-purple-600/15 blur-[80px] mix-blend-multiply dark:mix-blend-lighten" />
-      </div>
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="backdrop-blur-xl bg-white/60 dark:bg-zinc-900/60 border border-white/40 dark:border-zinc-800/50 p-8 sm:p-10 rounded-3xl shadow-2xl shadow-zinc-200/50 dark:shadow-black/50 transition-all duration-300">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-lg shadow-zinc-900/30 dark:shadow-white/30 mb-5 ring-4 ring-white/50 dark:ring-zinc-800/50">
-            <ClipboardCheck className="h-7 w-7" />
+    <div className="min-h-screen flex font-sans transition-colors duration-500 overflow-hidden relative">
+      
+      {/* ── LEFT COLUMN (45%) ── */}
+      <div className="w-full lg:w-[45%] flex flex-col justify-center px-8 sm:px-16 xl:px-24 py-12 relative z-10 bg-white dark:bg-zinc-950 min-h-screen shadow-2xl lg:shadow-none">
+        <div className="w-full max-w-[440px] mx-auto">
+          
+          {/* Logo & Heading */}
+          <div className="flex flex-col mb-10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0e372e] text-white shadow-lg shadow-teal-900/20 mb-6 ring-2 ring-[#0e372e]/20">
+              <ClipboardCheck className="h-6 w-6" />
+            </div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white font-outfit mb-3">
+              Welcome Back!
+            </h1>
+            <p className="text-[15px] font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+              Sign in to access your dashboard and continue optimizing your work process.
+            </p>
           </div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400 font-outfit text-center">
-            Employee Task Manager
-          </h1>
-          <p className="mt-2 text-sm font-medium text-zinc-500 dark:text-zinc-400 text-center">Sign in to your workspace</p>
-        </div>
 
-        {/* ── 1. INITIAL METHOD CHOICE SCREEN ────────────────────────────────── */}
-        {mode === 'initial' && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <button
-              type="button"
-              onClick={() => { setMode('email'); setSubTab('password'); resetErrors(); }}
-              className="group flex w-full items-center justify-between rounded-2xl border border-white/60 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 px-6 py-4.5 text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-            >
-              <span className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300">
-                  <Mail className="h-5 w-5" />
-                </div>
+          {/* ── 1. INITIAL METHOD CHOICE SCREEN ── */}
+          {mode === 'initial' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <button
+                type="button"
+                onClick={() => { setMode('email'); setSubTab('password'); resetErrors(); }}
+                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
+              >
+                <Mail className="h-4 w-4 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
                 Continue with Email
-              </span>
-              <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
-            </button>
-
-            <button
-              type="button"
-              onClick={() => { setMode('phone'); setSubTab('password'); resetErrors(); }}
-              className="group flex w-full items-center justify-between rounded-2xl border border-white/60 dark:border-zinc-700/50 bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-800 px-6 py-4.5 text-sm font-bold text-zinc-800 dark:text-zinc-200 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
-            >
-              <span className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform duration-300">
-                  <Phone className="h-5 w-5" />
-                </div>
-                Continue with Phone
-              </span>
-              <ArrowRight className="h-4 w-4 text-zinc-400 group-hover:text-zinc-900 dark:group-hover:text-white group-hover:translate-x-1 transition-all duration-300" />
-            </button>
-          </div>
-        )}
-
-        {/* ── 2. SUB-OPTIONS SCREEN (Email or Phone) ────────────────────────── */}
-        {mode !== 'initial' && (
-          <div className="space-y-5 animate-in fade-in duration-200">
-            {/* Go Back to Initial Choice */}
-            <button
-              type="button"
-              onClick={() => { setMode('initial'); resetErrors(); }}
-              className="group flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors duration-300 cursor-pointer"
-            >
-              <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to options
-            </button>
-
-            {/* Sub-tab selection: Password vs OTP */}
-            <div className="flex rounded-xl bg-zinc-200/50 dark:bg-zinc-950/50 p-1.5 shadow-inner">
-              <button
-                type="button"
-                onClick={() => { setSubTab('password'); resetErrors(); }}
-                className={`flex-1 rounded-lg py-2.5 text-xs font-bold transition-all duration-300 ${subTab === 'password'
-                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
-                  }`}
-              >
-                Password
               </button>
+
               <button
                 type="button"
-                onClick={() => { setSubTab('otp'); resetErrors(); }}
-                className={`flex-1 rounded-lg py-2.5 text-xs font-bold transition-all duration-300 ${subTab === 'otp'
-                  ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm ring-1 ring-zinc-200 dark:ring-zinc-700'
-                  : 'text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50'
-                  }`}
+                onClick={() => { setMode('phone'); setSubTab('password'); resetErrors(); }}
+                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
               >
-                OTP Code
+                <Phone className="h-4 w-4 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
+                Continue with Phone
               </button>
             </div>
+          )}
 
-            {formError && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold animate-in slide-in-from-top-1">
-                {formError}
-              </div>
-            )}
+          {/* ── 2. SUB-OPTIONS SCREEN (Email or Phone) ── */}
+          {mode !== 'initial' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              <button
+                type="button"
+                onClick={() => { setMode('initial'); resetErrors(); }}
+                className="group flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors duration-300 cursor-pointer -mt-2"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to options
+              </button>
 
-            {/* ── SUB-TAB: PASSWORD LOGIN ───────────────────────────────────── */}
-            {subTab === 'password' && (
-              <form onSubmit={handlePasswordSubmit} className="space-y-4">
-                {mode === 'email' ? (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email-input">Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                      <input
-                        id="email-input"
-                        type="text"
-                        maxLength={254}
-                        value={email}
-                        onChange={(e) => { setEmail(e.target.value); setEmailError(null); setFormError(null); }}
-                        placeholder="name@company.com"
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 placeholder:text-zinc-400 ${emailError ? 'border-red-400 focus:ring-red-400/20' : 'border-zinc-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/20'}`}
-                      />
-                    </div>
-                    {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="mobile-input">Mobile Number</label>
-                    <div className="flex gap-2">
-                      <select
-                        value={countryCode}
-                        onChange={(e) => setCountryCode(e.target.value)}
-                        className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-2 text-xs text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shrink-0 cursor-pointer font-semibold"
-                      >
-                        {countries.map((c) => (
-                          <option key={c.name} value={c.code}>
-                            {c.flag} {c.code}
-                          </option>
-                        ))}
-                      </select>
-                      <div className="relative flex-1">
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                        <input
-                          id="mobile-input"
-                          type="text"
-                          inputMode="numeric"
-                          value={mobileNumber}
-                          onChange={(e) => handleMobileChange(e.target.value)}
-                          placeholder="10-digit number"
-                          className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${mobileError ? 'border-red-400 focus:ring-red-400/20' : 'border-zinc-200 dark:border-zinc-800'}`}
-                        />
-                      </div>
-                    </div>
-                    {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
-                  </div>
-                )}
-
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password-input">Password</label>
-                    <a href="/forgot-password" className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:text-blue-750 dark:hover:text-blue-300 hover:underline transition">
-                      Forgot password?
-                    </a>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                    <input
-                      id="password-input"
-                      type={showPassword ? 'text' : 'password'}
-                      maxLength={128}
-                      value={password}
-                      onChange={(e) => { setPassword(e.target.value); setPasswordError(null); setFormError(null); }}
-                      placeholder="••••••••"
-                      className={`w-full pl-10 pr-10 py-2.5 rounded-xl border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 placeholder:text-zinc-400 ${passwordError ? 'border-red-400 focus:ring-red-400/20' : 'border-zinc-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/20'}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
-                </div>
-
+              {/* Sub-tab selection: Password vs OTP */}
+              <div style={{ display: 'flex', borderRadius: '0.75rem', backgroundColor: '#f4f4f5', padding: '0.375rem', boxShadow: 'inset 0 2px 4px 0 rgba(0,0,0,0.05)' }}>
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
+                  type="button"
+                  onClick={() => { setSubTab('password'); resetErrors(); }}
+                  style={{
+                    flex: '1', borderRadius: '0.5rem', padding: '0.5rem 0', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.3s', cursor: 'pointer', 
+                    ...(subTab === 'password'
+                      ? { backgroundColor: '#ffffff', color: '#18181b', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', border: '1px solid #e4e4e7' }
+                      : { backgroundColor: 'transparent', color: '#71717a', border: '1px solid transparent' })
+                  }}
                 >
-                  {loading ? 'Authenticating...' : 'Sign In Securely'} 
-                  {!loading && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
+                  Password
                 </button>
-              </form>
-            )}
+                <button
+                  type="button"
+                  onClick={() => { setSubTab('otp'); resetErrors(); }}
+                  style={{
+                    flex: '1', borderRadius: '0.5rem', padding: '0.5rem 0', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.3s', cursor: 'pointer',
+                    ...(subTab === 'otp'
+                      ? { backgroundColor: '#ffffff', color: '#18181b', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', border: '1px solid #e4e4e7' }
+                      : { backgroundColor: 'transparent', color: '#71717a', border: '1px solid transparent' })
+                  }}
+                >
+                  OTP Code
+                </button>
+              </div>
 
-            {/* ── SUB-TAB: OTP LOGIN ────────────────────────────────────────── */}
-            {subTab === 'otp' && (
-              <>
-                {!isOtpSent ? (
-                  // Step 1: Input details
-                  <form onSubmit={handleRequestOtp} className="space-y-4">
-                    {mode === 'email' ? (
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email-otp-input">Email Address</label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                          <input
-                            id="email-otp-input"
-                            type="text"
-                            maxLength={254}
-                            value={email}
-                            onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
-                            placeholder="name@company.com"
-                            className={`w-full pl-10 pr-4 py-2.5 rounded-xl border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 placeholder:text-zinc-400 ${emailError ? 'border-red-400 focus:ring-red-400/20' : 'border-zinc-200 dark:border-zinc-800 focus:border-blue-500 focus:ring-blue-500/20'}`}
-                          />
-                        </div>
-                        {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
+              {formError && (
+                <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold animate-in slide-in-from-top-1">
+                  {formError}
+                </div>
+              )}
+
+              {/* ── SUB-TAB: PASSWORD LOGIN ── */}
+              {subTab === 'password' && (
+                <form onSubmit={handlePasswordSubmit} className="space-y-4" autoComplete="off">
+                  {mode === 'email' ? (
+                    <div className="space-y-1">
+                      <div className="relative mt-2">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                        <input
+                          id="email-input"
+                          type="text"
+                          autoComplete="off"
+                          maxLength={254}
+                          value={email}
+                          onChange={(e) => { setEmail(e.target.value); setEmailError(null); setFormError(null); }}
+                          placeholder="name@company.com"
+                          className={`${inputBase} pl-10 pr-4 py-3 ${emailError ? inputError : inputNormal}`}
+                        />
+                        <label htmlFor="email-input" className={getFloatingLabelClass(email, !!emailError)}>
+                          Email Address
+                        </label>
                       </div>
-                    ) : (
-                      <div className="space-y-1.5">
-                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="mobile-otp-input">Mobile Number</label>
-                        <div className="flex gap-2">
-                          <select
-                            value={countryCode}
-                            onChange={(e) => setCountryCode(e.target.value)}
-                            className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-2 text-xs text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shrink-0 cursor-pointer font-semibold"
-                          >
-                            {countries.map((c) => (
-                              <option key={c.name} value={c.code}>
-                                {c.flag} {c.code}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="relative flex-1">
-                            <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="flex gap-2 mt-2">
+                        <select
+                          value={countryCode}
+                          onChange={(e) => setCountryCode(e.target.value)}
+                          className="rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                        >
+                          {countries.map((c) => (
+                            <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
+                          ))}
+                        </select>
+                        <div className="relative flex-1">
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                          <input
+                            id="mobile-input"
+                            type="text"
+                            inputMode="numeric"
+                            value={mobileNumber}
+                            onChange={(e) => handleMobileChange(e.target.value)}
+                            placeholder="10-digit number"
+                            className={`${inputBase} pl-10 pr-3.5 py-3 ${mobileError ? inputError : inputNormal}`}
+                          />
+                          <label htmlFor="mobile-input" className={getFloatingLabelClass(mobileNumber, !!mobileError)}>
+                            Mobile Number
+                          </label>
+                        </div>
+                      </div>
+                      {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
+                    </div>
+                  )}
+
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-end">
+                      <a href="/forgot-password" className="text-xs font-semibold text-teal-800 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline transition">
+                        Forgot Password?
+                      </a>
+                    </div>
+                    <div className="relative mt-2">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <input
+                        id="password-input"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        maxLength={128}
+                        value={password}
+                        onChange={(e) => { setPassword(e.target.value); setPasswordError(null); setFormError(null); }}
+                        placeholder="Enter your password"
+                        className={`${inputBase} pl-10 pr-10 py-3 ${passwordError ? inputError : inputNormal}`}
+                      />
+                      <label htmlFor="password-input" className={getFloatingLabelClass(password, !!passwordError)}>
+                        Password
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] hover:bg-[#0c3128] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
+                  >
+                    {loading ? 'Authenticating...' : 'Sign In'}
+                  </button>
+                </form>
+              )}
+
+              {/* ── SUB-TAB: OTP LOGIN ── */}
+              {subTab === 'otp' && (
+                <>
+                  {!isOtpSent ? (
+                    // Step 1: Input details
+                    <form onSubmit={handleRequestOtp} className="space-y-4">
+                      {mode === 'email' ? (
+                        <div className="space-y-1">
+                          <div className="relative mt-2">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
                             <input
-                              id="mobile-otp-input"
+                              id="email-otp-input"
+                              type="text"
+                              maxLength={254}
+                              value={email}
+                              onChange={(e) => { setEmail(e.target.value); setEmailError(null); }}
+                              placeholder="name@company.com"
+                              className={`${inputBase} pl-10 pr-4 py-3 ${emailError ? inputError : inputNormal}`}
+                            />
+                            <label htmlFor="email-otp-input" className={getFloatingLabelClass(email, !!emailError)}>
+                              Email Address
+                            </label>
+                          </div>
+                          {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
+                        </div>
+                      ) : (
+                        <div className="space-y-1">
+                          <div className="flex gap-2 mt-2">
+                            <select
+                              value={countryCode}
+                              onChange={(e) => setCountryCode(e.target.value)}
+                              className="rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                            >
+                              {countries.map((c) => (
+                                <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
+                              ))}
+                            </select>
+                            <div className="relative flex-1">
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                              <input
+                                id="mobile-otp-input"
+                                type="text"
+                                inputMode="numeric"
+                                value={mobileNumber}
+                                onChange={(e) => handleMobileChange(e.target.value)}
+                                placeholder="10-digit number"
+                                className={`${inputBase} pl-10 pr-3.5 py-3 ${mobileError ? inputError : inputNormal}`}
+                              />
+                              <label htmlFor="mobile-otp-input" className={getFloatingLabelClass(mobileNumber, !!mobileError)}>
+                                Mobile Number
+                              </label>
+                            </div>
+                          </div>
+                          {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={otpSending}
+                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] hover:bg-[#0c3128] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
+                      >
+                        {otpSending ? 'Sending Code...' : 'Send Verification Code'}
+                      </button>
+                    </form>
+                  ) : (
+                    // Step 2: Verify code & expiry countdown
+                    <form onSubmit={handleOtpVerify} className="space-y-5">
+                      {otpSuccessMsg && (
+                        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
+                          {otpSuccessMsg}
+                        </div>
+                      )}
+
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                            Enter the 6-digit code
+                          </label>
+                          {otpTimer > 0 ? (
+                            <span className="text-xs text-teal-700 dark:text-teal-400 font-bold flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5 animate-pulse" /> {formatTimer(otpTimer)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-red-500 font-bold">Expired</span>
+                          )}
+                        </div>
+
+                        {/* Digit Box Input Layout */}
+                        <div className="flex justify-center gap-2.5">
+                          {otpDigits.map((digit, idx) => (
+                            <input
+                              key={idx}
+                              id={`login-otp-${idx}`}
                               type="text"
                               inputMode="numeric"
-                              value={mobileNumber}
-                              onChange={(e) => handleMobileChange(e.target.value)}
-                              placeholder="10-digit number"
-                              className={`w-full pl-10 pr-3.5 py-2.5 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${mobileError ? 'border-red-400 focus:ring-red-400/20' : 'border-zinc-200 dark:border-zinc-800'}`}
+                              maxLength={1}
+                              value={digit}
+                              disabled={otpTimer <= 0}
+                              onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
+                              onKeyDown={(e) => handleOtpDigitKeyDown(idx, e)}
+                              className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
                             />
-                          </div>
+                          ))}
                         </div>
-                        {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
-                      </div>
-                    )}
 
-                    <button
-                      type="submit"
-                      disabled={otpSending}
-                      className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
-                    >
-                      {otpSending ? 'Sending Code...' : 'Send Verification Code'} 
-                      {!otpSending && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
-                    </button>
-                  </form>
-                ) : (
-                  // Step 2: Verify code & expiry countdown
-                  <form onSubmit={handleOtpVerify} className="space-y-5">
-                    {otpSuccessMsg && (
-                      <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-2.5 text-xs text-emerald-700 dark:text-emerald-400 font-medium">
-                        {otpSuccessMsg}
-                      </div>
-                    )}
-
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center">
-                        <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                          Enter the 6-digit code
-                        </label>
-                        {otpTimer > 0 ? (
-                          <span className="text-xs text-blue-650 dark:text-blue-455 font-bold flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5 animate-pulse" /> {formatTimer(otpTimer)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-red-500 font-bold">Expired</span>
+                        {otpCodeError && <p className="text-sm text-red-500 font-semibold text-center">{otpCodeError}</p>}
+                        {otpTimer <= 0 && (
+                          <p className="text-sm text-red-500 font-semibold text-center">OTP expired. Please go back and request a new code.</p>
                         )}
                       </div>
 
-                      {/* Digit Box Input Layout */}
-                      <div className="flex justify-center gap-2.5">
-                        {otpDigits.map((digit, idx) => (
-                          <input
-                            key={idx}
-                            id={`login-otp-${idx}`}
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={1}
-                            value={digit}
-                            disabled={otpTimer <= 0}
-                            onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
-                            onKeyDown={(e) => handleOtpDigitKeyDown(idx, e)}
-                            className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
-                          />
-                        ))}
-                      </div>
-
-                      {otpCodeError && <p className="text-sm text-red-500 font-semibold text-center">{otpCodeError}</p>}
-                      {otpTimer <= 0 && (
-                        <p className="text-sm text-red-500 font-semibold text-center">OTP expired. Please go back and request a new code.</p>
-                      )}
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={otpDigits.some((d) => !d) || otpVerifying || otpTimer <= 0}
-                      className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
-                    >
-                      {otpVerifying ? 'Verifying Code...' : 'Verify & Sign In'} 
-                      {!otpVerifying && <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />}
-                    </button>
-
-                    <div className="flex items-center justify-between text-xs">
                       <button
-                        type="button"
-                        onClick={() => { setIsOtpSent(false); setOtpDigits(['', '', '', '', '', '']); setOtpCodeError(null); setOtpSuccessMsg(null); }}
-                        className="text-xs font-bold text-blue-650 dark:text-blue-450 hover:underline cursor-pointer"
+                        type="submit"
+                        disabled={otpDigits.some((d) => !d) || otpVerifying || otpTimer <= 0}
+                        className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] hover:bg-[#0c3128] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
                       >
-                        ← Change input details
+                        {otpVerifying ? 'Verifying Code...' : 'Verify & Sign In'}
                       </button>
-                    </div>
-                  </form>
-                )}
-              </>
-            )}
-          </div>
-        )}
 
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
-          Don&apos;t have an account?{' '}
-          <a href="/register" className="font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline transition-colors decoration-2 underline-offset-2">
-            Create account
-          </a>
+                      <div className="flex items-center justify-between text-xs">
+                        <button
+                          type="button"
+                          onClick={() => { setIsOtpSent(false); setOtpDigits(['', '', '', '', '', '']); setOtpCodeError(null); setOtpSuccessMsg(null); }}
+                          className="text-xs font-bold text-teal-800 dark:text-teal-400 hover:underline cursor-pointer"
+                        >
+                          ← Change input details
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="mt-12 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
+            Don&apos;t have an Account?{' '}
+            <a href="/register" className="font-bold text-teal-800 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline transition-colors decoration-2 underline-offset-2">
+              Sign Up
+            </a>
+          </div>
+
         </div>
-        
       </div>
+
+      {/* ── RIGHT COLUMN (55%) ── */}
+      <div className="hidden lg:flex lg:w-[55%] bg-[#061f17] relative flex-col justify-between px-16 xl:px-24 py-16 overflow-hidden">
+        {/* Animated Background Orbs */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-teal-600/20 blur-[100px] animate-[pulse_6s_ease-in-out_infinite]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] rounded-full bg-emerald-700/10 blur-[120px] animate-[pulse_8s_ease-in-out_infinite_alternate]" />
+        <div className="absolute top-[30%] right-[20%] w-[30%] h-[30%] rounded-full bg-teal-400/5 blur-[80px] animate-[pulse_10s_ease-in-out_infinite_alternate]" />
+
+        {/* Top Floating Dots */}
+        <div className="relative z-10 flex justify-end">
+          <div className="flex space-x-2">
+            {[1, 2, 3].map((dot) => (
+              <div key={dot} className="w-2 h-2 rounded-full bg-teal-500/30" />
+            ))}
+          </div>
+        </div>
+
+        {/* Central Animated Solar System */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center items-center w-full min-h-[400px] overflow-hidden my-4">
+          <div className="relative flex items-center justify-center w-[400px] h-[400px] scale-75 md:scale-90 lg:scale-100">
+            
+            {/* Center Core */}
+            <div className="absolute w-20 h-20 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-full shadow-[0_0_60px_rgba(45,212,191,0.6)] z-20 flex items-center justify-center animate-[pulse_4s_ease-in-out_infinite]">
+              <Network className="w-8 h-8 text-white" />
+            </div>
+
+            {/* Orbit 1 (Inner) */}
+            <div className="absolute w-[180px] h-[180px] rounded-full border border-teal-500/30 animate-[spin_10s_linear_infinite]">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#0a2b20] border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_10s_linear_infinite_reverse]">
+                  <User className="w-4 h-4 text-teal-400" />
+              </div>
+            </div>
+
+            {/* Orbit 2 (Middle) */}
+            <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-teal-500/20 animate-[spin_15s_linear_infinite_reverse]">
+              <div className="absolute top-1/2 -right-5 -translate-y-1/2 w-10 h-10 bg-teal-900 border border-teal-400/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
+                  <Briefcase className="w-4 h-4 text-teal-300" />
+              </div>
+              <div className="absolute top-1/2 -left-4 -translate-y-1/2 w-8 h-8 bg-teal-800 border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
+                  <User className="w-4 h-4 text-white" />
+              </div>
+            </div>
+
+            {/* Orbit 3 (Outer) */}
+            <div className="absolute w-[380px] h-[380px] rounded-full border border-teal-500/10 animate-[spin_25s_linear_infinite]">
+              <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#0e372e] border border-teal-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
+                  <CheckCircle className="w-4 h-4 text-teal-400" />
+              </div>
+              <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-emerald-900 border border-emerald-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
+                  <User className="w-4 h-4 text-emerald-300" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Content / Testimonial Style */}
+        <div className="relative z-10 flex flex-col items-start">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white font-outfit mb-4 leading-tight">
+            Elevate your <br />
+            <span className="text-teal-400">enterprise productivity.</span>
+          </h2>
+          <p className="text-teal-100/70 text-[15px] max-w-[400px] leading-relaxed">
+            Experience our industry-grade platform designed for seamless team collaboration, task tracking, and powerful analytics at scale.
+          </p>
+        </div>
       </div>
+
     </div>
   );
 }

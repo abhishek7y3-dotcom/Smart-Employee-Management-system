@@ -10,6 +10,13 @@ export interface AuthUser {
   role?: string;
   profilePicture?: string;
   designation?: string;
+  department?: string;
+  qualification?: string;
+  notificationPreferences?: {
+    email: boolean;
+    inApp: boolean;
+  };
+  createdAt?: string;
 }
 
 export interface TokenResponse {
@@ -22,6 +29,7 @@ export interface RegisterRequest {
   firstName?: string;
   lastName?: string;
   gender?: string;
+  qualification?: string;
   mobileNumber?: string;
   countryCode?: string;
   email: string;

@@ -318,7 +318,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
     let attachmentData = undefined;
 
     // Check if the text contains our custom attachment string
-    const match = text.match(/^\[ATTACHMENT:(.*?)\](.*)/s);
+    const match = text.match(/^\[ATTACHMENT:(.*?)\]([\s\S]*)/);
     if (match) {
       try {
         attachmentData = JSON.parse(match[1]);
