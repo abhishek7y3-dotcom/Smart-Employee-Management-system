@@ -4,8 +4,24 @@ import React, { useState, FormEvent } from 'react';
 import { useTasks } from '../../context/TaskContext';
 import { useAuth } from '../../context/AuthContext';
 import { EmployeeCard } from '../../components/employee/EmployeeCard';
-import { Search, Plus, X, User, Mail, Lock, Briefcase, Shield, Image, Loader2, ClipboardCheck, Eye, EyeOff } from 'lucide-react';
+import { Search, Plus, X, User, Mail, Lock, Briefcase, Shield, Image, Loader2, ClipboardCheck, Eye, EyeOff, CheckCircle } from 'lucide-react';
 import ProtectedRoute from '../../components/ProtectedRoute';
+import { isValidEmail } from '../../utils/emailValidator';
+import { checkRequirements, isPasswordValid, calculatePasswordStrength, getPasswordValidationError } from '../../utils/passwordValidator';
+
+const validateNameField = (value: string, fieldName: string, allowSpace: boolean = true): string | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return `Please enter your ${fieldName.toLowerCase()}.`;
+  if (trimmed.length < 2) return `${fieldName} must be at least 2 characters long`;
+  if (trimmed.length > 50) return `${fieldName} must be at most 50 characters long`;
+  if (!/^[A-Z]/.test(trimmed)) return `${fieldName} must start with a capital letter`;
+  if (/[0-9]/.test(trimmed) || /[@#$%^&*()]/.test(trimmed)) return `${fieldName} should only contain letters`;
+  if (!allowSpace && /\s/.test(trimmed)) return `${fieldName} cannot contain spaces`;
+
+  const regex = allowSpace ? /^[A-Z][a-zA-Z]*(?:[\s'-][a-zA-Z]+)*$/ : /^[A-Z][a-zA-Z]*(?:['-][a-zA-Z]+)*$/;
+  if (!regex.test(trimmed)) return `${fieldName} has invalid characters or consecutive ${allowSpace ? 'spaces/' : ''}symbols`;
+  return null;
+};
 
 export default function EmployeesPage() {
   const { employees, addEmployee } = useTasks();
@@ -19,7 +35,8 @@ export default function EmployeesPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     designation: 'Employee',
@@ -67,7 +84,8 @@ export default function EmployeesPage() {
       pass += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setFormData({
-      name: '',
+      firstName: '',
+      lastName: '',
       email: '',
       password: pass,
       designation: 'Employee',
@@ -80,20 +98,38 @@ export default function EmployeesPage() {
   };
 
   const validate = () => {
+    let hasError = false;
     const errs: Record<string, string> = {};
-    if (!formData.name.trim()) errs.name = 'Please enter a name.';
-    if (!formData.email.trim()) {
-      errs.email = 'Please enter an email address.';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errs.email = 'Please enter a valid email address.';
+
+    const fnError = validateNameField(formData.firstName, 'First name', false);
+    if (fnError) {
+      errs.firstName = fnError;
+      hasError = true;
     }
-    if (!formData.password.trim()) {
-      errs.password = 'Please enter the password.';
-    } else if (formData.password.length < 6) {
-      errs.password = 'Password must be at least 6 characters';
+
+    const lnError = validateNameField(formData.lastName, 'Last name');
+    if (lnError) {
+      errs.lastName = lnError;
+      hasError = true;
     }
+
+    const trimmedEmail = formData.email.trim();
+    if (!trimmedEmail) {
+      errs.email = 'Please enter your email address.';
+      hasError = true;
+    } else if (!isValidEmail(trimmedEmail)) {
+      errs.email = 'Please enter a valid email address (e.g., user@example.com).';
+      hasError = true;
+    }
+
+    const passError = getPasswordValidationError(formData.password);
+    if (passError) {
+      errs.password = 'Please enter a valid password.';
+      hasError = true;
+    }
+
     setErrors(errs);
-    return Object.keys(errs).length === 0;
+    return !hasError;
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -102,8 +138,8 @@ export default function EmployeesPage() {
     setLoading(true);
     try {
       await addEmployee({
-        name: formData.name,
-        email: formData.email,
+        name: `${formData.firstName.trim()} ${formData.lastName.trim()}`,
+        email: formData.email.trim().toLowerCase(),
         password: formData.password,
         designation: formData.designation,
         role: formData.role,
@@ -198,26 +234,59 @@ export default function EmployeesPage() {
                   </div>
                 )}
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="name">
-                    Full name
-                  </label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                    <input
-                      id="name"
-                      type="text"
-                      maxLength={100}
-                      value={formData.name}
-                      onChange={(e) => { setFormData({ ...formData, name: e.target.value }); setErrors({ ...errors, name: '' }); }}
-                      placeholder="Jane Doe"
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.name
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
-                        }`}
-                    />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="firstName">
+                      First Name
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <input
+                        id="firstName"
+                        type="text"
+                        maxLength={50}
+                        value={formData.firstName}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/[^a-zA-Z]/g, '');
+                          if (val.length > 0) val = val.charAt(0).toUpperCase() + val.slice(1);
+                          setFormData({ ...formData, firstName: val });
+                          setErrors({ ...errors, firstName: '' });
+                        }}
+                        placeholder="Jane"
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.firstName
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
+                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                          }`}
+                      />
+                    </div>
+                    {errors.firstName && <p className="text-xs text-red-500 font-medium">{errors.firstName}</p>}
                   </div>
-                  {errors.name && <p className="text-xs text-red-500 font-medium">{errors.name}</p>}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="lastName">
+                      Last Name
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="lastName"
+                        type="text"
+                        maxLength={50}
+                        value={formData.lastName}
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/[^a-zA-Z\s'-]/g, '');
+                          val = val.trimStart().replace(/\s{2,}/g, ' ').replace(/-{2,}/g, '-').replace(/'{2,}/g, "'");
+                          if (val.length > 0) val = val.replace(/(?:^|\s|-)\S/g, (m) => m.toUpperCase());
+                          setFormData({ ...formData, lastName: val });
+                          setErrors({ ...errors, lastName: '' });
+                        }}
+                        placeholder="Doe"
+                        className={`w-full px-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.lastName
+                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
+                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                          }`}
+                      />
+                    </div>
+                    {errors.lastName && <p className="text-xs text-red-500 font-medium">{errors.lastName}</p>}
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -231,7 +300,7 @@ export default function EmployeesPage() {
                       type="text"
                       maxLength={254}
                       value={formData.email}
-                      onChange={(e) => { setFormData({ ...formData, email: e.target.value }); setErrors({ ...errors, email: '' }); }}
+                      onChange={(e) => { setFormData({ ...formData, email: e.target.value.toLowerCase().replace(/\s/g, '') }); setErrors({ ...errors, email: '' }); }}
                       placeholder="jane@company.com"
                       className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.email
                         ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'

@@ -5,6 +5,9 @@ import {
   createTask,
   updateTask,
   deleteTask,
+  getArchivedTasks,
+  restoreTask,
+  permanentDeleteTask,
 } from '../controllers/taskController';
 import { authenticate } from '../middleware/authMiddleware';
 import { taskCreateValidation, taskUpdateValidation } from '../validators/taskValidator';
@@ -35,6 +38,7 @@ router.use(authenticate);
  *       200:
  *         description: Success
  */
+router.get('/archived', getArchivedTasks);
 router.get('/', getTasks); 
 /**
  * @swagger
@@ -94,5 +98,7 @@ router.put('/:id', taskUpdateValidation, validateRequest, updateTask);
  *         description: Success
  */
 router.delete('/:id', deleteTask); // Task ko system se delete karna
+router.delete('/:id/permanent', permanentDeleteTask); // Permanently delete task
+router.put('/:id/restore', restoreTask); // Restore task
 
 export default router;

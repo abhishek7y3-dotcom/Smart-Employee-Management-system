@@ -26,6 +26,8 @@ function ResetPasswordForm() {
   const router = useRouter();
 
   const [email, setEmail] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('');
   const [otp, setOtp] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -42,17 +44,26 @@ function ResetPasswordForm() {
     if (emailParam) {
       setEmail(emailParam);
     }
+    const mobileParam = searchParams.get('mobileNumber');
+    if (mobileParam) {
+      setMobileNumber(mobileParam);
+    }
+    const codeParam = searchParams.get('countryCode');
+    if (codeParam) {
+      setCountryCode(codeParam);
+    }
   }, [searchParams]);
 
   const handleResendOtp = async () => {
-    if (!email.trim()) {
-      setResendMessage('Please enter your email first.');
+    if (!email.trim() && !mobileNumber.trim()) {
+      setResendMessage('Please enter your email or phone first.');
       return;
     }
     setResendMessage(null);
     setResendLoading(true);
     try {
-      const result = await resendResetOtp(email);
+      const payload = email ? { email } : { mobileNumber, countryCode };
+      const result = await resendResetOtp(payload);
       setResendMessage(result.message || 'A new reset code has been sent.');
       setResendCooldown(60);
       const interval = setInterval(() => {
@@ -76,7 +87,7 @@ function ResetPasswordForm() {
     setFormError(null);
     setSuccessMessage(null);
 
-    if (!email.trim() || !otp.trim() || !password.trim() || !confirmPassword.trim()) {
+    if ((!email.trim() && !mobileNumber.trim()) || !otp.trim() || !password.trim() || !confirmPassword.trim()) {
       setFormError('Please complete all fields.');
       return;
     }
@@ -97,7 +108,8 @@ function ResetPasswordForm() {
     }
 
     try {
-      const message = await resetPassword({ email, otp, password });
+      let payload = email ? { email, otp, password } : { mobileNumber, countryCode, otp, password };
+      const message = await resetPassword(payload);
       setSuccessMessage(message || 'Password reset successful! Redirecting to login…');
       setTimeout(() => {
         router.push('/login');
@@ -124,21 +136,19 @@ function ResetPasswordForm() {
 
       <form className="space-y-4" onSubmit={handleSubmit}>
         
-        {/* Email Field */}
+        {/* Email/Mobile Field Display */}
         <div className="space-y-1">
           <div className="relative mt-2">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
             <input
-              id="email"
+              id="identifier"
               type="text"
-              maxLength={254}
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@company.com"
-              className={`${inputBase} pl-10 pr-4 py-3 ${inputNormal}`}
+              readOnly
+              value={email || (countryCode + ' ' + mobileNumber)}
+              className={`${inputBase} pl-10 pr-4 py-3 bg-zinc-100 dark:bg-zinc-800/50 text-zinc-500`}
             />
-            <label htmlFor="email" className={getFloatingLabelClass(email, false)}>
-              Email Address
+            <label htmlFor="identifier" className={getFloatingLabelClass(email || mobileNumber, false)}>
+              {email ? 'Email Address' : 'Mobile Number'}
             </label>
           </div>
         </div>
@@ -147,7 +157,7 @@ function ResetPasswordForm() {
         <div className="space-y-1 pt-2">
           <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300 block text-center mb-2" htmlFor="otp">
             6-digit code sent to{' '}
-            {email ? <span className="text-teal-700 dark:text-teal-400 font-bold">{email}</span> : 'your email'}
+            {email || mobileNumber ? <span className="text-teal-700 dark:text-teal-400 font-bold">{email || mobileNumber}</span> : 'you'}
           </label>
           <input
             id="otp"

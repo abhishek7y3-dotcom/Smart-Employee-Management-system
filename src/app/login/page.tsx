@@ -161,8 +161,8 @@ export default function LoginPage() {
   };
 
   // ── REQUEST OTP (Email or Phone) ──────────────────────────────────────────
-  const handleRequestOtp = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleRequestOtp = async (e?: FormEvent<HTMLFormElement> | React.MouseEvent<HTMLButtonElement>) => {
+    if (e) e.preventDefault();
     setEmailError(null);
     setMobileError(null);
 
@@ -498,7 +498,17 @@ export default function LoginPage() {
                               <Clock className="h-3.5 w-3.5 animate-pulse" /> {formatTimer(otpTimer)}
                             </span>
                           ) : (
-                            <span className="text-xs text-red-500 font-bold">Expired</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-red-500 font-bold">Expired</span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleRequestOtp(e)}
+                                disabled={otpSending}
+                                className="text-xs font-bold text-teal-700 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300 underline disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                              >
+                                {otpSending ? 'Sending...' : 'Resend OTP'}
+                              </button>
+                            </div>
                           )}
                         </div>
 

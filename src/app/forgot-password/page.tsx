@@ -3,7 +3,8 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { Mail, ArrowRight, ClipboardCheck, User, Briefcase, Network, CheckCircle } from 'lucide-react';
+import { Mail, ClipboardCheck, Phone, ArrowLeft, User, Briefcase, Network, CheckCircle } from 'lucide-react';
+import { countries } from '../../constants/countries';
 
 const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
 
@@ -21,34 +22,72 @@ const inputNormal =
 const inputError =
   'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
+type ResetMode = 'initial' | 'email' | 'phone';
+
 export default function ForgotPasswordPage() {
   const { forgotPassword, loading, error } = useAuth();
   const router = useRouter();
+  
+  const [mode, setMode] = useState<ResetMode>('initial');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [mobileError, setMobileError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const resetErrors = () => {
     setFormError(null);
     setEmailError(null);
+    setMobileError(null);
     setSuccessMessage(null);
+  };
 
-    if (!email.trim()) {
-      setEmailError('Email is required.');
-      return;
+  const handleMobileChange = (val: string) => {
+    const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
+    setMobileNumber(digitsOnly);
+    setMobileError(null);
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    resetErrors();
+    let hasError = false;
+
+    if (mode === 'email') {
+      if (!email.trim()) {
+        setEmailError('Email is required.');
+        hasError = true;
+      } else if (!emailRegex.test(email)) {
+        setEmailError('Please enter a valid email address.');
+        hasError = true;
+      }
+    } else {
+      if (!mobileNumber.trim()) {
+        setMobileError('Mobile number is required.');
+        hasError = true;
+      } else if (mobileNumber.length !== 10) {
+        setMobileError('Mobile number must be exactly 10 digits.');
+        hasError = true;
+      } else if (mobileNumber.startsWith('0')) {
+        setMobileError('Mobile number should never start with 0.');
+        hasError = true;
+      }
     }
-    if (!emailRegex.test(email)) {
-      setEmailError('Please enter a valid email address.');
-      return;
-    }
+
+    if (hasError) return;
 
     try {
-      const message = await forgotPassword({ email });
+      let payload = mode === 'email' ? { email } : { mobileNumber, countryCode };
+      const message = await forgotPassword(payload);
       setSuccessMessage(message || 'Password reset OTP has been sent. Redirecting…');
       setTimeout(() => {
-        router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+        if (mode === 'email') {
+          router.push(`/reset-password?email=${encodeURIComponent(email)}`);
+        } else {
+          router.push(`/reset-password?mobileNumber=${encodeURIComponent(mobileNumber)}&countryCode=${encodeURIComponent(countryCode)}`);
+        }
       }, 2000);
     } catch {
       // Error state handled in context.
@@ -71,58 +110,126 @@ export default function ForgotPasswordPage() {
               Reset your password
             </h1>
             <p className="text-[15px] font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed mb-4">
-              Enter your email and we&apos;ll send a 6-digit code to reset your password.
+              Enter your email or phone and we&apos;ll send a 6-digit code to reset your password.
             </p>
           </div>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <div className="space-y-1">
-              <div className="relative mt-2">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
-                <input
-                  id="email"
-                  type="text"
-                  maxLength={254}
-                  value={email}
-                  onChange={(event) => {
-                    setEmail(event.target.value);
-                    setEmailError(null);
-                    setFormError(null);
-                  }}
-                  placeholder="name@company.com"
-                  className={`${inputBase} pl-10 pr-4 py-3 ${emailError ? inputError : inputNormal}`}
-                />
-                <label htmlFor="email" className={getFloatingLabelClass(email, !!emailError)}>
-                  Email Address
-                </label>
-              </div>
-              {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
+          {/* ── 1. INITIAL METHOD CHOICE SCREEN ── */}
+          {mode === 'initial' && (
+            <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <button
+                type="button"
+                onClick={() => { setMode('email'); resetErrors(); }}
+                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
+              >
+                <Mail className="h-4 w-4 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
+                Reset with Email
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setMode('phone'); resetErrors(); }}
+                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
+              >
+                <Phone className="h-4 w-4 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
+                Reset with Phone
+              </button>
             </div>
+          )}
 
-            {formError && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
-                {formError}
-              </div>
-            )}
-            {error && !formError && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
-                {error}
-              </div>
-            )}
-            {successMessage && (
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-2.5 text-sm text-emerald-700 dark:text-emerald-400 font-semibold">
-                {successMessage}
-              </div>
-            )}
+          {/* ── 2. INPUT SCREEN ── */}
+          {mode !== 'initial' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              <button
+                type="button"
+                onClick={() => { setMode('initial'); resetErrors(); }}
+                className="group flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors duration-300 cursor-pointer -mt-2"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to options
+              </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] hover:bg-[#0c3128] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
-            >
-              {loading ? 'Sending code…' : 'Send reset code'}
-            </button>
-          </form>
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                {mode === 'email' ? (
+                  <div className="space-y-1">
+                    <div className="relative mt-2">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <input
+                        id="email"
+                        type="text"
+                        maxLength={254}
+                        value={email}
+                        onChange={(event) => {
+                          setEmail(event.target.value);
+                          setEmailError(null);
+                          setFormError(null);
+                        }}
+                        placeholder="name@company.com"
+                        className={`${inputBase} pl-10 pr-4 py-3 ${emailError ? inputError : inputNormal}`}
+                      />
+                      <label htmlFor="email" className={getFloatingLabelClass(email, !!emailError)}>
+                        Email Address
+                      </label>
+                    </div>
+                    {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex gap-2 mt-2">
+                      <select
+                        value={countryCode}
+                        onChange={(e) => setCountryCode(e.target.value)}
+                        className="rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                      >
+                        {countries.map((c) => (
+                          <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
+                        ))}
+                      </select>
+                      <div className="relative flex-1">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                        <input
+                          id="mobile-input"
+                          type="text"
+                          inputMode="numeric"
+                          value={mobileNumber}
+                          onChange={(e) => handleMobileChange(e.target.value)}
+                          placeholder="10-digit number"
+                          className={`${inputBase} pl-10 pr-3.5 py-3 ${mobileError ? inputError : inputNormal}`}
+                        />
+                        <label htmlFor="mobile-input" className={getFloatingLabelClass(mobileNumber, !!mobileError)}>
+                          Mobile Number
+                        </label>
+                      </div>
+                    </div>
+                    {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
+                  </div>
+                )}
+
+                {formError && (
+                  <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
+                    {formError}
+                  </div>
+                )}
+                {error && !formError && (
+                  <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
+                    {error}
+                  </div>
+                )}
+                {successMessage && (
+                  <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-2.5 text-sm text-emerald-700 dark:text-emerald-400 font-semibold">
+                    {successMessage}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="group flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] hover:bg-[#0c3128] px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-teal-900/25 transition-all duration-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer mt-6"
+                >
+                  {loading ? 'Sending code…' : 'Send reset code'}
+                </button>
+              </form>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="mt-12 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">

@@ -52,7 +52,7 @@ The application guarantees high security via AES-encrypted One-Time Passwords (O
 
 - 🔐 **Bulletproof Authentication**: Secure email validation loop requiring AES-encrypted 6-digit OTPs before account creation.
 - 🛡️ **Role-Based Access Control (RBAC)**: Strict separation of concerns. Admins have omnipotent read/write access (assigning tasks, broadcasting announcements), whereas Members are isolated to only view and update tasks specifically assigned to them.
-- 📊 **Dynamic Dashboard**: Beautiful UI featuring Glassmorphism, animated mesh gradients, and automatic Dark Mode transitions.
+- 📊 **Enterprise UI & Dynamic Dashboard**: Beautiful UI featuring an industry-standard 45/55 split-screen architecture for authentication pages, advanced Glassmorphism (`backdrop-blur`), floating labels, complex CSS Solar System micro-animations, animated mesh gradients, and automatic Dark Mode transitions.
 - 💬 **Integrated Communication**: Real-time ready schema supporting internal 1-on-1 team messaging and global Admin announcements.
 - 📝 **Intelligent UI Forms**: Frontend forms feature smart typing (auto-capitalizing trailing names) and integrated search filtering inside country-code dropdowns.
 

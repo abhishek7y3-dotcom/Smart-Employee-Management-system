@@ -34,10 +34,10 @@ export const KPICard: React.FC<KPICardProps> = ({ tasks, className = '' }) => {
       ? Math.round((metrics.inProgressTasks / metrics.totalTasks) * 100)
       : 0;
 
-  const overdueCount = tasks.filter(isOverdueTask).length;
+
 
   const highPriorityPending = tasks.filter(
-    (t) => t.priority === 'high' && t.status !== 'completed' && t.status !== 'cancelled'
+    (t) => t.priority === 'high' && t.status !== 'completed'
   ).length;
 
   const kpis: KPI[] = [
@@ -60,16 +60,6 @@ export const KPICard: React.FC<KPICardProps> = ({ tasks, className = '' }) => {
       borderColor: 'border-blue-200 dark:border-blue-800',
       icon: <Zap className="h-4 w-4" />,
       trend: activeRate > 0 ? 'up' : 'neutral',
-    },
-    {
-      label: 'Overdue Tasks',
-      value: `${overdueCount}`,
-      subtext: overdueCount === 0 ? 'All tasks on schedule' : `${overdueCount} past due date`,
-      color: overdueCount === 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
-      bgColor: overdueCount === 0 ? 'bg-emerald-50 dark:bg-emerald-950/40' : 'bg-red-50 dark:bg-red-950/40',
-      borderColor: overdueCount === 0 ? 'border-emerald-200 dark:border-emerald-800' : 'border-red-200 dark:border-red-800',
-      icon: <Clock className="h-4 w-4" />,
-      trend: overdueCount === 0 ? 'up' : 'down',
     },
     {
       label: 'High Priority Open',

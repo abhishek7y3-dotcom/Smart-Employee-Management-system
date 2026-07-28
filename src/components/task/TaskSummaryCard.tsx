@@ -63,7 +63,7 @@ export const TaskSummaryCard: React.FC<TaskSummaryCardProps> = ({
   const content = (
     <>
       <div className="flex items-center justify-between gap-4">
-        <span className="text-xs font-bold uppercase tracking-[0.1em] text-zinc-400 transition-colors duration-300 dark:text-zinc-550">{title}</span>
+        <span className="text-xs font-extrabold uppercase tracking-[0.1em] text-black transition-colors duration-300 dark:text-white">{title}</span>
         {icon && <div className={`rounded-xl p-2 transition-all duration-300 ${selectedColor.iconBg}`}>{icon}</div>}
       </div>
       <div className="mt-5 flex items-end justify-between gap-3">

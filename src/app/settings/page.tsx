@@ -6,6 +6,21 @@ import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock, User as UserIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { Country, State, City } from 'country-state-city';
+import Select from 'react-select';
+import { sanitizePhoneNumber, validatePhoneNumber } from '../../utils/phoneValidation';
+
+const reactSelectClassNames = {
+  control: () => '!bg-transparent !border-zinc-200 dark:!border-zinc-800 !rounded-xl !shadow-none !py-0.5',
+  menu: () => '!bg-white dark:!bg-zinc-900 !border !border-zinc-200 dark:!border-zinc-800 !rounded-xl !mt-1',
+  option: (state: any) => `!cursor-pointer !text-zinc-900 dark:!text-zinc-100 hover:!bg-zinc-100 dark:hover:!bg-zinc-800 ${state.isSelected ? '!bg-blue-50 dark:!bg-blue-900/30' : '!bg-transparent'}`,
+  singleValue: () => '!text-zinc-950 dark:!text-zinc-50',
+  input: () => '!text-zinc-950 dark:!text-zinc-50',
+  placeholder: () => '!text-zinc-500',
+  menuList: () => '!p-1',
+};
 
 export default function SettingsPage() {
   const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp, updateUser } = useAuth();
@@ -36,6 +51,53 @@ export default function SettingsPage() {
   const [isVerifyingDeleteOtp, setIsVerifyingDeleteOtp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteTimer, setDeleteTimer] = useState(0); // 120s countdown
+
+  // Country, State & District handling
+  const [selectedCountryCode, setSelectedCountryCode] = useState('');
+  const [selectedCountryName, setSelectedCountryName] = useState(user?.country || '');
+  const [selectedStateCode, setSelectedStateCode] = useState('');
+  const [selectedStateName, setSelectedStateName] = useState(user?.state || '');
+  const [selectedDistrictName, setSelectedDistrictName] = useState(user?.district || '');
+
+  // Documents handling
+  const [existingDocuments, setExistingDocuments] = useState<string[]>(user?.documents || []);
+  const [newDocumentsBase64, setNewDocumentsBase64] = useState<string[]>([]);
+  const [isConvertingFiles, setIsConvertingFiles] = useState(false);
+  const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
+
+  // Controlled Phone states for typing restrictions
+  const [mobilePhoneValue, setMobilePhoneValue] = useState('');
+  const [alternatePhoneValue, setAlternatePhoneValue] = useState('');
+
+  // Initialize selected country and state code
+  useEffect(() => {
+    let currentCountryCode = '';
+    if (user?.country) {
+      const countries = Country.getAllCountries();
+      const foundCountry = countries.find(c => c.name === user.country);
+      if (foundCountry) {
+        currentCountryCode = foundCountry.isoCode;
+        setSelectedCountryCode(foundCountry.isoCode);
+        setSelectedCountryName(foundCountry.name);
+      }
+    }
+    
+    if (user?.state && currentCountryCode) {
+      const states = State.getStatesOfCountry(currentCountryCode);
+      const foundState = states.find(s => s.name === user.state);
+      if (foundState) {
+        setSelectedStateCode(foundState.isoCode);
+        setSelectedStateName(foundState.name);
+      }
+    }
+    
+    if (user?.district) {
+      setSelectedDistrictName(user.district);
+    }
+    
+    if (user?.mobileNumber) setMobilePhoneValue(user.mobileNumber);
+    if (user?.alternateNumber) setAlternatePhoneValue(user.alternateNumber);
+  }, [user]);
 
   // ─── Countdown Timers ──────────────────────────────────────────────────────
 
@@ -268,34 +330,97 @@ export default function SettingsPage() {
               <UserIcon className="h-4.5 w-4.5 text-blue-500" />
               Profile Details
             </h2>
-            <div className="max-w-xl space-y-4">
+            <div className="w-full space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="settings-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Full Name</label>
+                  <label htmlFor="settings-first-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First Name</label>
                   <input
-                    id="settings-name"
+                    id="settings-first-name"
                     type="text"
-                    defaultValue={user?.name}
+                    maxLength={50}
+                    defaultValue={user?.firstName}
                     onChange={(e) => {
+                      let val = e.target.value.replace(/[^A-Za-z]/g, '');
+                      if (val.length > 0) {
+                        val = val.charAt(0).toUpperCase() + val.slice(1);
+                      }
+                      e.target.value = val;
                       if (typeof window !== 'undefined') {
-                        (window as any)._tempEditName = e.target.value;
+                        (window as any)._tempEditFirstName = val;
                       }
                     }}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label htmlFor="settings-designation" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Designation</label>
+                  <label htmlFor="settings-last-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last Name</label>
                   <input
-                    id="settings-designation"
+                    id="settings-last-name"
                     type="text"
-                    defaultValue={user?.designation}
+                    maxLength={50}
+                    defaultValue={user?.lastName}
                     onChange={(e) => {
+                      let val = e.target.value.replace(/[^A-Za-z ]/g, '');
+                      val = val.replace(/^\s+/, ''); // Remove leading spaces
+                      val = val.replace(/\s{2,}/g, ' '); // Allow max one space consecutively
+                      
+                      if (val.length > 0) {
+                        val = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                      }
+                      e.target.value = val;
                       if (typeof window !== 'undefined') {
-                        (window as any)._tempEditDesignation = e.target.value;
+                        (window as any)._tempEditLastName = val;
                       }
                     }}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-country" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Country</label>
+                  <Select
+                    instanceId="country-select"
+                    options={Country.getAllCountries().map(c => ({
+                      value: c.name,
+                      label: (
+                        <div className="flex items-center gap-2">
+                          <img src={`https://flagcdn.com/w20/${c.isoCode.toLowerCase()}.png`} alt={c.name} className="w-5" />
+                          <span>{c.name}</span>
+                        </div>
+                      ),
+                      country: c
+                    }))}
+                    value={
+                      selectedCountryCode ? {
+                        value: selectedCountryName,
+                        label: (
+                          <div className="flex items-center gap-2">
+                            <img src={`https://flagcdn.com/w20/${selectedCountryCode.toLowerCase()}.png`} alt={selectedCountryName} className="w-5" />
+                            <span>{selectedCountryName}</span>
+                          </div>
+                        )
+                      } : null
+                    }
+                    onChange={(selectedOption: any) => {
+                      if (!selectedOption) return;
+                      const newCode = selectedOption.country.isoCode;
+                      const newName = selectedOption.country.name;
+                      setSelectedCountryCode(newCode);
+                      setSelectedCountryName(newName);
+                      
+                      // Reset state and district when country changes
+                      setSelectedStateCode('');
+                      setSelectedStateName('');
+                      setSelectedDistrictName('');
+                      
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditCountry = newName;
+                        (window as any)._tempEditState = '';
+                        (window as any)._tempEditDistrict = '';
+                      }
+                    }}
+                    placeholder="Select Country"
+                    classNames={reactSelectClassNames}
+                    className="text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -310,16 +435,47 @@ export default function SettingsPage() {
                 </div>
                 <div className="space-y-1.5">
                   <label htmlFor="settings-mobile" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number</label>
-                  <input
-                    id="settings-mobile"
-                    type="text"
-                    defaultValue={user?.mobileNumber}
-                    onChange={(e) => {
+                  <PhoneInput
+                    country={selectedCountryCode ? selectedCountryCode.toLowerCase() : 'in'}
+                    value={mobilePhoneValue}
+                    onChange={(phone, data: any) => {
+                      if (data?.dialCode) {
+                        const localPart = phone.slice(data.dialCode.length);
+                        
+                        // Dynamic country-based length restriction
+                        if (data.format) {
+                          const maxLen = (data.format.match(/\./g) || []).length;
+                          if (phone.length > maxLen) {
+                            setMobilePhoneValue('');
+                            setTimeout(() => setMobilePhoneValue(mobilePhoneValue), 0);
+                            return;
+                          }
+                        } else {
+                          if (localPart.length > 15) {
+                            setMobilePhoneValue('');
+                            setTimeout(() => setMobilePhoneValue(mobilePhoneValue), 0);
+                            return;
+                          }
+                        }
+
+                        // Specific valid starting digits for India
+                        if (data.dialCode === '91') {
+                          if (/^[0-5]/.test(localPart)) {
+                            setMobilePhoneValue('');
+                            setTimeout(() => setMobilePhoneValue(data.dialCode), 0);
+                            return;
+                          }
+                        }
+                      }
+                      setMobilePhoneValue(phone);
                       if (typeof window !== 'undefined') {
-                        (window as any)._tempEditMobile = e.target.value;
+                        (window as any)._tempEditMobile = phone;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    inputStyle={{ width: '100%', height: '42px', borderRadius: '0.75rem', background: 'transparent' }}
+                    inputClass="!border-zinc-200 dark:!border-zinc-800 !text-zinc-950 dark:!text-zinc-50"
+                    buttonClass="!bg-transparent !border-zinc-200 dark:!border-zinc-800 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
+                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-zinc-200 dark:!border-zinc-800"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -364,6 +520,249 @@ export default function SettingsPage() {
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-500 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
                   />
                 </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-permanent-address" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Permanent Address</label>
+                  <input
+                    id="settings-permanent-address"
+                    type="text"
+                    defaultValue={user?.permanentAddress}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditPermanentAddress = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-current-address" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Current Address</label>
+                  <input
+                    id="settings-current-address"
+                    type="text"
+                    defaultValue={user?.currentAddress}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditCurrentAddress = e.target.value;
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-alternate-number" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Alternate Number</label>
+                  <PhoneInput
+                    country={selectedCountryCode ? selectedCountryCode.toLowerCase() : 'in'}
+                    value={alternatePhoneValue}
+                    onChange={(phone, data: any) => {
+                      if (data?.dialCode) {
+                        const localPart = phone.slice(data.dialCode.length);
+                        
+                        // Dynamic country-based length restriction
+                        if (data.format) {
+                          const maxLen = (data.format.match(/\./g) || []).length;
+                          if (phone.length > maxLen) {
+                            setAlternatePhoneValue('');
+                            setTimeout(() => setAlternatePhoneValue(alternatePhoneValue), 0);
+                            return;
+                          }
+                        } else {
+                          if (localPart.length > 15) {
+                            setAlternatePhoneValue('');
+                            setTimeout(() => setAlternatePhoneValue(alternatePhoneValue), 0);
+                            return;
+                          }
+                        }
+
+                        // Specific valid starting digits for India
+                        if (data.dialCode === '91') {
+                          if (/^[0-5]/.test(localPart)) {
+                            setAlternatePhoneValue('');
+                            setTimeout(() => setAlternatePhoneValue(data.dialCode), 0);
+                            return;
+                          }
+                        }
+                      }
+                      setAlternatePhoneValue(phone);
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditAlternateNumber = phone;
+                      }
+                    }}
+                    inputStyle={{ width: '100%', height: '42px', borderRadius: '0.75rem', background: 'transparent' }}
+                    inputClass="!border-zinc-200 dark:!border-zinc-800 !text-zinc-950 dark:!text-zinc-50"
+                    buttonClass="!bg-transparent !border-zinc-200 dark:!border-zinc-800 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
+                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-zinc-200 dark:!border-zinc-800"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-state" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">State</label>
+                  <Select
+                    instanceId="state-select"
+                    isDisabled={!selectedCountryCode}
+                    options={selectedCountryCode ? State.getStatesOfCountry(selectedCountryCode).map(s => ({
+                      value: s.name,
+                      label: s.name,
+                      state: s
+                    })) : []}
+                    value={
+                      selectedStateCode ? {
+                        value: selectedStateName,
+                        label: selectedStateName
+                      } : null
+                    }
+                    onChange={(selectedOption: any) => {
+                      if (!selectedOption) return;
+                      const newCode = selectedOption.state.isoCode;
+                      const newName = selectedOption.state.name;
+                      setSelectedStateCode(newCode);
+                      setSelectedStateName(newName);
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditState = newName;
+                        (window as any)._tempEditDistrict = ''; // Reset district on state change
+                      }
+                      setSelectedDistrictName('');
+                    }}
+                    placeholder="Select State"
+                    classNames={reactSelectClassNames}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label htmlFor="settings-district" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">District / City</label>
+                  <Select
+                    instanceId="district-select"
+                    isDisabled={!selectedStateCode}
+                    options={selectedStateCode && selectedCountryCode ? City.getCitiesOfState(selectedCountryCode, selectedStateCode).map(c => ({
+                      value: c.name,
+                      label: c.name
+                    })) : []}
+                    value={
+                      selectedDistrictName ? {
+                        value: selectedDistrictName,
+                        label: selectedDistrictName
+                      } : null
+                    }
+                    onChange={(selectedOption: any) => {
+                      if (!selectedOption) return;
+                      setSelectedDistrictName(selectedOption.value);
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditDistrict = selectedOption.value;
+                      }
+                    }}
+                    placeholder="Select District"
+                    classNames={reactSelectClassNames}
+                    className="text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label htmlFor="settings-documents" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Documents</label>
+                  
+                  {existingDocuments.length > 0 && (
+                    <div className="mb-2 space-y-1">
+                      <p className="text-xs text-zinc-500">Currently uploaded documents:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {existingDocuments.map((doc, idx) => (
+                          <div key={idx} className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">
+                            <a href={doc} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate max-w-[150px]">
+                              Document {idx + 1}
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setExistingDocuments(prev => prev.filter((_, i) => i !== idx));
+                              }}
+                              className="text-red-500 hover:text-red-700 ml-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {newDocumentsBase64.length > 0 && (
+                    <div className="mb-2 space-y-1">
+                      <p className="text-xs text-zinc-500">Files ready to upload:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {newDocumentsBase64.map((_, idx) => (
+                          <div key={idx} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded text-xs text-blue-700 dark:text-blue-300">
+                            <span>New File {idx + 1}</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setNewDocumentsBase64(prev => prev.filter((_, i) => i !== idx));
+                              }}
+                              className="text-red-500 hover:text-red-700 ml-1"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <input
+                    id="settings-documents"
+                    type="file"
+                    multiple
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                    disabled={isConvertingFiles}
+                    className="block w-full text-sm text-zinc-500 dark:text-zinc-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700 outline-none cursor-pointer"
+                    onChange={async (e) => {
+                      const files = e.target.files;
+                      if (!files || files.length === 0) return;
+                      
+                      // Fake file validation
+                      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/jpg'];
+                      const validFiles = Array.from(files).filter(file => allowedTypes.includes(file.type));
+                      
+                      if (validFiles.length !== files.length) {
+                        toast.error('Invalid or fake file detected. Only PDF, DOCX, JPG, and PNG are allowed.');
+                        e.target.value = '';
+                        return;
+                      }
+
+                      setIsConvertingFiles(true);
+                      
+                      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = error => reject(error);
+                      });
+
+                      try {
+                        const base64Files = await Promise.all(Array.from(files).map(toBase64));
+                        setNewDocumentsBase64(prev => [...prev, ...base64Files]);
+                        // Reset input so same file can be selected again if removed
+                        e.target.value = '';
+                      } catch (error) {
+                        toast.error('Failed to process one or more files.');
+                      } finally {
+                        setIsConvertingFiles(false);
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  {isConvertingFiles && <span className="text-xs text-zinc-500 flex items-center gap-1 mt-1"><Loader2 className="w-3 h-3 animate-spin" /> Processing files...</span>}
+                </div>
+                <div className="space-y-1.5 sm:col-span-2 flex items-center gap-2 mt-2">
+                  <input
+                    id="settings-terms"
+                    type="checkbox"
+                    defaultChecked={user?.termsAndConditions}
+                    onChange={(e) => {
+                      if (typeof window !== 'undefined') {
+                        (window as any)._tempEditTerms = e.target.checked;
+                      }
+                    }}
+                    className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  <label htmlFor="settings-terms" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
+                    I agree to the <button type="button" onClick={() => setIsTermsModalOpen(true)} className="text-blue-600 hover:underline">Terms and Conditions</button>
+                  </label>
+                </div>
               </div>
               <button
                 type="button"
@@ -374,11 +773,56 @@ export default function SettingsPage() {
                   btn.disabled = true;
                   try {
                     const updates: any = {};
-                    if ((window as any)._tempEditName) updates.name = (window as any)._tempEditName;
-                    if ((window as any)._tempEditDesignation) updates.designation = (window as any)._tempEditDesignation;
-                    if ((window as any)._tempEditMobile) updates.mobileNumber = (window as any)._tempEditMobile;
+                    if ((window as any)._tempEditFirstName !== undefined) updates.firstName = (window as any)._tempEditFirstName;
+                    if ((window as any)._tempEditLastName !== undefined) updates.lastName = (window as any)._tempEditLastName;
+                    
+                    // Also derive 'name' if either firstName or lastName is updated
+                    if ((window as any)._tempEditFirstName !== undefined || (window as any)._tempEditLastName !== undefined) {
+                      const fName = (window as any)._tempEditFirstName !== undefined ? (window as any)._tempEditFirstName : (user?.firstName || '');
+                      const lName = (window as any)._tempEditLastName !== undefined ? (window as any)._tempEditLastName : (user?.lastName || '');
+                      updates.name = `${fName} ${lName}`.trim();
+                    }
+                    
+                    if ((window as any)._tempEditCountry !== undefined) updates.country = (window as any)._tempEditCountry;
+                    if ((window as any)._tempEditMobile !== undefined) {
+                      const sanitized = sanitizePhoneNumber((window as any)._tempEditMobile);
+                      if (sanitized) {
+                        const validation = validatePhoneNumber(sanitized);
+                        if (!validation.isValid) {
+                          toast.error(`Mobile Number: ${validation.error}`);
+                          btn.innerHTML = prevText;
+                          btn.disabled = false;
+                          return;
+                        }
+                      }
+                      updates.mobileNumber = sanitized;
+                    }
                     if ((window as any)._tempEditGender) updates.gender = (window as any)._tempEditGender;
                     if ((window as any)._tempEditQualification) updates.qualification = (window as any)._tempEditQualification;
+                    if ((window as any)._tempEditPermanentAddress !== undefined) updates.permanentAddress = (window as any)._tempEditPermanentAddress;
+                    if ((window as any)._tempEditCurrentAddress !== undefined) updates.currentAddress = (window as any)._tempEditCurrentAddress;
+                    
+                    if ((window as any)._tempEditAlternateNumber !== undefined) {
+                      const sanitizedAlt = sanitizePhoneNumber((window as any)._tempEditAlternateNumber);
+                      if (sanitizedAlt) {
+                        const validationAlt = validatePhoneNumber(sanitizedAlt);
+                        if (!validationAlt.isValid) {
+                          toast.error(`Alternate Number: ${validationAlt.error}`);
+                          btn.innerHTML = prevText;
+                          btn.disabled = false;
+                          return;
+                        }
+                      }
+                      updates.alternateNumber = sanitizedAlt;
+                    }
+                    
+                    if ((window as any)._tempEditState !== undefined) updates.state = (window as any)._tempEditState;
+                    if ((window as any)._tempEditDistrict !== undefined) updates.district = (window as any)._tempEditDistrict;
+                    
+                    // Combine existing documents and newly uploaded base64 documents
+                    updates.documents = [...existingDocuments, ...newDocumentsBase64];
+
+                    if ((window as any)._tempEditTerms !== undefined) updates.termsAndConditions = (window as any)._tempEditTerms;
                     
                     if (Object.keys(updates).length > 0) {
                       await updateUser(updates);
@@ -708,6 +1152,50 @@ export default function SettingsPage() {
         )}
 
       </div>
+
+      {/* Terms and Conditions Modal */}
+      {isTermsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-5 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Terms & Conditions (Registration & Profile Update)</h3>
+              <button onClick={() => setIsTermsModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+                <Trash2 className="w-5 h-5 hidden" />
+                <span className="text-2xl leading-none">&times;</span>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
+              <p>By registering an account or updating your profile in the Employee Management System (&quot;EMS&quot;), you agree to the following terms:</p>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Accurate Information</strong><br/>You agree to provide accurate, complete, and up-to-date personal and professional information during registration and profile updates. Providing false or misleading information may result in account suspension or termination.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Account Responsibility</strong><br/>You are responsible for maintaining the confidentiality of your login credentials. You must not share your username, password, or verification codes with anyone. Any activity performed using your account is your responsibility.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Profile Updates</strong><br/>You may update your personal information whenever necessary. Certain fields, such as Employee ID, Company Email, Role, Department, or other official records, may only be modified by authorized administrators.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Data Privacy</strong><br/>Your personal information will be collected, stored, and processed only for employment-related purposes, including account management, communication, attendance, payroll, and other HR operations. Your information will be handled securely and in accordance with the organization&apos;s Privacy Policy.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Acceptable Use</strong><br/>You agree to use the system only for legitimate business purposes. You must not upload harmful, offensive, misleading, or illegal content, attempt unauthorized access, interfere with system security, or misuse the platform in any way.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Security Monitoring</strong><br/>For security, compliance, and audit purposes, the system may record login history, profile updates, password changes, and other account activities. These records may be reviewed by authorized personnel when necessary.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Account Suspension</strong><br/>The organization reserves the right to suspend, restrict, or terminate your account if you violate these Terms & Conditions, provide false information, misuse the system, or engage in unauthorized activities.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">System Availability</strong><br/>While every effort is made to ensure uninterrupted access, the system may occasionally be unavailable due to maintenance, updates, or technical issues. The organization is not responsible for temporary service interruptions.</div>
+              
+              <div><strong className="text-zinc-900 dark:text-white">Changes to Terms</strong><br/>These Terms & Conditions may be updated from time to time. Continued use of the Employee Management System after any changes indicates your acceptance of the revised terms.</div>
+            </div>
+            <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 flex justify-end">
+              <button 
+                onClick={() => setIsTermsModalOpen(false)}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition"
+              >
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </ProtectedRoute>
   );
 }

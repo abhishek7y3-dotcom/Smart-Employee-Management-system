@@ -44,7 +44,7 @@ interface AuthContextType extends AuthState {
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<string>;
   resetPassword: (payload: ResetPasswordRequest) => Promise<string>;
   persistAuth: (authUser: AuthUser, authToken: string) => void;
-  updateUser: (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string }) => Promise<void>;
+  updateUser: (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string; permanentAddress?: string; currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }) => Promise<void>;
   deleteAccount: () => Promise<void>;
   verifyResetOtp: (otp: string) => Promise<void>;
 }
@@ -167,7 +167,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [clearAuth, router]);
 
   const updateUser = useCallback(
-    async (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string }) => {
+    async (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string; permanentAddress?: string; currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }) => {
       if (!user) return;
       setLoading(true);
       setError(null);

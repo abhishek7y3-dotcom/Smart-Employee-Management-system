@@ -87,3 +87,10 @@ Successfully bypassed local Windows Git credential blocks to force-push the enti
 - **Security in Transit:** Storing plain text OTPs in a database is a massive security risk. Pre-encrypting them with `AES-256-GCM` ensures that even if the database is compromised, the verification codes remain useless to attackers.
 - **Semantic Data Relationships:** When building assignment engines, tracking `createdBy` is insufficient. Moving to an `assignedBy` and `assignedTo` structure semantically defines the flow of authority in an RBAC system.
 - **Event Bubbling is Dangerous:** Complex UI components (like a search bar inside a dropdown button) require strict event management (`stopPropagation`) to prevent nested elements from triggering the closures of their parent containers.
+
+## 🚀 Latest Updates (Enterprise Authentication Redesign)
+- **UI Redesign**: Fully redesigned all authentication pages (`/login`, `/register`, `/forgot-password`, `/reset-password`) to match an industry-standard Enterprise SaaS layout.
+- **Split Screen Layout**: Implemented a responsive 45/55 split-screen design featuring a clean white left column for forms and a deep Teal/Dark Emerald right column for branding.
+- **Floating Labels**: Upgraded all authentication input fields to utilize modern "floating label" animations for a cleaner user experience.
+- **Solar System Animation**: Engineered a complex, pure CSS/Tailwind animated Solar System on the right side of authentication pages. It features orbiting icons (Users, Tasks, Network) with inverse-rotation math to keep icons upright, pulsing glowing orbs, and glassmorphism styling.
+- **Streamlined Login**: Refined the initial method choice screen (Email vs. Phone) to be thinner, removing unnecessary borders, and implementing theme-aligned teal hover effects to seamlessly blend with the new premium aesthetic.

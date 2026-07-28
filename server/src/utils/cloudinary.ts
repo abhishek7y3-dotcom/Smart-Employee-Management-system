@@ -48,3 +48,21 @@ export async function uploadToCloudinary(base64Image: string, userName: string):
     return defaultAvatar;
   }
 }
+
+// Ye function generic documents (PDFs, docs, images) upload karne ke liye hai
+export async function uploadDocumentToCloudinary(base64Data: string): Promise<string> {
+  if (!base64Data) return '';
+  if (!isCloudinaryConfigured) return '';
+
+  try {
+    const uploadResponse = await cloudinary.uploader.upload(base64Data, {
+      folder: 'employee_task_manager_documents',
+      resource_type: 'auto', // Allows uploading PDFs, Word docs, images, etc.
+    });
+    console.log('cloudinary.ts: Successfully uploaded document to Cloudinary:', uploadResponse.secure_url);
+    return uploadResponse.secure_url;
+  } catch (error) {
+    console.error('cloudinary.ts: Error uploading document to Cloudinary:', error);
+    throw new Error('Failed to upload document');
+  }
+}

@@ -23,11 +23,9 @@ const priorityColors = {
 };
 
 const statuses: Array<{ value: Task['status']; label: string }> = [
-  { value: 'todo', label: 'To Do' },
+  { value: 'todo', label: 'Pending' },
   { value: 'in_progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'overdue', label: 'Overdue' },
 ];
 
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDelete, onEdit, onView }) => {

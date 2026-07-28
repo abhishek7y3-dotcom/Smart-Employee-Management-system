@@ -2,7 +2,10 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Leave from '../models/Leave';
 import LeaveBalance from '../models/LeaveBalance';
+import User from '../models/User';
+import Notification from '../models/Notification';
 import { AuthRequest } from '../middleware/authMiddleware';
+import { sendLeaveApprovalEmail, sendLeaveRejectionEmail } from '../utils/mailer';
 
 export async function applyLeave(req: AuthRequest, res: Response) {
   try {
@@ -42,6 +45,22 @@ export async function applyLeave(req: AuthRequest, res: Response) {
     });
 
     await leave.save();
+
+    // Create notification for admins
+    const admins = await User.find({ role: { $in: ['admin', 'Admin', 'HR'] } });
+    const employeeName = req.user?.name || req.user?.firstName + ' ' + req.user?.lastName;
+    const notifications = admins.map(admin => ({
+      recipientId: admin._id,
+      senderId: employeeId,
+      senderName: employeeName,
+      type: 'system',
+      message: `New leave request from ${employeeName} for ${totalDays} day(s).`,
+      isRead: false
+    }));
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
+    }
+
     return res.status(201).json({ success: true, data: leave });
   } catch (error: any) {
     console.error('Error applying leave:', error);
@@ -166,6 +185,62 @@ export async function updateLeaveStatus(req: AuthRequest, res: Response) {
     }
 
     await leave.save();
+
+    // Send email notification if approved
+    if (status === 'Approved') {
+      const employee = await User.findById(leave.employeeId);
+      if (employee && employee.email) {
+        const approverName = leave.approverName || 'an Administrator';
+        const formattedStart = new Date(leave.startDate).toLocaleDateString();
+        const formattedEnd = new Date(leave.endDate).toLocaleDateString();
+
+        sendLeaveApprovalEmail(
+          employee.email,
+          leave.employeeName,
+          approverName,
+          leave.leaveType,
+          formattedStart,
+          formattedEnd,
+          leave.totalDays
+        ).catch((err) => {
+          console.error('Failed to send leave approval email:', err);
+        });
+      }
+    } else if (status === 'Rejected') {
+      const employee = await User.findById(leave.employeeId);
+      if (employee && employee.email) {
+        const approverName = leave.approverName || 'an Administrator';
+        const formattedStart = new Date(leave.startDate).toLocaleDateString();
+        const formattedEnd = new Date(leave.endDate).toLocaleDateString();
+
+        sendLeaveRejectionEmail(
+          employee.email,
+          leave.employeeName,
+          approverName,
+          leave.leaveType,
+          formattedStart,
+          formattedEnd,
+          leave.totalDays,
+          leave.rejectionReason || 'No specific reason provided.'
+        ).catch((err) => {
+          console.error('Failed to send leave rejection email:', err);
+        });
+      }
+    }
+
+    // Send in-app notification to employee
+    if (status === 'Approved' || status === 'Rejected') {
+      const approverName = req.user?.name || req.user?.firstName + ' ' + req.user?.lastName;
+      await Notification.create({
+        recipientId: leave.employeeId,
+        senderId: req.user?._id,
+        senderName: approverName,
+        type: 'system',
+        message: `Your leave request for ${leave.totalDays} day(s) has been ${status.toLowerCase()} by ${approverName}.`,
+        isRead: false
+      });
+    }
+
     return res.status(200).json({ success: true, data: leave });
   } catch (error) {
     console.error('Error updating leave status:', error);

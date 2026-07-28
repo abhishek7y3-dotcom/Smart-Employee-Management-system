@@ -25,16 +25,16 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
   }, [pathname]);
 
   useEffect(() => {
-    if (!initializing && !loading && !isAuthenticated && !isAuthPage) {
+    if (!initializing && !isAuthenticated && !isAuthPage) {
       router.replace('/login');
     }
-  }, [isAuthenticated, initializing, loading, isAuthPage, router]);
+  }, [isAuthenticated, initializing, isAuthPage, router]);
 
   if (isAuthPage) {
     return <>{children}</>;
   }
 
-  if (initializing || loading) {
+  if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4 py-12 dark:bg-zinc-950">
         <div className="rounded-xl border border-zinc-200 bg-white px-8 py-6 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-900/50">

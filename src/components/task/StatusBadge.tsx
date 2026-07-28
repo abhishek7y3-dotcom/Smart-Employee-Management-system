@@ -9,7 +9,7 @@ interface StatusBadgeProps {
 export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = '' }) => {
   const statusConfig = {
     todo: {
-      label: 'To Do',
+      label: 'Pending',
       classes: 'bg-zinc-100/70 text-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300 border-zinc-200/60 dark:border-zinc-800/60 font-bold',
     },
     in_progress: {
@@ -23,10 +23,6 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
     completed: {
       label: 'Completed',
       classes: 'bg-green-50/70 text-green-700 dark:bg-green-950/30 dark:text-green-400 border-green-200/40 dark:border-green-900/30 font-bold',
-    },
-    cancelled: {
-      label: 'Cancelled',
-      classes: 'bg-red-50/70 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200/40 dark:border-red-900/30 font-bold',
     },
     overdue: {
       label: 'Overdue',

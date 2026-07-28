@@ -238,3 +238,42 @@ export async function deleteTask(taskId: string): Promise<void> {
 
   await axiosInstance.delete(`/tasks/${taskId}`);
 }
+
+export async function getArchivedTasks(): Promise<Task[]> {
+  if (isMockAuthEnabled()) return []; // Mock not supported for archive yet
+  const response = await axiosInstance.get<ApiTasksResponse>('/tasks/archived');
+  return response.data.data.tasks.map(normalizeTask);
+}
+
+export async function restoreTask(taskId: string): Promise<void> {
+  if (isMockAuthEnabled()) return;
+  await axiosInstance.put(`/tasks/${taskId}/restore`);
+}
+
+export async function getArchivedUsers(): Promise<Employee[]> {
+  if (isMockAuthEnabled()) return [];
+  const response = await axiosInstance.get<{ success: boolean; data: { users: any[] } }>('/auth/users/archived');
+  return response.data.data.users.map((user) => ({
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    role: user.role ?? 'user',
+    designation: user.designation || 'Employee',
+    avatarUrl: user.profilePicture,
+  }));
+}
+
+export async function restoreUser(userId: string): Promise<void> {
+  if (isMockAuthEnabled()) return;
+  await axiosInstance.put(`/auth/users/${userId}/restore`);
+}
+
+export async function permanentDeleteTask(taskId: string): Promise<void> {
+  if (isMockAuthEnabled()) return;
+  await axiosInstance.delete(`/tasks/${taskId}/permanent`);
+}
+
+export async function permanentDeleteUser(userId: string): Promise<void> {
+  if (isMockAuthEnabled()) return;
+  await axiosInstance.delete(`/auth/users/${userId}/permanent`);
+}

@@ -16,6 +16,8 @@ interface TaskTableProps {
   onEditTask?: (task: Task) => void;
   onViewTask?: (task: Task) => void;
   onStatusChange?: (taskId: string, status: Task['status']) => void;
+  priorityFilter?: string;
+  onPriorityFilterChange?: (priority: string) => void;
   isLoading?: boolean;
 }
 
@@ -38,6 +40,8 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   onEditTask,
   onViewTask,
   onStatusChange,
+  priorityFilter = 'all',
+  onPriorityFilterChange,
   isLoading = false
 }) => {
   const truncateDescription = (desc: string) => {
@@ -67,7 +71,21 @@ export const TaskTable: React.FC<TaskTableProps> = ({
             <tr>
               <th className="pl-6 pr-2 py-4">Task</th>
               <th className="pl-2 pr-6 py-4">Assigned To</th>
-              <th className="px-6 py-4">Priority</th>
+              <th className="px-6 py-4">
+                <div className="flex items-center gap-2">
+                  <span>Priority</span>
+                  <select 
+                    value={priorityFilter}
+                    onChange={(e) => onPriorityFilterChange?.(e.target.value)}
+                    className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider outline-none cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                  >
+                    <option value="all">All</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </div>
+              </th>
               <th className="px-6 py-4">Status</th>
               <th className="px-6 py-4">Due Date</th>
               <th className="px-6 py-4 text-right">Actions</th>
@@ -93,11 +111,10 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                       onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
                       className="text-sm bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold cursor-pointer"
                     >
-                      <option value="todo">To Do</option>
+                      <option value="todo">Pending</option>
                       <option value="in_progress">In Progress</option>
                       <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                      <option value="overdue">Overdue</option>
+
                     </select>
                   ) : (
                     <StatusBadge status={task.status} />

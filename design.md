@@ -70,7 +70,7 @@ The system enforces strict permission boundaries:
 ### Data Flow & Security
 - **Registration**: Employs AES-256-GCM encryption for storing OTPs prior to email verification. Email addresses are strictly validated.
 - **Authentication**: JWT is exchanged upon login and appended to subsequent requests via `Authorization` headers.
-- **Design Aesthetic**: The frontend extensively uses Glassmorphism UI patterns (`backdrop-blur`), dynamic Tailwind gradients, micro-animations, and modern SVG iconography (Lucide React) to deliver a premium UX.
+- **Design Aesthetic (Enterprise Auth UI)**: The frontend completely embraces a 45/55 split-screen architecture for authentication pages, combining clean white forms with deep Teal/Dark Emerald branding. It features advanced Glassmorphism UI patterns (`backdrop-blur`), dynamic Tailwind floating labels, and a complex pure CSS Solar System micro-animation (complete with mathematically inverse-rotating Lucide React icons) to deliver a highly premium, industry-grade SaaS UX.
 
 ### Validation
 Dual-layer validation is enforced:

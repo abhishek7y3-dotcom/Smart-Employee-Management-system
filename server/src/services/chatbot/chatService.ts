@@ -87,20 +87,20 @@ export async function processChat(user: IUser, message: string = "", conversatio
   }
 
   const tools = [
-    { 
+    {
       functionDeclarations: [
-        fetchTasksDeclaration, 
-        createTaskDeclaration, 
+        fetchTasksDeclaration,
+        createTaskDeclaration,
         updateTaskStatusDeclaration,
         getEmployeeWorkloadDeclaration,
         createAnnouncementDeclaration,
         fetchAnnouncementsDeclaration
-      ] 
+      ]
     }
   ];
 
   let promptParts: any = message;
-  
+
   if (attachment) {
     promptParts = [
       { text: `[Attached File: ${attachment.name}]\n${message}` },
@@ -109,7 +109,7 @@ export async function processChat(user: IUser, message: string = "", conversatio
   }
 
   const response = await sendPromptWithTools(getSystemPrompt(user), history, promptParts, tools);
-  
+
   let finalContent = '';
   try {
     finalContent = response.text();
@@ -154,7 +154,7 @@ export async function processChat(user: IUser, message: string = "", conversatio
     } catch (err: any) {
       resultJSON = { error: 'Internal server error while executing tool: ' + err.message };
     }
-    
+
     const followUpPrompt = `The user originally asked: "${message}". The tool returned this JSON: ${JSON.stringify(resultJSON)}. Please synthesize it for the user in markdown.`;
     const followUpResponse = await sendPromptWithTools(getSystemPrompt(user), history, followUpPrompt, []);
     finalContent = followUpResponse.text();

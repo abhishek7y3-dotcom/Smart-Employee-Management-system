@@ -12,6 +12,14 @@ export interface AuthUser {
   designation?: string;
   department?: string;
   qualification?: string;
+  country?: string;
+  permanentAddress?: string;
+  currentAddress?: string;
+  alternateNumber?: string;
+  state?: string;
+  district?: string;
+  documents?: string[];
+  termsAndConditions?: boolean;
   notificationPreferences?: {
     email: boolean;
     inApp: boolean;
@@ -55,7 +63,9 @@ export interface LoginResponse {
 }
 
 export interface ForgotPasswordRequest {
-  email: string;
+  email?: string;
+  mobileNumber?: string;
+  countryCode?: string;
 }
 
 export interface ForgotPasswordResponse {
@@ -63,7 +73,9 @@ export interface ForgotPasswordResponse {
 }
 
 export interface ResetPasswordRequest {
-  email: string;
+  email?: string;
+  mobileNumber?: string;
+  countryCode?: string;
   otp: string;
   password?: string;
 }

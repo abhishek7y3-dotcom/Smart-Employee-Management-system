@@ -120,27 +120,55 @@ export const loginValidation = [
 ];
 
 export const forgotPasswordValidation = [
-  body('email')
-    .trim()
-    .toLowerCase()
-    .custom((value) => {
-      if (!isValidEmail(value)) {
+  body('email').optional().trim().toLowerCase(),
+  body().custom((value) => {
+    if (!value.email && !value.mobileNumber) {
+      throw new Error('Email or Mobile Number is required');
+    }
+    if (value.email) {
+      if (!isValidEmail(value.email)) {
         throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
       }
-      return true;
-    }),
+    } else {
+      if (!value.countryCode) {
+        throw new Error(VALIDATION_MESSAGES.AUTH.COUNTRY_CODE_REQUIRED);
+      }
+      if (!value.mobileNumber || !isValidMobileNumber(value.mobileNumber, value.countryCode)) {
+        if (value.countryCode === '+91') {
+          throw new Error('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+        } else {
+          throw new Error('Please enter a valid mobile number for the selected country.');
+        }
+      }
+    }
+    return true;
+  }),
 ];
 
 export const resetPasswordValidation = [
-  body('email')
-    .trim()
-    .toLowerCase()
-    .custom((value) => {
-      if (!isValidEmail(value)) {
+  body('email').optional().trim().toLowerCase(),
+  body().custom((value) => {
+    if (!value.email && !value.mobileNumber) {
+      throw new Error('Email or Mobile Number is required');
+    }
+    if (value.email) {
+      if (!isValidEmail(value.email)) {
         throw new Error(VALIDATION_MESSAGES.AUTH.EMAIL_INVALID);
       }
-      return true;
-    }),
+    } else {
+      if (!value.countryCode) {
+        throw new Error(VALIDATION_MESSAGES.AUTH.COUNTRY_CODE_REQUIRED);
+      }
+      if (!value.mobileNumber || !isValidMobileNumber(value.mobileNumber, value.countryCode)) {
+        if (value.countryCode === '+91') {
+          throw new Error('Please enter a valid 10-digit Indian mobile number starting with 6, 7, 8, or 9.');
+        } else {
+          throw new Error('Please enter a valid mobile number for the selected country.');
+        }
+      }
+    }
+    return true;
+  }),
   body('otp').notEmpty().withMessage(VALIDATION_MESSAGES.AUTH.OTP_REQUIRED),
   body('password')
     .isLength({ min: 8, max: 128 })

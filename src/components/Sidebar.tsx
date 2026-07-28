@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -11,6 +12,7 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
+  const { user } = useAuth();
   const [isMock, setIsMock] = React.useState(false);
 
   React.useEffect(() => {
@@ -103,6 +105,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       ),
     },
   ];
+
+  const isAdmin = user?.role === 'admin' || user?.designation?.toLowerCase() === 'admin' || user?.designation?.toLowerCase() === 'ceo' || user?.designation?.toLowerCase() === 'project manager';
+
+  if (isAdmin) {
+    navigation.push({
+      name: 'Archive',
+      href: '/archive',
+      icon: (
+        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+        </svg>
+      ),
+    });
+  }
 
   return (
     <>

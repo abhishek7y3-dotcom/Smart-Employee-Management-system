@@ -15,9 +15,9 @@ export const PieChartCard: React.FC<PieChartCardProps> = ({ tasks, className = '
   const { theme } = useTheme();
   const data = getStatusChartData(tasks);
   const isDark = theme === 'dark';
-  const colors = isDark
-    ? { todo: '#a1a1aa', in_progress: '#60a5fa', completed: '#4ade80', cancelled: '#f87171', overdue: '#fbbf24' }
-    : { todo: '#71717a', in_progress: '#2563eb', completed: '#16a34a', cancelled: '#dc2626', overdue: '#d97706' };
+  const colors: Record<string, string> = isDark
+    ? { todo: '#a1a1aa', in_progress: '#60a5fa', completed: '#4ade80', overdue: '#fbbf24' }
+    : { todo: '#71717a', in_progress: '#2563eb', completed: '#16a34a', overdue: '#d97706' };
 
   return (
     <div className={`rounded-2xl border border-zinc-200/60 bg-white/90 p-5 shadow-sm transition-colors duration-300 dark:border-zinc-800/80 dark:bg-zinc-950/40 backdrop-blur-sm ${className}`}>

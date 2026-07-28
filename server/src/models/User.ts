@@ -22,6 +22,14 @@ export interface IUser extends Document {
   loginOtpExpires?: Date;
   designation?: string;
   department?: string;
+  permanentAddress?: string;
+  currentAddress?: string;
+  country?: string;
+  alternateNumber?: string;
+  state?: string;
+  district?: string;
+  documents?: string[];
+  termsAndConditions?: boolean;
   lastLogin?: Date;
   notificationPreferences?: {
     email: boolean;
@@ -29,6 +37,7 @@ export interface IUser extends Document {
   };
   createdAt: Date;
   updatedAt: Date;
+  isArchived: boolean;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -111,6 +120,44 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: 'Unassigned',
     },
+    permanentAddress: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    currentAddress: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    alternateNumber: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    state: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    district: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    documents: [{
+      type: String,
+      trim: true,
+    }],
+    termsAndConditions: {
+      type: Boolean,
+      default: false,
+    },
     profilePicture: {
       type: String,
       default: '',
@@ -150,6 +197,10 @@ const userSchema = new Schema<IUser>(
     notificationPreferences: {
       email: { type: Boolean, default: true },
       inApp: { type: Boolean, default: true }
+    },
+    isArchived: {
+      type: Boolean,
+      default: false,
     }
   },
   {

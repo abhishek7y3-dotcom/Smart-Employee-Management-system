@@ -51,7 +51,7 @@ export default function DashboardPage() {
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-100/90">Team operations overview</p>
               <h2 className="mt-2 text-3xl font-extrabold tracking-tight md:text-4xl font-outfit">Welcome Back, {user?.name || 'User'}</h2>
               <p className="mt-3 max-w-2xl text-xs leading-relaxed text-blue-100/80 md:text-sm">
-                {metrics.inProgressTasks} tasks are moving, {metrics.cancelledTasks} are cancelled, and the latest team activity is ready for review.
+                {metrics.inProgressTasks} tasks are moving, {metrics.completedTasks} are completed, and the latest team activity is ready for review.
               </p>
             </div>
             <Link
@@ -64,12 +64,12 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <TaskSummaryCard title="Total Tasks" value={metrics.totalTasks} href="/tasks" color="blue" icon={<ListTodo className="h-5 w-5" />} />
           <TaskSummaryCard title="Pending Tasks" value={metrics.pendingTasks} href="/tasks?status=pending" color="zinc" icon={<CircleDashed className="h-5 w-5" />} />
           <TaskSummaryCard title="In Progress" value={metrics.inProgressTasks} href="/tasks?status=in-progress" color="indigo" icon={<Clock3 className="h-5 w-5" />} />
           <TaskSummaryCard title="Completed" value={metrics.completedTasks} href="/tasks?status=completed" color="green" icon={<CheckCircle2 className="h-5 w-5" />} />
-          <TaskSummaryCard title="Cancelled Tasks" value={metrics.cancelledTasks} href="/tasks?status=cancelled" color="red" icon={<AlertTriangle className="h-5 w-5" />} />
+
         </section>
 
         <section className="enterprise-card rounded-2xl p-6 relative z-10">

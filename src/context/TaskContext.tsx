@@ -39,10 +39,9 @@ const getEmployeeName = (employees: Employee[], employeeId: string) =>
   employees.find((employee) => employee.id === employeeId)?.name ?? 'Unassigned';
 
 const statusLabels: Record<TaskStatus, string> = {
-  todo: 'To Do',
+  todo: 'Pending',
   in_progress: 'In Progress',
   completed: 'Completed',
-  cancelled: 'Cancelled',
   overdue: 'Overdue',
 };
 
@@ -139,7 +138,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addTask = async (newTaskData: TaskInput) => {
     try {
       const { task: created, employee } = await apiCreateTask(newTaskData);
-      setTasks((prev) => [...prev, created]);
+      setTasks((prev) => [created, ...prev]);
       const currentEmployees = employee && !employees.some((e) => e.id === employee.id)
         ? [...employees, employee]
         : employees;
@@ -279,13 +278,18 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const nameParts = (newEmployeeData.name || '').trim().split(/\s+/);
         const fName = nameParts[0] || 'Employee';
         const lName = nameParts.slice(1).join(' ') || 'Member';
+        
+        // Generate a random valid 10-digit Indian mobile number to bypass unique constraints 
+        // since the admin creation form doesn't take a mobile number anymore
+        const randomMobile = `9${Math.floor(100000000 + Math.random() * 900000000)}`;
 
         const regResult = await registerUser({
           name: newEmployeeData.name,
           firstName: fName,
           lastName: lName,
           gender: 'Other',
-          mobileNumber: '0000000000',
+          mobileNumber: randomMobile,
+          qualification: 'N/A',
           countryCode: '+91',
           email: newEmployeeData.email,
           password: newEmployeeData.password || 'TempPassword123!',

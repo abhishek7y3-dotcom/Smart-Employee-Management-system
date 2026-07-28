@@ -1,7 +1,7 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'overdue' | 'cancelled';
-export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
 export interface ITask extends Document {
   title: string;
@@ -13,6 +13,7 @@ export interface ITask extends Document {
   assignedBy: Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
+  isArchived: boolean;
 }
 
 /**
@@ -26,13 +27,15 @@ const taskSchema = new Schema<ITask>(
       type: String,
       required: true,
       trim: true, // Automatically removes whitespace from both ends of the string before saving
-      maxlength: 150, // Security: Prevents extremely large strings from filling the database
+      minlength: 5,
+      maxlength: 120, // Strict enterprise limits
     },
     // Task ki detail description
     description: {
       type: String,
       required: true,
       trim: true,
+      minlength: 20,
       maxlength: 1000,
     },
     // Task ka current status, ye fix enum values me se ek hoga
@@ -44,7 +47,7 @@ const taskSchema = new Schema<ITask>(
     // Task ki priority ya urgency
     priority: {
       type: String,
-      enum: ['low', 'medium', 'high'],
+      enum: ['low', 'medium', 'high', 'critical'],
       default: 'medium',
     },
     // Task kab tak complete karna hai (Deadline)
@@ -63,6 +66,10 @@ const taskSchema = new Schema<ITask>(
       type: Schema.Types.ObjectId,
       ref: 'User', // Relational Link: Tracks the admin who created the task
       required: true,
+    },
+    isArchived: {
+      type: Boolean,
+      default: false,
     },
   },
   {

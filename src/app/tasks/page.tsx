@@ -1,7 +1,7 @@
 import { TasksClient } from './TasksClient';
 import { TaskUrlStatus } from '../../utils/dashboardUtils';
 
-const validStatuses: TaskUrlStatus[] = ['all', 'pending', 'in-progress', 'completed', 'cancelled', 'overdue'];
+const validStatuses: TaskUrlStatus[] = ['all', 'pending', 'in-progress', 'completed'];
 
 type TasksPageProps = {
   searchParams: Promise<{ status?: string | string[] }>;

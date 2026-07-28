@@ -123,13 +123,13 @@ export async function resendVerificationOtp(email: string): Promise<{ message: s
   }
 }
 
-export async function resendResetOtp(email: string): Promise<{ message: string }> {
+export async function resendResetOtp(payload: { email?: string; mobileNumber?: string; countryCode?: string }): Promise<{ message: string }> {
   if (isMockAuthEnabled()) {
     return { message: 'Mock reset OTP resent.' };
   }
 
   try {
-    const response = await axiosInstance.post<any>('/auth/resend-reset-otp', { email });
+    const response = await axiosInstance.post<any>('/auth/resend-reset-otp', payload);
     return {
       message: response.data.message || 'A new reset code has been sent.',
     };
@@ -140,7 +140,10 @@ export async function resendResetOtp(email: string): Promise<{ message: string }
 
 export async function updateUserProfile(
   id: string,
-  payload: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string }
+  payload: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string;
+  country?: string;
+  permanentAddress?: string;
+  currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }
 ): Promise<any> {
   if (isMockAuthEnabled()) {
     return { id, ...payload };

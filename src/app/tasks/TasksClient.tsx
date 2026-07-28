@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, X } from 'lucide-react';
 import { useTasks } from '../../context/TaskContext';
 import { ConfirmationModal } from '../../components/ui/ConfirmationModal';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -23,8 +23,7 @@ const statusOptions: Array<{ value: TaskUrlStatus; label: string }> = [
   { value: 'pending', label: 'Pending' },
   { value: 'in-progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'overdue', label: 'Overdue' },
+
 ];
 
 const defaultTaskForm: Omit<TaskInput, 'status'> & { status?: TaskInput['status'] } = {
@@ -35,7 +34,8 @@ const defaultTaskForm: Omit<TaskInput, 'status'> & { status?: TaskInput['status'
   dueDate: getTodayString(),
 };
 
-const priorityWeights: Record<TaskPriority, number> = {
+const priorityWeights: Record<string, number> = {
+  critical: 4,
   high: 3,
   medium: 2,
   low: 1,
@@ -81,9 +81,17 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
         return matchesSearch && matchesPriority && matchesDate;
       })
       .sort((a, b) => {
+        // When viewing 'all' priorities, prioritize newest tasks first
+        if (priorityFilter === 'all') {
+          return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+        }
+        // Otherwise, group by priority first, then newest
         const weightA = priorityWeights[a.priority] || 0;
         const weightB = priorityWeights[b.priority] || 0;
-        return weightB - weightA;
+        if (weightA !== weightB) {
+          return weightB - weightA;
+        }
+        return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       });
   }, [employees, priorityFilter, searchTerm, statusFilter, tasks, dateFilter]);
 
@@ -99,25 +107,38 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
     setDueDateError(null);
   };
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
     let hasError = false;
 
-    if (!newTitle.trim()) {
-      setTitleError('Please enter a task title.');
+    // 1. Task Title Validation
+    const trimmedTitle = newTitle.replace(/\s{2,}/g, ' ').trim();
+    if (!trimmedTitle) {
+      setTitleError('Task title is required.');
       hasError = true;
-    } else if (newTitle.length > 150) {
-      setTitleError('Please keep the task title under 150 characters.');
+    } else if (trimmedTitle.length < 5) {
+      setTitleError('Task title must contain at least 5 characters.');
+      hasError = true;
+    } else if (trimmedTitle.length > 120) {
+      setTitleError('Task title cannot exceed 120 characters.');
+      hasError = true;
+    } else if (/<[a-z][\s\S]*>/i.test(trimmedTitle)) {
+      setTitleError('HTML or JavaScript code is not allowed.');
       hasError = true;
     } else {
       setTitleError(null);
     }
 
-    if (!newDescription.trim()) {
-      setDescriptionError('Please enter a task description.');
+    // 2. Task Description Validation
+    const trimmedDesc = newDescription.replace(/\s{2,}/g, ' ').trim();
+    if (!trimmedDesc || trimmedDesc.length < 20) {
+      setDescriptionError('Task description must contain at least 20 characters.');
       hasError = true;
-    } else if (newDescription.length > 500) {
-      setDescriptionError('Please keep the task description under 500 characters.');
+    } else if (trimmedDesc.length > 1000) {
+      setDescriptionError('Task description cannot exceed 1000 characters.');
+      hasError = true;
+    } else if (/<[a-z][\s\S]*>/i.test(trimmedDesc)) {
+      setDescriptionError('HTML or JavaScript code is not allowed.');
       hasError = true;
     } else {
       setDescriptionError(null);
@@ -138,22 +159,38 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       setDueDateError('Please select a due date that is today or in the future.');
       hasError = true;
     } else {
-      setDueDateError(null);
+      // Due Date bounds based on Priority
+      const maxDays = newPriority === 'critical' ? 7 : newPriority === 'medium' ? 30 : 90;
+      const futureLimit = new Date();
+      futureLimit.setDate(futureLimit.getDate() + maxDays);
+      if (new Date(newDueDate).getTime() > futureLimit.getTime()) {
+        setDueDateError(`Maximum due date for ${newPriority} priority is ${maxDays} days.`);
+        hasError = true;
+      } else {
+        setDueDateError(null);
+      }
     }
 
     if (hasError) return;
 
-    addTask({
-      title: newTitle.trim(),
-      description: newDescription.trim(),
-      status: 'todo',
-      priority: newPriority,
-      assignedTo: newAssignee,
-      dueDate: newDueDate,
-    });
-
-    resetCreateForm();
-    setShowAddForm(false);
+    try {
+      await addTask({
+        title: trimmedTitle,
+        description: trimmedDesc,
+        status: 'todo',
+        priority: newPriority,
+        assignedTo: newAssignee,
+        dueDate: newDueDate,
+      });
+      resetCreateForm();
+      setShowAddForm(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || 'Failed to create task.';
+      if (msg.includes('duplicate') || msg.includes('exists')) setTitleError(msg);
+      else if (msg.includes('employee has reached the maximum')) setAssigneeError(msg);
+      else if (msg.includes('overdue tasks')) setAssigneeError(msg);
+      else alert(msg);
+    }
   };
 
   const confirmDelete = () => {
@@ -176,21 +213,51 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4.5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-98 cursor-pointer"
           >
             {!showAddForm && <Plus className="h-4 w-4" />}
-            {showAddForm ? 'Cancel' : 'Add New Task'}
+            Add New Task
           </button>
         )}
       </div>
 
       {showAddForm && isAdmin && (
-        <form onSubmit={handleAddTask} className="enterprise-card space-y-5 rounded-2xl p-6 transition-all duration-300">
-          <h3 className="font-bold text-zinc-950 dark:text-zinc-50 font-outfit text-sm">Create Task</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            aria-label="Close modal"
+            className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md transition-opacity duration-300"
+            onClick={() => setShowAddForm(false)}
+          />
+          <div className="relative z-10 w-full max-w-2xl rounded-2xl border border-zinc-200/80 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/95 transition-all duration-300 animate-in fade-in zoom-in-95">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Create Task</h3>
+                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Create a new task and assign it to a team member.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddForm(false)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+              >
+                <X className="h-4.5 w-4.5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddTask} className="mt-6 space-y-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="md:col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Title</span>
               <input
-                maxLength={150}
+                maxLength={120}
                 value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value;
+                  // Block starting with special chars
+                  if (/^[_\-.,/]/.test(val)) return;
+                  // Allow only Alphabets, Numbers, Spaces, _ / () & : , .
+                  val = val.replace(/[^a-zA-Z0-9\s_/\()&:,.]/g, '');
+                  // Title capitalization
+                  val = val.replace(/\b\w/g, c => c.toUpperCase());
+                  setNewTitle(val);
+                }}
                 className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
                   titleError
                     ? 'border-red-500 focus:border-red-500'
@@ -202,9 +269,14 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             <label className="md:col-span-2">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Description</span>
               <textarea
-                maxLength={500}
+                maxLength={1000}
                 value={newDescription}
-                onChange={(e) => setNewDescription(e.target.value)}
+                onChange={(e) => {
+                  let val = e.target.value;
+                  // Emojis regex blocker
+                  val = val.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '');
+                  setNewDescription(val);
+                }}
                 rows={3}
                 className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
                   descriptionError
@@ -220,6 +292,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
+                <option value="critical">Critical</option>
               </select>
             </label>
             <label>
@@ -257,7 +330,10 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-all duration-300 hover:bg-blue-700 active:scale-[0.98] sm:w-auto cursor-pointer">
             Create Task
           </button>
+
         </form>
+          </div>
+        </div>
       )}
 
       <div className="enterprise-card flex flex-col gap-4 rounded-2xl p-4.5 md:flex-row md:items-center md:justify-between">
@@ -301,6 +377,8 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           onEditTask={setTaskToEdit}
           onViewTask={setViewingTask}
           onStatusChange={updateTaskStatus}
+          priorityFilter={priorityFilter}
+          onPriorityFilterChange={setPriorityFilter}
         />
       ) : (
         <EmptyState title="No tasks found" message="Try adjusting your filters or search terms." />

@@ -13,12 +13,12 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, loading, initializing } = useAuth();
 
   useEffect(() => {
-    if (!initializing && !loading && !isAuthenticated) {
+    if (!initializing && !isAuthenticated) {
       router.replace('/login');
     }
-  }, [isAuthenticated, initializing, loading, router]);
+  }, [isAuthenticated, initializing, router]);
 
-  if (initializing || loading) {
+  if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-zinc-50 px-4 py-12">
         <div className="rounded-xl bg-white px-8 py-6 shadow ring-1 ring-black/5">

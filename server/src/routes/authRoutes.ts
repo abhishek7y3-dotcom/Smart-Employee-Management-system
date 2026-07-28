@@ -11,9 +11,12 @@ import {
   getAllUsers,
   updateUser,
   deleteUser,
+  getArchivedUsers,
+  restoreUser,
   requestLoginOtp,
   loginWithOtp,
   verifyResetOtp,
+  permanentDeleteUser,
 } from '../controllers/authController';
 import { registerValidation, loginValidation, forgotPasswordValidation, resetPasswordValidation } from '../validators/authValidator';
 import { validateRequest } from '../middleware/validateRequest';
@@ -42,8 +45,11 @@ router.post('/verify-reset-otp', verifyResetOtp);
 // Profile fetch karna (Iske liye 'authenticate' middleware zaroori hai, matlab login hona lazmi hai)
 router.get('/profile', authenticate, profile);
 // Users ki details nikalna, update karna, ya delete karna
+router.get('/users/archived', authenticate, getArchivedUsers);
 router.get('/users', authenticate, getAllUsers);
 router.put('/users/:id', authenticate, updateUser);
 router.delete('/users/:id', authenticate, deleteUser);
+router.put('/users/:id/restore', authenticate, restoreUser);
+router.delete('/users/:id/permanent', authenticate, permanentDeleteUser);
 
 export default router;

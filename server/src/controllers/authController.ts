@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import { signToken, verifyToken } from '../utils/jwt';
-import { sendVerificationOtp, sendResetPasswordOtp } from '../utils/mailer';
-import { uploadToCloudinary } from '../utils/cloudinary';
+import { sendVerificationOtp, sendResetPasswordOtp, sendAdminAccountCreationEmail, sendAccountDeactivationEmail, sendAccountReactivationEmail, sendAccountPermanentDeletionEmail } from '../utils/mailer';
+import { sendSmsOtp } from '../utils/twilio';
+import { uploadToCloudinary, uploadDocumentToCloudinary } from '../utils/cloudinary';
 import { AuthRequest } from '../middleware/authMiddleware';
 import { encrypt, decrypt } from '../utils/crypto';
+import { sanitizePhoneNumber, validatePhoneNumber } from '../utils/phoneValidation';
 
 /**
  * @description Registers a new user in the system.
@@ -34,19 +36,24 @@ export async function register(req: Request, res: Response) {
       $or: [{ email: email.toLowerCase() }, { mobileNumber }]
     });
     if (existingUser) {
-      if (existingUser.email === email.toLowerCase()) {
-        return res.status(409).json({
-          success: false,
-          message: 'Email is already registered.',
-          errors: [],
-        });
-      }
-      if (existingUser.mobileNumber === mobileNumber) {
-        return res.status(409).json({
-          success: false,
-          message: 'Mobile number is already registered.',
-          errors: [],
-        });
+      if (existingUser.isVerified) {
+        if (existingUser.email === email.toLowerCase()) {
+          return res.status(409).json({
+            success: false,
+            message: 'Email is already registered.',
+            errors: [],
+          });
+        }
+        if (existingUser.mobileNumber === mobileNumber) {
+          return res.status(409).json({
+            success: false,
+            message: 'Mobile number is already registered.',
+            errors: [],
+          });
+        }
+      } else {
+        // User exists but is NOT verified. Delete the unverified record so they can register again.
+        await User.findByIdAndDelete(existingUser._id);
       }
     }
 
@@ -106,6 +113,17 @@ export async function register(req: Request, res: Response) {
       sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
         console.error('authController.ts: Failed to send verification OTP email:', emailErr);
       });
+      // Trigger Verification SMS (fire-and-forget)
+      if (user.mobileNumber) {
+        sendSmsOtp(user.countryCode || '', user.mobileNumber, verificationOtpPlain, 'Registration').catch((smsErr) => {
+          console.error('authController.ts: Failed to send SMS:', smsErr);
+        });
+      }
+    } else {
+      // Trigger Admin Account Creation Email
+      sendAdminAccountCreationEmail(user.email, user.name, password).catch((emailErr) => {
+        console.error('authController.ts: Failed to send admin account creation email:', emailErr);
+      });
     }
 
     return res.status(201).json({
@@ -158,6 +176,14 @@ export async function login(req: Request, res: Response) {
       });
     }
 
+    if (user.isArchived) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated by an administrator.',
+        errors: [],
+      });
+    }
+
     // Check email verification status
     if (!user.isVerified) {
       return res.status(400).json({
@@ -196,6 +222,15 @@ export async function login(req: Request, res: Response) {
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
+          qualification: user.qualification,
+          country: user.country,
+          permanentAddress: user.permanentAddress,
+          currentAddress: user.currentAddress,
+          alternateNumber: user.alternateNumber,
+          state: user.state,
+          district: user.district,
+          documents: user.documents,
+          termsAndConditions: user.termsAndConditions,
         },
         token,
       },
@@ -283,14 +318,28 @@ export async function verifyOtp(req: Request, res: Response) {
 }
 
 export async function forgotPassword(req: Request, res: Response) {
-  const { email } = req.body as { email: string };
+  const { email, mobileNumber, countryCode } = req.body as { email?: string; mobileNumber?: string; countryCode?: string };
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() });
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase() });
+    } else if (mobileNumber) {
+      user = await User.findOne({ mobileNumber, countryCode });
+    }
+
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'No account found with that email.',
+        message: 'No account found with these credentials.',
+        errors: [],
+      });
+    }
+
+    if (user.isArchived) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated by an administrator.',
         errors: [],
       });
     }
@@ -304,14 +353,21 @@ export async function forgotPassword(req: Request, res: Response) {
     // Log OTP to terminal for development/testing
     console.log(`\n🔑 [FORGOT PASSWORD] Reset OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
 
-    // Fire-and-forget: don't block the response on email delivery
-    sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
-      console.error('authController.ts: Failed to send reset password OTP email:', emailErr);
-    });
+    if (email) {
+      // Send only to email
+      sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
+        console.error('authController.ts: Failed to send reset password OTP email:', emailErr);
+      });
+    } else if (mobileNumber && user.mobileNumber) {
+      // Send only to mobile
+      sendSmsOtp(user.countryCode || '', user.mobileNumber, otpPlain, 'Password Reset').catch((smsErr) => {
+        console.error('authController.ts: Failed to send reset SMS:', smsErr);
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'Password reset OTP has been sent to your email.',
+      message: mobileNumber ? 'Password reset OTP has been sent to your mobile number.' : 'Password reset OTP has been sent to your email.',
       data: {},
     });
   } catch (error) {
@@ -325,24 +381,34 @@ export async function forgotPassword(req: Request, res: Response) {
 }
 
 export async function resetPassword(req: Request, res: Response) {
-  const { email, otp, password } = req.body as {
-    email: string;
+  const { email, mobileNumber, countryCode, otp, password } = req.body as {
+    email?: string;
+    mobileNumber?: string;
+    countryCode?: string;
     otp: string;
     password?: string;
   };
 
-  if (!email || !otp || !password) {
+  if ((!email && !mobileNumber) || !otp || !password) {
     return res.status(400).json({
       success: false,
-      message: 'Email, OTP code, and new password are required.',
+      message: 'Email/Phone, OTP code, and new password are required.',
       errors: [],
     });
   }
 
   try {
-    const user = await User.findOne({
-      email: email.toLowerCase(),
-    }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    let user;
+    if (email) {
+      user = await User.findOne({
+        email: email.toLowerCase(),
+      }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    } else if (mobileNumber) {
+      user = await User.findOne({
+        mobileNumber,
+        countryCode,
+      }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    }
 
     if (!user) {
       return res.status(400).json({
@@ -457,14 +523,21 @@ export async function resendVerificationOtp(req: Request, res: Response) {
     // Log OTP to terminal for development/testing
     console.log(`\n🔑 [RESEND VERIFY] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 2 min)\n`);
 
-    // Send the new OTP via email (fire-and-forget)
-    sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
-      console.error('authController.ts: Failed to resend verification OTP email:', emailErr);
-    });
+    if (email) {
+      // Send the new OTP via email (fire-and-forget)
+      sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
+        console.error('authController.ts: Failed to resend verification OTP email:', emailErr);
+      });
+    } else if (mobileNumber && user.mobileNumber) {
+      // Send SMS (fire-and-forget)
+      sendSmsOtp(user.countryCode || '', user.mobileNumber, verificationOtpPlain, 'Verification').catch((smsErr) => {
+        console.error('authController.ts: Failed to resend verification SMS:', smsErr);
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'A new verification code has been sent to your email.',
+      message: mobileNumber ? 'A new verification code has been sent to your mobile number.' : 'A new verification code has been sent to your email.',
     });
   } catch (error) {
     console.error('authController.ts: resendVerificationOtp error:', error);
@@ -476,22 +549,27 @@ export async function resendVerificationOtp(req: Request, res: Response) {
 }
 
 export async function resendResetOtp(req: Request, res: Response) {
-  const { email } = req.body as { email: string };
+  const { email, mobileNumber, countryCode } = req.body as { email?: string; mobileNumber?: string; countryCode?: string };
 
-  if (!email) {
+  if (!email && !mobileNumber) {
     return res.status(400).json({
       success: false,
-      message: 'Email is required.',
+      message: 'Email or Mobile Number is required.',
     });
   }
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    let user;
+    if (email) {
+      user = await User.findOne({ email: email.toLowerCase() }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    } else if (mobileNumber) {
+      user = await User.findOne({ mobileNumber, countryCode }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+    }
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'No account found with that email.',
+        message: 'No account found with these credentials.',
       });
     }
 
@@ -515,14 +593,21 @@ export async function resendResetOtp(req: Request, res: Response) {
     // Log OTP to terminal for development/testing
     console.log(`\n🔑 [RESEND RESET] Reset OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
 
-    // Send the new OTP via email (fire-and-forget)
-    sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
-      console.error('authController.ts: Failed to resend reset OTP email:', emailErr);
-    });
+    if (email) {
+      // Send only to email
+      sendResetPasswordOtp(user.email, user.name, otpPlain).catch((emailErr) => {
+        console.error('authController.ts: Failed to resend reset OTP email:', emailErr);
+      });
+    } else if (mobileNumber && user.mobileNumber) {
+      // Send only to mobile
+      sendSmsOtp(user.countryCode || '', user.mobileNumber, otpPlain, 'Password Reset').catch((smsErr) => {
+        console.error('authController.ts: Failed to resend reset SMS:', smsErr);
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'A new password reset code has been sent to your email.',
+      message: mobileNumber ? 'A new password reset code has been sent to your mobile number.' : 'A new password reset code has been sent to your email.',
     });
   } catch (error) {
     console.error('authController.ts: resendResetOtp error:', error);
@@ -551,6 +636,10 @@ export async function requestLoginOtp(req: Request, res: Response) {
     if (!user) {
       return res.status(404).json({ success: false, message: 'No account found with these credentials.' });
     }
+    
+    if (user.isArchived) {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated by an administrator.' });
+    }
     if (!user.isVerified) {
       return res.status(400).json({ success: false, message: 'Your account is not verified yet. Please verify your account first.' });
     }
@@ -562,16 +651,22 @@ export async function requestLoginOtp(req: Request, res: Response) {
     user.loginOtpExpires = otpExpires;
     await user.save();
 
-    console.log(`\n🔑 [LOGIN OTP] OTP for ${user.email} (${user.countryCode || ''} ${user.mobileNumber || ''}): ${otpPlain} (expires in 2 min)\n`);
+    console.log(`\n🔑 [LOGIN OTP] OTP for ${user.email || user.mobileNumber}: ${otpPlain} (expires in 2 min)\n`);
 
-    sendVerificationOtp(user.email, user.name, otpPlain).catch((err) => {
-      console.error('authController.ts: Failed to send login OTP email:', err);
-    });
+    if (email) {
+      sendVerificationOtp(user.email, user.name, otpPlain).catch((err) => {
+        console.error('authController.ts: Failed to send login OTP email:', err);
+      });
+    } else if (mobileNumber && user.mobileNumber) {
+      // Send SMS (fire-and-forget)
+      sendSmsOtp(user.countryCode || '', user.mobileNumber, otpPlain, 'Login').catch((smsErr) => {
+        console.error('authController.ts: Failed to send login SMS:', smsErr);
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      message: 'A login code has been sent to your registered profile details.',
-      email: user.email,
+      message: mobileNumber ? 'A login code has been sent to your mobile number.' : 'A login code has been sent to your email.',
     });
   } catch (error) {
     console.error('authController.ts: requestLoginOtp error:', error);
@@ -637,6 +732,15 @@ export async function loginWithOtp(req: Request, res: Response) {
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
+          qualification: user.qualification,
+          country: user.country,
+          permanentAddress: user.permanentAddress,
+          currentAddress: user.currentAddress,
+          alternateNumber: user.alternateNumber,
+          state: user.state,
+          district: user.district,
+          documents: user.documents,
+          termsAndConditions: user.termsAndConditions,
         },
         token,
       },
@@ -673,6 +777,15 @@ export async function profile(req: Request, res: Response) {
         role: user.role,
         designation: user.designation || 'Employee',
         profilePicture: user.profilePicture,
+        qualification: user.qualification,
+        country: user.country,
+        permanentAddress: user.permanentAddress,
+        currentAddress: user.currentAddress,
+        alternateNumber: user.alternateNumber,
+        state: user.state,
+        district: user.district,
+        documents: user.documents,
+        termsAndConditions: user.termsAndConditions,
       },
     },
   });
@@ -680,7 +793,7 @@ export async function profile(req: Request, res: Response) {
 
 export async function getAllUsers(req: Request, res: Response) {
   try {
-    const users = await User.find({}, 'name email role designation profilePicture isVerified');
+    const users = await User.find({ isArchived: { $ne: true } }, 'name email role designation profilePicture isVerified firstName lastName mobileNumber');
     return res.status(200).json({
       success: true,
       message: 'Users retrieved successfully.',
@@ -698,7 +811,7 @@ export async function getAllUsers(req: Request, res: Response) {
 
 export async function updateUser(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  const { role, designation, name, profilePicture, firstName, lastName, gender, mobileNumber, countryCode } = req.body as {
+  const { role, designation, name, profilePicture, firstName, lastName, gender, mobileNumber, countryCode, qualification, country, permanentAddress, currentAddress, alternateNumber, state, district, documents, termsAndConditions } = req.body as {
     role?: string;
     designation?: string;
     name?: string;
@@ -708,6 +821,15 @@ export async function updateUser(req: Request, res: Response) {
     gender?: string;
     mobileNumber?: string;
     countryCode?: string;
+    qualification?: string;
+    country?: string;
+    permanentAddress?: string;
+    currentAddress?: string;
+    alternateNumber?: string;
+    state?: string;
+    district?: string;
+    documents?: string[];
+    termsAndConditions?: boolean;
   };
   const { id } = req.params;
 
@@ -792,7 +914,14 @@ export async function updateUser(req: Request, res: Response) {
     }
 
     if (mobileNumber !== undefined) {
-      user.mobileNumber = mobileNumber;
+      const sanitized = sanitizePhoneNumber(mobileNumber);
+      if (sanitized) {
+        const validation = validatePhoneNumber(sanitized);
+        if (!validation.isValid) {
+          return res.status(400).json({ success: false, message: `Mobile Number: ${validation.error}`, errors: [] });
+        }
+      }
+      user.mobileNumber = sanitized;
     }
 
     if (countryCode !== undefined) {
@@ -801,6 +930,55 @@ export async function updateUser(req: Request, res: Response) {
 
     if (name !== undefined) {
       user.name = name;
+    }
+
+    if (qualification !== undefined) {
+      user.qualification = qualification;
+    }
+
+    if (country !== undefined) {
+      user.country = country;
+    }
+
+    if (permanentAddress !== undefined) {
+      user.permanentAddress = permanentAddress;
+    }
+
+    if (currentAddress !== undefined) {
+      user.currentAddress = currentAddress;
+    }
+
+    if (alternateNumber !== undefined) {
+      const sanitizedAlt = sanitizePhoneNumber(alternateNumber);
+      if (sanitizedAlt) {
+        const validationAlt = validatePhoneNumber(sanitizedAlt);
+        if (!validationAlt.isValid) {
+          return res.status(400).json({ success: false, message: `Alternate Number: ${validationAlt.error}`, errors: [] });
+        }
+      }
+      user.alternateNumber = sanitizedAlt;
+    }
+
+    if (state !== undefined) {
+      user.state = state;
+    }
+
+    if (district !== undefined) {
+      user.district = district;
+    }
+
+    if (documents !== undefined) {
+      const resolvedDocuments = await Promise.all(documents.map(async (doc) => {
+        if (doc.startsWith('data:')) {
+          return await uploadDocumentToCloudinary(doc);
+        }
+        return doc;
+      }));
+      user.documents = resolvedDocuments.filter(Boolean);
+    }
+
+    if (termsAndConditions !== undefined) {
+      user.termsAndConditions = termsAndConditions;
     }
 
     if (profilePicture !== undefined) {
@@ -830,6 +1008,15 @@ export async function updateUser(req: Request, res: Response) {
           role: user.role,
           designation: user.designation || 'Employee',
           profilePicture: user.profilePicture,
+          qualification: user.qualification,
+          country: user.country,
+          permanentAddress: user.permanentAddress,
+          currentAddress: user.currentAddress,
+          alternateNumber: user.alternateNumber,
+          state: user.state,
+          district: user.district,
+          documents: user.documents,
+          termsAndConditions: user.termsAndConditions,
         }
       },
     });
@@ -867,7 +1054,7 @@ export async function deleteUser(req: Request, res: Response) {
       });
     }
 
-    const user = await User.findByIdAndDelete(id);
+    const user = await User.findByIdAndUpdate(id, { isArchived: true }, { new: true });
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -875,6 +1062,10 @@ export async function deleteUser(req: Request, res: Response) {
         errors: [],
       });
     }
+
+    sendAccountDeactivationEmail(user.email, user.name).catch((err) => {
+      console.error('Failed to send deactivation email to', user.email, err);
+    });
 
     return res.status(200).json({
       success: true,
@@ -886,6 +1077,62 @@ export async function deleteUser(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: 'An error occurred while removing the user.',
+      errors: [],
+    });
+  }
+}
+
+export async function getArchivedUsers(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  if (authReq.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden' });
+  }
+
+  try {
+    const users = await User.find({ isArchived: true }, 'name email role designation profilePicture isVerified firstName lastName mobileNumber');
+    return res.status(200).json({
+      success: true,
+      message: 'Archived users retrieved successfully.',
+      data: { users },
+    });
+  } catch (error) {
+    console.error('authController.ts: getArchivedUsers error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while fetching archived users.',
+      errors: [],
+    });
+  }
+}
+
+export async function restoreUser(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  if (authReq.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden' });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const user = await User.findByIdAndUpdate(id, { isArchived: false }, { new: true });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found in archive.' });
+    }
+
+    sendAccountReactivationEmail(user.email, user.name).catch((err) => {
+      console.error('Failed to send reactivation email to', user.email, err);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User restored successfully.',
+      data: {},
+    });
+  } catch (error) {
+    console.error('authController.ts: restoreUser error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while restoring the user.',
       errors: [],
     });
   }
@@ -940,6 +1187,38 @@ export async function verifyResetOtp(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: 'An error occurred during verification.',
+    });
+  }
+}
+
+export async function permanentDeleteUser(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  if (authReq.user?.role !== 'admin') {
+    return res.status(403).json({ success: false, message: 'Forbidden' });
+  }
+
+  const { id } = req.params;
+
+  try {
+    const user = await User.findByIdAndDelete(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    sendAccountPermanentDeletionEmail(user.email, user.name).catch((err) => {
+      console.error('Failed to send permanent deletion email to', user.email, err);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User permanently deleted.',
+      data: {},
+    });
+  } catch (error) {
+    console.error('authController.ts: permanentDeleteUser error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'An error occurred while deleting the user.',
     });
   }
 }
