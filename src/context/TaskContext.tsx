@@ -278,7 +278,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const nameParts = (newEmployeeData.name || '').trim().split(/\s+/);
         const fName = nameParts[0] || 'Employee';
         const lName = nameParts.slice(1).join(' ') || 'Member';
-        
+
         // Generate a random valid 10-digit Indian mobile number to bypass unique constraints 
         // since the admin creation form doesn't take a mobile number anymore
         const randomMobile = `9${Math.floor(100000000 + Math.random() * 900000000)}`;

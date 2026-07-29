@@ -16,6 +16,7 @@ import {
   resetPassword as resetPasswordApi,
   updateUserProfile,
   removeUser,
+  logoutUser,
   verifyResetOtp as verifyResetOtpApi,
 } from '../api/auth';
 import {
@@ -71,15 +72,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const storedUser = window.localStorage.getItem(AUTH_STORAGE_KEYS.user);
-    const storedToken = window.localStorage.getItem(AUTH_STORAGE_KEYS.token);
 
-    if (storedUser && storedToken) {
+    if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-        setToken(storedToken);
+        // We no longer read the token from localStorage; we rely on the HttpOnly cookie.
+        // For backwards compatibility in this context state, we just set a dummy token 
+        // to indicate 'isAuthenticated' is true since we have a user.
+        setToken('cookie_managed');
       } catch {
         localStorage.removeItem(AUTH_STORAGE_KEYS.user);
-        localStorage.removeItem(AUTH_STORAGE_KEYS.token);
       }
     }
 
@@ -88,9 +90,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const persistAuth = useCallback((authUser: AuthUser, authToken: string) => {
     setUser(authUser);
-    setToken(authToken);
+    setToken('cookie_managed'); // Backend set the real token via HttpOnly cookie
     window.localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(authUser));
-    window.localStorage.setItem(AUTH_STORAGE_KEYS.token, authToken);
+    // Removing the token from localStorage
+    window.localStorage.removeItem(AUTH_STORAGE_KEYS.token);
   }, []);
 
   const clearAuth = useCallback(() => {
@@ -161,7 +164,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await logoutUser();
+    } catch (e) {
+      console.error('Logout API failed:', e);
+    }
     clearAuth();
     router.push('/login');
   }, [clearAuth, router]);

@@ -1,33 +1,44 @@
+// =========================================================================
+// INTERVIEW GUIDE: authRoutes.ts - The Traffic Police
+// `app.ts` ne saare '/api/auth' requests is file ko bhej diye. Ab ye file dekhegi
+// ki us request me aage kya likha hai (jaise '/login' ya '/register') aur
+// usko sahi Controller aur Middlewares (security check) ke paas bhejegi.
+// =========================================================================
+
 import { Router } from 'express';
+// Ye saare function (Handlers) authController se aaye hain jahan actual brain/logic likha hai
 import {
-  register,
-  login,
-  forgotPassword,
-  resetPassword,
-  profile,
-  verifyOtp,
-  resendVerificationOtp,
-  resendResetOtp,
-  getAllUsers,
-  updateUser,
-  deleteUser,
-  getArchivedUsers,
-  restoreUser,
-  requestLoginOtp,
-  loginWithOtp,
-  verifyResetOtp,
-  permanentDeleteUser,
+  register, login, logout, forgotPassword, resetPassword, profile,
+  verifyOtp, resendVerificationOtp, resendResetOtp, getAllUsers,
+  updateUser, deleteUser, getArchivedUsers, restoreUser, requestLoginOtp,
+  loginWithOtp, verifyResetOtp, permanentDeleteUser, refreshToken,
 } from '../controllers/authController';
+
+// Ye Middlewares hain (Checkers). Controller me jaane se pehle data check hoga.
 import { registerValidation, loginValidation, forgotPasswordValidation, resetPasswordValidation } from '../validators/authValidator';
 import { validateRequest } from '../middleware/validateRequest';
 import { authenticate } from '../middleware/authMiddleware';
 
 const router = Router();
 
+// =========================================================================
+// THE REQUEST PIPELINE (Very Important)
+// Interviewer: "Login request kaise flow karti hai aapke code me?"
+// Aapka Jawab: "Sabse pehle request router pe aati hai. Yahan main 3 functions pass kar raha hoon:"
+// 1. `loginValidation`: Check karega ki email/password empty toh nahi? Format sahi hai?
+// 2. `validateRequest`: Agar 1st step me error mili, toh yahi se Frontend ko error bhej dega (Controller tak nahi jayega).
+// 3. `login`: Agar sab theek hai, tab ja kar hamara main logic (Controller) chalega!
+// =========================================================================
+
 // Naya user banane ka route (Registration)
 router.post('/register', registerValidation, validateRequest, register);
-// Normal email aur password se login
+
+// Normal email aur password se login (Yahi pipeline lagoo hoti hai)
 router.post('/login', loginValidation, validateRequest, login);
+// User ko logout karne ke liye
+router.post('/logout', logout);
+// Refresh token endpoint to get new access token
+router.post('/refresh', refreshToken);
 // Account verify karne ke liye OTP submit karna
 router.post('/verify-otp', verifyOtp);
 // OTP wapas mangwane ke routes

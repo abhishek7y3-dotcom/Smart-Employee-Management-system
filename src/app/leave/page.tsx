@@ -89,7 +89,11 @@ const LeaveContent = () => {
         </div>
       </header>
 
-      {isAdmin && <LeaveStatistics />}
+      {isAdmin && (
+        <LeaveStatistics 
+          onCardClick={(status) => setFilters(prev => ({ ...prev, status }))} 
+        />
+      )}
       {!isAdmin && <LeaveBalanceCard />}
 
       {view === 'table' ? (

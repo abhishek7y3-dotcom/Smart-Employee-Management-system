@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
-import { signToken, verifyToken } from '../utils/jwt';
+import { signToken, verifyToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
 import { sendVerificationOtp, sendResetPasswordOtp, sendAdminAccountCreationEmail, sendAccountDeactivationEmail, sendAccountReactivationEmail, sendAccountPermanentDeletionEmail } from '../utils/mailer';
 import { sendSmsOtp } from '../utils/twilio';
 import { uploadToCloudinary, uploadDocumentToCloudinary } from '../utils/cloudinary';
@@ -157,11 +157,20 @@ export async function register(req: Request, res: Response) {
   }
 }
 
+// =========================================================================
+// INTERVIEW GUIDE: login() Controller (The Brain)
+// Yeh function actual logic run karta hai. 
+// Pipeline: Request -> authRoutes.ts -> Validation Middleware -> Yahan (Controller)
+// =========================================================================
 export async function login(req: Request, res: Response) {
+  // 1. Data Extractor: Frontend se aaye data ko nikalna
   const { email, password, mobileNumber, countryCode } = req.body as { email?: string; password: string; mobileNumber?: string; countryCode?: string };
 
   try {
     let user;
+    // 2. Database Lookup: Email ya Mobile kisi ek cheez se user dhoondhna
+    // Interview Note: Yahan `select('+password')` isliye likha hai kyunki Model me humne 
+    // `select: false` kiya tha (Security). Toh verify karne ke liye explicitly bulana padta hai.
     if (email) {
       user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     } else if (mobileNumber) {
@@ -193,6 +202,9 @@ export async function login(req: Request, res: Response) {
       });
     }
 
+    // 3. Password Verification
+    // Database me password encrypted (hash) hai aur user ne plain text bheja hai.
+    // Hum 'comparePassword' method (jo User.ts me banaya tha) use karke match karte hain.
     const passwordMatches = await user.comparePassword(password);
     if (!passwordMatches) {
       return res.status(401).json({
@@ -202,10 +214,40 @@ export async function login(req: Request, res: Response) {
       });
     }
 
+    // 4. Token Generation (JWT)
     const token = signToken({ id: user._id, email: user.email });
+    const refreshToken = signRefreshToken({ id: user._id, email: user.email });
 
+    // 5. Update Record
     user.lastLogin = new Date();
+    
+    // Save refresh token to user
+    if (!user.refreshTokens) {
+      user.refreshTokens = [];
+    }
+    user.refreshTokens.push(refreshToken);
+    // Keep max 5 active sessions
+    if (user.refreshTokens.length > 5) {
+      user.refreshTokens.shift();
+    }
+
     await user.save({ validateBeforeSave: false });
+
+    // 6. HttpOnly Cookie Set Karna
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     return res.status(200).json({
       success: true,
@@ -475,17 +517,18 @@ export async function resetPassword(req: Request, res: Response) {
 }
 
 export async function resendVerificationOtp(req: Request, res: Response) {
-  const { email } = req.body as { email: string };
+  const { email, mobileNumber } = req.body as { email?: string; mobileNumber?: string };
 
-  if (!email) {
+  if (!email && !mobileNumber) {
     return res.status(400).json({
       success: false,
-      message: 'Email is required.',
+      message: 'Email or Mobile Number is required.',
     });
   }
 
   try {
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+verificationOtp +verificationOtpExpires');
+    const query = email ? { email: email.toLowerCase() } : { mobileNumber };
+    const user = await User.findOne(query).select('+verificationOtp +verificationOtpExpires');
 
     if (!user) {
       return res.status(404).json({
@@ -716,6 +759,31 @@ export async function loginWithOtp(req: Request, res: Response) {
     await user.save();
 
     const token = signToken({ id: user._id, email: user.email });
+    const refreshToken = signRefreshToken({ id: user._id, email: user.email });
+    
+    if (!user.refreshTokens) {
+      user.refreshTokens = [];
+    }
+    user.refreshTokens.push(refreshToken);
+    if (user.refreshTokens.length > 5) {
+      user.refreshTokens.shift();
+    }
+    await user.save({ validateBeforeSave: false });
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
 
     return res.status(200).json({
       success: true,
@@ -800,13 +868,45 @@ export async function getAllUsers(req: Request, res: Response) {
       data: { users },
     });
   } catch (error) {
-    console.error('authController.ts: getAllUsers error:', error);
+    console.error('authController.ts: Error fetching users:', error);
     return res.status(500).json({
       success: false,
-      message: 'An error occurred while fetching users.',
-      errors: [],
+      message: 'Failed to fetch users.',
     });
   }
+}
+
+export async function logout(req: Request, res: Response) {
+  // If user is authenticated, remove this specific refresh token from DB
+  const refreshToken = req.cookies.refreshToken;
+  if (refreshToken) {
+    try {
+      const decoded = verifyRefreshToken(refreshToken) as { id: string };
+      await User.findByIdAndUpdate(decoded.id, {
+        $pull: { refreshTokens: refreshToken }
+      });
+    } catch (err) {
+      // Token is invalid or expired, ignore DB update
+    }
+  }
+
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  });
+  
+  res.clearCookie('refreshToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+  });
+  
+  return res.status(200).json({
+    success: true,
+    message: 'Logged out successfully.'
+  });
 }
 
 export async function updateUser(req: Request, res: Response) {
@@ -1219,6 +1319,57 @@ export async function permanentDeleteUser(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: 'An error occurred while deleting the user.',
+    });
+  }
+}
+
+export async function refreshToken(req: Request, res: Response) {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    return res.status(401).json({
+      success: false,
+      message: 'Refresh token not found. Please log in again.'
+    });
+  }
+
+  try {
+    const decoded = verifyRefreshToken(refreshToken) as { id: string };
+    
+    // Check if user exists and token is in their active sessions
+    const user = await User.findById(decoded.id).select('+refreshTokens');
+    
+    if (!user || !user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid refresh token.'
+      });
+    }
+
+    // Generate new access token
+    const newAccessToken = signToken({ id: user._id, email: user.email });
+
+    res.cookie('token', newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000 // 15 minutes
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Token refreshed successfully.',
+      data: { token: newAccessToken }
+    });
+
+  } catch (error) {
+    console.error('authController.ts: Refresh token error:', error);
+    // If token verification fails (e.g., expired), we clear the cookies
+    res.clearCookie('token');
+    res.clearCookie('refreshToken');
+    return res.status(401).json({
+      success: false,
+      message: 'Refresh token expired or invalid.'
     });
   }
 }

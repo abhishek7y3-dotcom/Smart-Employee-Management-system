@@ -10,5 +10,9 @@ export const metadata = {
 };
 
 export default function ChatbotPage() {
-  return <ChatLayout />;
+  return (
+    <React.Suspense fallback={<div className="p-4 flex items-center justify-center h-full">Loading AI Assistant...</div>}>
+      <ChatLayout />
+    </React.Suspense>
+  );
 }

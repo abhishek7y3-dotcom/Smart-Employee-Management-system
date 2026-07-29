@@ -68,7 +68,10 @@ export const LayoutGuard: React.FC<LayoutGuardProps> = ({ children }) => {
       <div className="flex h-screen flex-col overflow-hidden relative z-10 w-full">
         <Header onMenuClick={() => setIsSidebarOpen(!isSidebarOpen)} />
         <div className="flex flex-1 overflow-hidden relative">
+        {/* Sidebar with Suspense for useSearchParams */}
+        <React.Suspense fallback={<div className="w-64 flex-none bg-white dark:bg-zinc-950 border-r border-zinc-200/40 dark:border-zinc-800/50" />}>
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+        </React.Suspense>
           <main className={`flex-1 transition-colors duration-300 bg-transparent ${isChatbotPage ? 'p-0 overflow-hidden' : 'p-4 md:p-8 overflow-y-auto custom-scrollbar'}`}>
             {children}
           </main>

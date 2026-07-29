@@ -1,6 +1,16 @@
-import bcrypt from 'bcrypt';
+// =========================================================================
+// INTERVIEW GUIDE: User.ts (Database Schema / Model)
+// Yeh file hamari MongoDB database ka "Blueprint" (Naksha) hai. 
+// Mongoose library ka use karke hum batate hain ki User ka data kaisa dikhega.
+// =========================================================================
+
+import bcrypt from 'bcrypt'; // Password ko secure (hash) karne ke liye.
 import { Schema, model, Document } from 'mongoose';
 
+// 1. TypeScript Interface (IUser):
+// Yeh TypeScript ko batata hai ki ek User object me kya-kya fields honge. 
+// Interviewer: "Aapne Interface aur Schema dono kyun banaye?"
+// Aapka Jawab: "Interface TypeScript ke liye hai taaki coding karte waqt auto-complete aur type-checking mil sake, jabki Schema Mongoose ke liye hai taaki wo actual database me data format enforce kar sake."
 export interface IUser extends Document {
   name: string;
   firstName?: string;
@@ -38,6 +48,7 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   isArchived: boolean;
+  refreshTokens?: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -201,27 +212,34 @@ const userSchema = new Schema<IUser>(
     isArchived: {
       type: Boolean,
       default: false,
-    }
+    },
+    refreshTokens: [{
+      type: String,
+      select: false,
+    }],
   },
   {
     timestamps: true,
   }
 );
 
+// =========================================================================
+// 3. MONGOOSE MIDDLEWARE (Pre-save Hook) - Interview Favorite!
+// =========================================================================
 /**
- * @description Mongoose Middleware (Hook) that executes automatically right before a user is saved to the database.
- * @logic
- * - Handles automatic concatenation of `firstName` and `lastName` into a single `name` property.
- * - Checks if the `password` field was modified. If so, it generates a cryptographically secure salt using `bcrypt` and replaces the plaintext password with a hashed version.
+ * @description Ye hook data database me save hone se theek pehle chalta hai
+ * Interviewer: "Password encryption kaise manage kiya hai?"
+ * Aapka Jawab: "Maine Mongoose ka 'pre-save' hook use kiya hai. Jab bhi user naya banta hai ya password badalta hai, 
+ * toh DB me save hone se theek ek second pehle ye hook chalta hai aur password ko bcrypt se hash (encrypt) kar deta hai. 
+ * Is se control hamesha model ke paas rehta hai, bhale hi kisi bhi controller se user save kiya jaye."
  */
-// Ye hook data database me save hone se theek pehle chalta hai
 userSchema.pre<IUser>('save', async function save(next) {
   // 1. Agar user ne firstName aur lastName update kiya hai, toh dono ko jod kar 'name' bana dena
   if (this.firstName || this.lastName) {
     this.name = `${this.firstName || ''} ${this.lastName || ''}`.trim() || 'User';
   }
 
-  // 2. Agar password change nahi hua hai, toh seedha agle step par chale jao (bcrypt avoid karna)
+  // 2. Agar password field me koi change nahi hua hai, toh seedha agle step par chale jao (bcrypt avoid karna)
   if (!this.isModified('password')) {
     return next();
   }
@@ -236,13 +254,22 @@ userSchema.pre<IUser>('save', async function save(next) {
   }
 });
 
+// =========================================================================
+// 4. INSTANCE METHODS
+// =========================================================================
+// Ye function hum login ke time use karte hain jahan user apna password dalta hai aur hum DB ke encrypted password se match karte hain.
 userSchema.methods.comparePassword = async function comparePassword(
   candidatePassword: string
 ): Promise<boolean> {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-// Add indexes to optimize authentication flows
+// =========================================================================
+// 5. DATABASE INDEXING (Performance Optimization)
+// =========================================================================
+// Interviewer: "Jab millions of users ho jayenge, toh login fast kaise rahega?"
+// Aapka Jawab: "Maine 'email' aur 'mobileNumber' par index laga rakha hai. 
+// Isse MongoDB ko poori table scan nahi karni padti. O(log N) time me turant user mil jata hai."
 userSchema.index({ email: 1 });
 userSchema.index({ mobileNumber: 1 });
 userSchema.index({ role: 1 });

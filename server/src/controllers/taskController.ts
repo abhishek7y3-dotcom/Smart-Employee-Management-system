@@ -4,14 +4,7 @@ import { Request, Response } from 'express';
 import Task from '../models/Task';
 import { AuthRequest } from '../middleware/authMiddleware';
 
-/**
- * @description Retrieves a list of tasks.
- * @logic
- * - If the user is an 'admin', they bypass the filter and retrieve ALL tasks in the system.
- * - If the user is a 'member', the query is strictly limited to tasks where `assignedTo` matches their own User ID.
- * - Uses Mongoose `.populate()` to join the 'User' collection and fetch the name, email, and role of the assigner/assignee.
- * - Filters out any corrupted tasks where the assigned user was deleted from the database.
- */
+
 export async function getTasks(req: AuthRequest, res: Response) {
   // Authorization Check: Construct the database query based on the user's role.
   const query = req.user?.role === 'admin'
@@ -34,10 +27,14 @@ export async function getTasks(req: AuthRequest, res: Response) {
 }
 
 /**
- * @description Retrieves a single task by its database ID.
- * @logic
- * - Secures the lookup by injecting the user's ID into the query if they are a regular member.
- * - This prevents "Insecure Direct Object Reference (IDOR)" attacks where a user tries to guess another user's task ID.
+ * =========================================================================
+ * INTERVIEW GUIDE: getTaskById (IDOR Protection)
+ * Interviewer: "IDOR (Insecure Direct Object Reference) attack se kaise bachte hain?"
+ * Aapka Jawab: "Agar koi employee URL me task ki ID change kar de (/api/tasks/123 -> /124), 
+ * toh use dusre ka data na mile iske liye main database me sirf ID se search nahi karta.
+ * Main query me 'assignedTo: req.user._id' bhi jodta hoon taaki wo sirf wahi task fetch kar 
+ * sake jo usko assign hua ho."
+ * =========================================================================
  */
 export async function getTaskById(req: AuthRequest, res: Response) {
   // Construct a secure query to prevent IDOR attacks
@@ -101,7 +98,7 @@ export async function createTask(req: AuthRequest, res: Response) {
   title = title.replace(/\s{2,}/g, ' ').trim();
   if (title.length < 5) return res.status(400).json({ success: false, message: 'Task title must contain at least 5 characters.', errors: [] });
   if (title.length > 120) return res.status(400).json({ success: false, message: 'Task title cannot exceed 120 characters.', errors: [] });
-  
+
   if (/<[a-z][\s\S]*>/i.test(title) || /<[a-z][\s\S]*>/i.test(description)) {
     return res.status(400).json({ success: false, message: 'HTML or JavaScript code is not allowed.', errors: [] });
   }
@@ -115,7 +112,14 @@ export async function createTask(req: AuthRequest, res: Response) {
     return res.status(400).json({ success: false, message: 'Cannot assign task. Employee is either invalid or unverified.', errors: [] });
   }
 
-  // Active Task Limit & Duplicate Checks (Parallel Queries)
+  // =========================================================================
+  // INTERVIEW GUIDE: The Power of Promise.all (Parallel Execution)
+  // Interviewer: "Aap database ko fast kaise rakhte hain jab 4 validation queries run karni hon?"
+  // Aapka Jawab: "Agar main 4 await line-by-line likhunga, toh queries ek ke baad ek block 
+  // hokar chalengi (Series). Iski jagah main 'Promise.all' use karta hoon. Ye chaaron 
+  // queries ko MongoDB me ek sath (Parallel) bhejta hai. Isse hamara execution time 
+  // 4 guna kam ho jata hai aur backend bahut fast respond karta hai."
+  // =========================================================================
   const [duplicateTask, activeTasksCount, activeCriticalCount, overdueCount] = await Promise.all([
     Task.findOne({ title, assignedTo, status: { $in: ['todo', 'in_progress'] } }),
     Task.countDocuments({ assignedTo, status: { $in: ['todo', 'in_progress'] } }),
@@ -126,7 +130,7 @@ export async function createTask(req: AuthRequest, res: Response) {
   if (duplicateTask) {
     return res.status(400).json({ success: false, message: 'An active task with the same title already exists for this employee.', errors: [] });
   }
-  
+
   if (activeTasksCount >= 10) {
     return res.status(400).json({ success: false, message: 'This employee has reached the maximum active task limit.', errors: [] });
   }
@@ -173,7 +177,7 @@ export async function createTask(req: AuthRequest, res: Response) {
  */
 export async function updateTask(req: AuthRequest, res: Response) {
   const updates = req.body;
-  
+
   // Construct secure query to ensure members can't update other people's tasks
   const query = req.user?.role === 'admin'
     ? { _id: req.params.id, isArchived: { $ne: true } }

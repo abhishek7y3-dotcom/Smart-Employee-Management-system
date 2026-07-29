@@ -13,20 +13,24 @@ export interface AuthRequest extends Request {
  */
 export async function authenticate(req: AuthRequest, res: Response, next: NextFunction) {
   try {
-    // 1. Request ke headers se 'Authorization' token nikalna
-    const authHeader = req.headers.authorization;
+    // 1. Request ke cookies se 'token' nikalna (Primary method) ya 'Authorization' header se (Fallback)
+    let token = req.cookies?.token;
     
-    // 2. Agar token nahi hai ya 'Bearer ' se start nahi hota, toh error dena
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
+    
+    // 2. Agar token nahi hai toh error dena
+    if (!token) {
       return res.status(401).json({
         success: false,
-        message: 'Authorization token missing or invalid', // Token missing ka message
+        message: 'Authorization token missing or invalid',
         errors: [],
       });
     }
-
-    // 3. 'Bearer <token>' me se actual token ko alag karna
-    const token = authHeader.split(' ')[1];
     
     // 4. Token ko verify karna aur usme se data (payload) nikalna
     const decoded = verifyToken(token);

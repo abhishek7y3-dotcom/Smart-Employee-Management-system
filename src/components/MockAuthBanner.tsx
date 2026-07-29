@@ -40,14 +40,14 @@ export default function MockAuthBanner() {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 rounded-3xl border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
+    <div suppressHydrationWarning className="fixed bottom-4 right-4 z-50 rounded-3xl border border-zinc-200 bg-white p-4 shadow-lg dark:border-zinc-800 dark:bg-zinc-950">
       <button
         type="button"
         onClick={handleDismiss}
         className="absolute top-2 right-2 p-1 rounded-full text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
         aria-label="Dismiss auth stub banner"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="w-3.5 h-3.5" suppressHydrationWarning />
       </button>
       <div className="flex items-center gap-3 pr-4">
         <span className="text-xs font-medium uppercase tracking-[0.28em] text-zinc-500">

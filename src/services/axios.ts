@@ -11,6 +11,7 @@ if (!apiBaseUrl) {
 const axiosInstance: AxiosInstance = axios.create({
   baseURL: apiBaseUrl,
   timeout: 10000,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -19,12 +20,7 @@ const axiosInstance: AxiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    if (typeof window !== 'undefined') {
-      const token = window.localStorage.getItem('auth_token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-    }
+    // Token is now managed by HttpOnly cookies automatically attached by the browser
     return config;
   },
   (error) => {
@@ -34,7 +30,9 @@ axiosInstance.interceptors.request.use(
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<Record<string, unknown>>) => {
+  async (error: AxiosError<Record<string, unknown>>) => {
+    const originalRequest = error.config as any;
+
     if (error.response) {
       const status = error.response.status;
       const data = error.response.data as Record<string, unknown> | undefined;
@@ -54,14 +52,30 @@ axiosInstance.interceptors.response.use(
         message = 'An unexpected error occurred. Please try again.';
       }
 
-      // Auto-logout on 401: stale or invalid token (e.g. user deleted from DB)
+      // Handle 401 Unauthorized for Refresh Token logic
       if (status === 401 && typeof window !== 'undefined') {
         const currentPath = window.location.pathname;
-        // Only clear and redirect if not already on an auth page
-        if (!['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath)) {
-          window.localStorage.removeItem('auth_token');
-          window.localStorage.removeItem('auth_user');
-          window.location.href = '/login';
+        const isAuthRoute = ['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath);
+        
+        // If it's a 401 and we haven't already retried this request
+        if (!originalRequest._retry && !isAuthRoute) {
+          originalRequest._retry = true;
+          
+          try {
+            // Attempt silent refresh
+            await axios.post(`${apiBaseUrl}/auth/refresh`, {}, { withCredentials: true });
+            
+            // If successful, retry the original request
+            return axiosInstance(originalRequest);
+          } catch (refreshError) {
+            // Refresh failed, token is actually dead. Log them out.
+            window.localStorage.removeItem('auth_user');
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          }
+        } else if (!isAuthRoute) {
+            window.localStorage.removeItem('auth_user');
+            window.location.href = '/login';
         }
       }
 

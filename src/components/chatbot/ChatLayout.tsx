@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ChatWindow } from './ChatWindow';
 import { ChatSidebar } from './ChatSidebar';
 import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
@@ -8,10 +9,21 @@ import { ProjectView } from './ProjectView';
 import { ChatsListView } from './ChatsListView';
 import { ArchiveView } from './ArchiveView';
 import { ProjectDetailView } from './ProjectDetailView';
+import { DocumentUpload } from '../rag/DocumentUpload';
+import { DocumentChat } from '../rag/DocumentChat';
 
 export const ChatLayout = () => {
+  const searchParams = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [currentView, setCurrentView] = useState<'chat' | 'chats_list' | 'library' | 'project' | 'archive' | 'project_detail'>('chat');
+  const [currentView, setCurrentView] = useState<'chat' | 'chats_list' | 'library' | 'project' | 'archive' | 'project_detail' | 'rag'>('chat');
+  const [ragDocumentId, setRagDocumentId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const view = searchParams.get('view');
+    if (view === 'rag') {
+      setCurrentView('rag');
+    }
+  }, [searchParams]);
 
   return (
     <div className="h-full w-full flex bg-white dark:bg-zinc-950 overflow-hidden relative">
@@ -47,6 +59,11 @@ export const ChatLayout = () => {
               AI Assistant
             </h1>
           )}
+          {currentView === 'rag' && (
+            <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2 pl-2">
+              Document Q&A
+            </h1>
+          )}
         </div>
         
         {/* Main Interface */}
@@ -57,6 +74,23 @@ export const ChatLayout = () => {
           {currentView === 'project' && <ProjectView onOpenProjectDetail={() => setCurrentView('project_detail')} />}
           {currentView === 'archive' && <ArchiveView onOpenChat={() => setCurrentView('chat')} />}
           {currentView === 'project_detail' && <ProjectDetailView onOpenChat={() => setCurrentView('chat')} />}
+          
+          {currentView === 'rag' && (
+            <div className="h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-6">
+              {!ragDocumentId ? (
+                <div className="max-w-2xl w-full">
+                  <h2 className="text-xl font-semibold mb-6 text-center text-zinc-800 dark:text-zinc-200">Upload a PDF for RAG</h2>
+                  <DocumentUpload 
+                    onUploadSuccess={(docId) => setRagDocumentId(docId)} 
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-full">
+                  <DocumentChat documentId={ragDocumentId} />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
       

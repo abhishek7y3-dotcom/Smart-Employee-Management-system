@@ -15,23 +15,39 @@ export async function processChat(user: IUser, message: string = "", conversatio
   let chatHistoryId = conversationId;
 
   if (!chatHistoryId) {
-    let title = 'New Conversation';
-    try {
-      const titlePrompt = `Generate a very short (2-5 words) summary title for a conversation that begins with this message. Do not include quotes or formatting. Just the title text.\n\nMessage: "${message}"`;
-      const titleResponse = await sendPromptWithTools('You are a helpful summarizer.', [], titlePrompt, []);
-      if (titleResponse.text()) {
-        title = titleResponse.text().trim().replace(/^["']|["']$/g, '');
-      }
-    } catch (err) {
-      console.warn('Failed to generate chat title with AI, using fallback.', err);
-      title = message.split(' ').slice(0, 5).join(' ') + (message.split(' ').length > 5 ? '...' : '');
-    }
+    // Generate a fast fallback title immediately
+    let fallbackTitle = message.split(' ').slice(0, 5).join(' ') + (message.split(' ').length > 5 ? '...' : '');
+    if (!fallbackTitle.trim()) fallbackTitle = 'New Conversation';
 
+    // Create the history document instantly so we get the ID without waiting for AI
     const newHistory = await ChatHistory.create({
       userId: user._id,
-      title: title,
+      title: fallbackTitle,
     });
     chatHistoryId = newHistory._id.toString();
+
+    // =========================================================================
+    // PERFORMANCE OPTIMIZATION: Asynchronous Title Generation
+    // We fire-and-forget the AI title generation so it runs in the background.
+    // This saves ~3-5 seconds on the user's first message!
+    // =========================================================================
+    const generateAndSetTitle = async (historyId: string) => {
+      try {
+        const titlePrompt = `Generate a very short (2-5 words) summary title for a conversation that begins with this message. Do not include quotes or formatting. Just the title text.\n\nMessage: "${message}"`;
+        const titleResponse = await sendPromptWithTools('You are a helpful summarizer.', [], titlePrompt, []);
+        if (titleResponse.text()) {
+          const aiTitle = titleResponse.text().trim().replace(/^["']|["']$/g, '');
+          await ChatHistory.findByIdAndUpdate(historyId, { title: aiTitle });
+        }
+      } catch (err) {
+        console.warn('Failed to generate chat title asynchronously.', err);
+      }
+    };
+    
+    // Call the function WITHOUT `await` so it doesn't block the thread
+    if (chatHistoryId) {
+      generateAndSetTitle(chatHistoryId);
+    }
   }
 
   const savedContent = attachment ? `[Attached: ${attachment.name}]\n\n${message}` : message;

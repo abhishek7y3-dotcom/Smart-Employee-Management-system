@@ -51,10 +51,23 @@ export async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
     return {
       user: apiData.user,
       token: {
-        accessToken: apiData.token,
+        accessToken: apiData.token, // Still parsed but not saved in localStorage anymore
         expiresIn: 3600
       }
     };
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function logoutUser(): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock logout successful.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/logout');
+    return { message: response.data.message || 'Logout successful.' };
   } catch (error) {
     throw normalizeApiError(error);
   }
