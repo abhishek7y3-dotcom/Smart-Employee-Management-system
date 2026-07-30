@@ -79,6 +79,13 @@ axiosInstance.interceptors.response.use(
         }
       }
 
+      // Handle 403 Forbidden (e.g. Account deactivated by Admin)
+      if (status === 403 && typeof window !== 'undefined') {
+        alert(message || 'Your account has been deactivated by an administrator.');
+        window.localStorage.removeItem('auth_user');
+        window.location.href = '/login';
+      }
+
       const normalizedError = new Error(message);
       Object.assign(normalizedError, { status });
       return Promise.reject(normalizedError);

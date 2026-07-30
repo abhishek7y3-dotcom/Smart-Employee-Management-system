@@ -32,7 +32,7 @@ export const ActivityLogTab: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">Activity Log</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">A summary of your recent interactions and modules.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">A summary of your recent interactions and modules.</p>
       </div>
 
       {loading ? (
@@ -69,7 +69,7 @@ export const ActivityLogTab: React.FC = () => {
         </h3>
         
         <div className="text-center py-8 opacity-60">
-          <p className="text-xs text-zinc-500 font-medium">Activity timeline integration coming soon.</p>
+          <p className="text-xs text-zinc-600 font-medium">Activity timeline integration coming soon.</p>
         </div>
       </div>
     </div>
@@ -82,7 +82,7 @@ const StatCard = ({ title, value, icon: Icon, color, bgColor }: any) => (
       <Icon size={24} className={color} />
     </div>
     <div>
-      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{title}</p>
+      <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{title}</p>
       <h4 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{value}</h4>
     </div>
   </div>

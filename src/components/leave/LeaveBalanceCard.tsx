@@ -12,7 +12,7 @@ export const LeaveBalanceCard: React.FC = () => {
       case 'Sick Leave': return <BriefcaseMedical size={20} className="text-blue-500" />;
       case 'Casual Leave': return <Coffee size={20} className="text-orange-500" />;
       case 'Earned Leave': return <Plane size={20} className="text-teal-500" />;
-      default: return <Calendar size={20} className="text-zinc-500" />;
+      default: return <Calendar size={20} className="text-zinc-600" />;
     }
   };
 
@@ -29,15 +29,15 @@ export const LeaveBalanceCard: React.FC = () => {
           
           <div className="grid grid-cols-3 gap-2 text-center divide-x divide-zinc-100 dark:divide-zinc-800">
             <div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Total</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1">Total</p>
               <p className="font-semibold text-zinc-900 dark:text-zinc-100">{b.total}</p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Used</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1">Used</p>
               <p className="font-semibold text-red-600 dark:text-red-400">{b.used}</p>
             </div>
             <div>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-1">Remaining</p>
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1">Remaining</p>
               <p className="font-semibold text-green-600 dark:text-green-400">{b.remaining}</p>
             </div>
           </div>

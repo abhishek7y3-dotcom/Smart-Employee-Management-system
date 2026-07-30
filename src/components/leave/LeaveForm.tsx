@@ -171,7 +171,7 @@ export const LeaveForm: React.FC<Props> = ({ onSuccess, onCancel }) => {
           placeholder="Please provide a valid reason..."
           required
         />
-        <div className="text-right text-xs text-zinc-500 mt-1">{formData.reason.length}/500</div>
+        <div className="text-right text-xs text-zinc-600 mt-1">{formData.reason.length}/500</div>
       </div>
 
       <div className="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-800">

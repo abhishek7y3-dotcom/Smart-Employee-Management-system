@@ -18,7 +18,7 @@ export const AttendanceDetailsModal: React.FC<Props> = ({ record, isOpen, onClos
       <div className="relative w-full max-w-2xl bg-white dark:bg-zinc-950 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-200 border border-zinc-200 dark:border-zinc-800">
         <div className="flex items-center justify-between p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
           <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Attendance Details</h3>
-          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -27,13 +27,13 @@ export const AttendanceDetailsModal: React.FC<Props> = ({ record, isOpen, onClos
           <div className="flex items-start justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
             <div>
               <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{record.employeeName}</h2>
-              <p className="text-zinc-500 dark:text-zinc-400 mt-1">{record.designation} • {record.department}</p>
+              <p className="text-zinc-600 dark:text-zinc-400 mt-1">{record.designation} • {record.department}</p>
             </div>
             <div className="text-right">
               <span className={`px-4 py-1.5 rounded-full text-sm font-bold bg-zinc-100 text-zinc-800`}>
                 {record.attendanceStatus}
               </span>
-              <p className="text-sm text-zinc-500 mt-2 font-medium">{new Date(record.attendanceDate).toLocaleDateString()}</p>
+              <p className="text-sm text-zinc-600 mt-2 font-medium">{new Date(record.attendanceDate).toLocaleDateString()}</p>
             </div>
           </div>
 
@@ -66,14 +66,14 @@ export const AttendanceDetailsModal: React.FC<Props> = ({ record, isOpen, onClos
               <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 border-b border-zinc-200 dark:border-zinc-800 pb-2">Details</h4>
               
               <div className="flex items-center gap-3 text-sm">
-                <Building2 size={16} className="text-zinc-400" />
+                <Building2 size={16} className="text-zinc-500" />
                 <span className="text-zinc-600 dark:text-zinc-400 w-24">Work Mode:</span>
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{record.workMode}</span>
               </div>
               
               {record.location && (
                 <div className="flex items-center gap-3 text-sm">
-                  <MapPin size={16} className="text-zinc-400" />
+                  <MapPin size={16} className="text-zinc-500" />
                   <span className="text-zinc-600 dark:text-zinc-400 w-24">Location:</span>
                   <span className="font-medium text-zinc-900 dark:text-zinc-100">{record.location}</span>
                 </div>

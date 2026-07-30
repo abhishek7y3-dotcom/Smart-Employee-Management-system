@@ -17,7 +17,7 @@ export default function ArchivePage() {
   const [viewedTask, setViewedTask] = useState<Task | null>(null);
   const [viewedUser, setViewedUser] = useState<Employee | null>(null);
 
-  const isAdmin = user?.role === 'admin' || user?.designation?.toLowerCase() === 'admin' || user?.designation?.toLowerCase() === 'ceo' || user?.designation?.toLowerCase() === 'project manager';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.designation?.toLowerCase() === 'admin' || user?.designation?.toLowerCase() === 'ceo' || user?.designation?.toLowerCase() === 'project manager';
 
   useEffect(() => {
     if (isAdmin) {
@@ -93,7 +93,7 @@ export default function ArchivePage() {
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
               Archive
             </h1>
-            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               Manage deleted tasks and users. You can restore them if needed.
             </p>
           </div>
@@ -102,11 +102,11 @@ export default function ArchivePage() {
         {!isAdmin ? (
           <div className="flex flex-1 items-center justify-center rounded-2xl border border-zinc-200/50 bg-white/50 p-12 text-center dark:border-zinc-800/50 dark:bg-zinc-900/50">
             <div className="max-w-md">
-              <svg className="mx-auto h-12 w-12 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="mx-auto h-12 w-12 text-zinc-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <h3 className="mt-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">Access Denied</h3>
-              <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+              <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
                 You do not have permission to view the archive. This area is restricted to administrators only.
               </p>
             </div>
@@ -120,7 +120,7 @@ export default function ArchivePage() {
                 className={`px-4 py-2 font-semibold ${
                   activeTab === 'tasks'
                     ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+                    : 'text-zinc-600 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
                 }`}
               >
                 Deleted Tasks
@@ -130,7 +130,7 @@ export default function ArchivePage() {
                 className={`px-4 py-2 font-semibold ${
                   activeTab === 'users'
                     ? 'border-b-2 border-blue-600 text-blue-600 dark:text-blue-400'
-                    : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
+                    : 'text-zinc-600 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-300'
                 }`}
               >
                 Deleted Users
@@ -145,7 +145,7 @@ export default function ArchivePage() {
                 </div>
               ) : activeTab === 'tasks' ? (
                 tasks.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-zinc-500">No deleted tasks found.</div>
+                  <div className="flex h-full items-center justify-center text-zinc-600">No deleted tasks found.</div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {tasks.map((task) => (
@@ -153,14 +153,14 @@ export default function ArchivePage() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{task.title}</h3>
-                            <p className="mt-1 line-clamp-2 text-sm text-zinc-500 dark:text-zinc-400">{task.description}</p>
+                            <p className="mt-1 line-clamp-2 text-sm text-zinc-600 dark:text-zinc-400">{task.description}</p>
                             <span className="mt-2 inline-block rounded bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-800 dark:bg-zinc-800 dark:text-zinc-300">
                               Status: {task.status.replace('_', ' ')}
                             </span>
                           </div>
                           <button
                             onClick={() => setViewedTask(task)}
-                            className="shrink-0 rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                            className="shrink-0 rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                             title="View Details"
                           >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -189,24 +189,24 @@ export default function ArchivePage() {
                 )
               ) : (
                 users.length === 0 ? (
-                  <div className="flex h-full items-center justify-center text-zinc-500">No deleted users found.</div>
+                  <div className="flex h-full items-center justify-center text-zinc-600">No deleted users found.</div>
                 ) : (
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {users.map((u) => (
                       <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-zinc-200/50 bg-white p-4 shadow-sm dark:border-zinc-800/50 dark:bg-zinc-900">
                         <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-lg font-bold text-zinc-500 dark:bg-zinc-800">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-lg font-bold text-zinc-600 dark:bg-zinc-800">
                             {u.name.charAt(0)}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p className="truncate font-medium text-zinc-900 dark:text-zinc-100">{u.name}</p>
-                            <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{u.email}</p>
+                            <p className="truncate text-xs text-zinc-600 dark:text-zinc-400">{u.email}</p>
                           </div>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
                           <button
                             onClick={() => setViewedUser(u)}
-                            className="rounded-lg p-2 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                            className="rounded-lg p-2 text-zinc-600 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
                             title="View Details"
                           >
                             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -242,31 +242,31 @@ export default function ArchivePage() {
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900">
               <div className="flex items-start justify-between mb-4">
                 <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Task Details</h2>
-                <button onClick={() => setViewedTask(null)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                <button onClick={() => setViewedTask(null)} className="text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-200">
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
               <div className="space-y-3">
                 <div>
-                  <span className="block text-xs font-medium text-zinc-500">Title</span>
+                  <span className="block text-xs font-medium text-zinc-600">Title</span>
                   <p className="text-zinc-900 dark:text-zinc-100">{viewedTask.title}</p>
                 </div>
                 <div>
-                  <span className="block text-xs font-medium text-zinc-500">Description</span>
+                  <span className="block text-xs font-medium text-zinc-600">Description</span>
                   <p className="text-sm text-zinc-700 dark:text-zinc-300">{viewedTask.description}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="block text-xs font-medium text-zinc-500">Status</span>
+                    <span className="block text-xs font-medium text-zinc-600">Status</span>
                     <p className="text-zinc-900 dark:text-zinc-100 capitalize">{viewedTask.status.replace('_', ' ')}</p>
                   </div>
                   <div>
-                    <span className="block text-xs font-medium text-zinc-500">Priority</span>
+                    <span className="block text-xs font-medium text-zinc-600">Priority</span>
                     <p className="text-zinc-900 dark:text-zinc-100 capitalize">{viewedTask.priority}</p>
                   </div>
                 </div>
                 <div>
-                  <span className="block text-xs font-medium text-zinc-500">Created At</span>
+                  <span className="block text-xs font-medium text-zinc-600">Created At</span>
                   <p className="text-zinc-900 dark:text-zinc-100">{new Date(viewedTask.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
@@ -283,7 +283,7 @@ export default function ArchivePage() {
             <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900">
               <div className="flex items-start justify-between mb-4">
                 <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">User Details</h2>
-                <button onClick={() => setViewedUser(null)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200">
+                <button onClick={() => setViewedUser(null)} className="text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-200">
                   <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                 </button>
               </div>
@@ -293,16 +293,16 @@ export default function ArchivePage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">{viewedUser.name}</h3>
-                  <p className="text-sm text-zinc-500">{viewedUser.email}</p>
+                  <p className="text-sm text-zinc-600">{viewedUser.email}</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-                  <span className="block text-xs font-medium text-zinc-500">Role</span>
+                  <span className="block text-xs font-medium text-zinc-600">Role</span>
                   <p className="mt-1 font-medium text-zinc-900 dark:text-zinc-100 capitalize">{viewedUser.role}</p>
                 </div>
                 <div className="rounded-lg bg-zinc-50 p-3 dark:bg-zinc-800/50">
-                  <span className="block text-xs font-medium text-zinc-500">Designation</span>
+                  <span className="block text-xs font-medium text-zinc-600">Designation</span>
                   <p className="mt-1 font-medium text-zinc-900 dark:text-zinc-100 capitalize">{viewedUser.designation || 'N/A'}</p>
                 </div>
               </div>

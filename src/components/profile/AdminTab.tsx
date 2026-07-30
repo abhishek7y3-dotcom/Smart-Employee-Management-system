@@ -37,7 +37,7 @@ export const AdminTab: React.FC = () => {
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1 flex items-center gap-2">
           Admin Area <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Restricted</span>
         </h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">View team members and administrative scope.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">View team members and administrative scope.</p>
       </div>
 
       <div className="bg-zinc-50 dark:bg-zinc-800/50 p-6 rounded-2xl border border-zinc-200/50 dark:border-zinc-700/50">
@@ -62,7 +62,7 @@ export const AdminTab: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-500">
+                <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-600">
                   <th className="px-6 py-3 font-medium">Name</th>
                   <th className="px-6 py-3 font-medium">Designation</th>
                   <th className="px-6 py-3 font-medium">Department</th>
@@ -74,7 +74,7 @@ export const AdminTab: React.FC = () => {
                   <tr key={member._id} className="text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800/50">
                     <td className="px-6 py-3">
                       <p className="font-medium text-zinc-900 dark:text-zinc-100">{member.name}</p>
-                      <p className="text-xs text-zinc-500">{member.email}</p>
+                      <p className="text-xs text-zinc-600">{member.email}</p>
                     </td>
                     <td className="px-6 py-3 text-zinc-600 dark:text-zinc-400">{member.designation || '-'}</td>
                     <td className="px-6 py-3 text-zinc-600 dark:text-zinc-400">{member.department || '-'}</td>

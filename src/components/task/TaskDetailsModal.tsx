@@ -47,13 +47,13 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task
             </div>
             <div>
               <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Task Details</h3>
-              <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Reference ID: {task.id}</p>
+              <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider">Reference ID: {task.id}</p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 cursor-pointer"
           >
             <X className="h-4.5 w-4.5" />
           </button>
@@ -67,7 +67,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task
 
           {/* Description */}
           <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4 dark:border-zinc-800/40 dark:bg-zinc-950/20">
-            <p className="text-sm font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 mb-2">Description</p>
+            <p className="text-sm font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500 mb-2">Description</p>
             <p className="text-sm leading-6 text-zinc-700 dark:text-zinc-300 whitespace-pre-wrap">
               {task.description || 'No description provided for this task.'}
             </p>
@@ -76,22 +76,22 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task
           {/* Grid Metadata */}
           <div className="grid grid-cols-2 gap-4">
             <div className="flex items-center gap-3 rounded-xl border border-zinc-100 p-3.5 dark:border-zinc-800/40 dark:bg-zinc-950/10">
-              <UserRound className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+              <UserRound className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
               <div>
-                <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Assigned To</p>
+                <p className="text-[9px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider">Assigned To</p>
                 <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 truncate mt-0.5">
                   {assignee ? assignee.name : 'Unassigned'}
                 </p>
                 {assignee?.designation && (
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold">{assignee.designation}</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-semibold">{assignee.designation}</p>
                 )}
               </div>
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-zinc-100 p-3.5 dark:border-zinc-800/40 dark:bg-zinc-950/10">
-              <CalendarDays className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+              <CalendarDays className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
               <div>
-                <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Due Date</p>
+                <p className="text-[9px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider">Due Date</p>
                 <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 mt-0.5">
                   {formatDate(task.dueDate)}
                 </p>
@@ -99,9 +99,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-zinc-100 p-3.5 dark:border-zinc-800/40 dark:bg-zinc-950/10">
-              <AlertTriangle className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+              <AlertTriangle className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
               <div>
-                <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Priority</p>
+                <p className="text-[9px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider">Priority</p>
                 <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold mt-1 ${priorityColors[task.priority]}`}>
                   {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
                 </span>
@@ -109,9 +109,9 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task
             </div>
 
             <div className="flex items-center gap-3 rounded-xl border border-zinc-100 p-3.5 dark:border-zinc-800/40 dark:bg-zinc-950/10">
-              <ShieldCheck className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+              <ShieldCheck className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
               <div>
-                <p className="text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider">Status</p>
+                <p className="text-[9px] font-bold text-zinc-500 dark:text-zinc-500 uppercase tracking-wider">Status</p>
                 <div className="mt-1">
                   <StatusBadge status={task.status} />
                 </div>

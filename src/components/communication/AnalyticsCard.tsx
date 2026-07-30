@@ -14,9 +14,9 @@ const StatCard: React.FC<{ icon: React.ReactNode; label: string; value: string |
     <div className="flex items-center gap-3">
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${color}`}>{icon}</div>
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">{label}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">{label}</p>
         <p className="text-xl font-extrabold text-zinc-950 dark:text-zinc-50 font-outfit">{value}</p>
-        {subtext && <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{subtext}</p>}
+        {subtext && <p className="text-[10px] text-zinc-500 dark:text-zinc-500">{subtext}</p>}
       </div>
     </div>
   </div>
@@ -39,7 +39,7 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ analytics }) => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-950/40 backdrop-blur-sm">
           <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Weekly Communication Trend</h3>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Messages sent per day this week</p>
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-500 mt-0.5">Messages sent per day this week</p>
           <div className="mt-4 h-48">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={analytics.weeklyTrend}>
@@ -55,7 +55,7 @@ export const AnalyticsCard: React.FC<AnalyticsCardProps> = ({ analytics }) => {
         </div>
         <div className="rounded-2xl border border-zinc-200/60 bg-white p-5 dark:border-zinc-800/60 dark:bg-zinc-950/40 backdrop-blur-sm">
           <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Monthly Communication Trend</h3>
-          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-0.5">Messages sent per month</p>
+          <p className="text-[10px] text-zinc-500 dark:text-zinc-500 mt-0.5">Messages sent per month</p>
           <div className="mt-4 h-48">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={analytics.monthlyTrend}>

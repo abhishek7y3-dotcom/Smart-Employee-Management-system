@@ -33,7 +33,7 @@ export const LeaveTable: React.FC<Props> = ({ leaves, loading, isAdmin, currentU
     return (
       <div className="text-center py-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm flex flex-col items-center justify-center">
         <FileText size={48} className="text-zinc-300 dark:text-zinc-700 mb-4" />
-        <p className="text-zinc-500 dark:text-zinc-400 font-medium">No leave requests found.</p>
+        <p className="text-zinc-600 dark:text-zinc-400 font-medium">No leave requests found.</p>
       </div>
     );
   }
@@ -53,7 +53,7 @@ export const LeaveTable: React.FC<Props> = ({ leaves, loading, isAdmin, currentU
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-x-auto">
       <table className="w-full text-left border-collapse min-w-[800px]">
         <thead>
-          <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
+          <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
             <th className="px-6 py-4 font-semibold">Employee</th>
             <th className="px-6 py-4 font-semibold">Leave Type</th>
             <th className="px-6 py-4 font-semibold">Duration</th>
@@ -68,7 +68,7 @@ export const LeaveTable: React.FC<Props> = ({ leaves, loading, isAdmin, currentU
             <tr key={leave._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors">
               <td className="px-6 py-4">
                 <p className="font-semibold text-zinc-900 dark:text-zinc-100">{leave.employeeName}</p>
-                <p className="text-xs text-zinc-500">{leave.department || 'Employee'}</p>
+                <p className="text-xs text-zinc-600">{leave.department || 'Employee'}</p>
               </td>
               <td className="px-6 py-4">
                 <p className="text-sm text-zinc-700 dark:text-zinc-300 font-medium">{leave.leaveType}</p>
@@ -88,7 +88,7 @@ export const LeaveTable: React.FC<Props> = ({ leaves, loading, isAdmin, currentU
                   {leave.status}
                 </span>
               </td>
-              <td className="px-6 py-4 text-sm text-zinc-500 dark:text-zinc-400">
+              <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
                 {new Date(leave.createdAt).toLocaleDateString()}
               </td>
               <td className="px-6 py-4 text-right">

@@ -23,7 +23,7 @@ export const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-4 px-6 border-b border-transparent">
           <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">Create project</h2>
-          <button onClick={onClose} className="p-2 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors">
+          <button onClick={onClose} className="p-2 text-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200 transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -34,7 +34,7 @@ export const CreateProjectModal = ({ onClose }: { onClose: () => void }) => {
           <div className="space-y-2">
             <label className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Project name</label>
             <div className="relative">
-              <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+              <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
               <input 
                 type="text" 
                 value={projectName}

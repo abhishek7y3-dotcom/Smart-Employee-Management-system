@@ -15,7 +15,7 @@ export const AttendanceFilters: React.FC<Props> = ({ filters, setFilters, isAdmi
   return (
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 mb-6 shadow-sm flex flex-col md:flex-row gap-4">
       <div className="flex-1 relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
         <input 
           type="text" 
           name="search"
@@ -29,7 +29,7 @@ export const AttendanceFilters: React.FC<Props> = ({ filters, setFilters, isAdmi
 
       <div className="flex flex-wrap gap-4 items-center">
         <div className="flex items-center gap-2">
-          <Filter size={16} className="text-zinc-500" />
+          <Filter size={16} className="text-zinc-600" />
           <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Filters:</span>
         </div>
 

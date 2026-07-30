@@ -101,12 +101,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </div>
         <div className="min-w-0">
           <h1 className="truncate text-base font-bold leading-tight text-zinc-950 dark:text-zinc-50 md:text-lg hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Employee Task Manager</h1>
-          <p className="hidden text-xs text-zinc-400 dark:text-zinc-500 sm:block">Workspace Dashboard</p>
+          <p className="hidden text-xs text-zinc-500 dark:text-zinc-500 sm:block">Workspace Dashboard</p>
         </div>
       </div>
 
       <div className="flex items-center gap-3 md:gap-4" ref={containerRef}>
-        <div className="hidden text-sm font-semibold text-zinc-500 dark:text-zinc-400 lg:block">{isMounted ? currentDate : ''}</div>
+        <div className="hidden text-sm font-semibold text-zinc-600 dark:text-zinc-400 lg:block">{isMounted ? currentDate : ''}</div>
         {isMounted && <AccessibilityToggle />}
         {isMounted && <ThemeToggle />}
         <div className="relative">
@@ -133,7 +133,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     {unreadCount} unread
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Your recent alerts and messages.</p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Your recent alerts and messages.</p>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-zinc-200/80 dark:divide-zinc-800/60">
                 {notifications.length > 0 ? (
@@ -154,7 +154,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                         <p className="font-medium text-zinc-900 dark:text-zinc-100 line-clamp-2">
                           {notification.message}
                         </p>
-                        <p className="text-[10px] text-zinc-400 dark:text-zinc-500 mt-1">
+                        <p className="text-[10px] text-zinc-500 dark:text-zinc-500 mt-1">
                           {new Date(notification.createdAt).toLocaleDateString()} {new Date(notification.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
@@ -164,7 +164,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     </div>
                   ))
                 ) : (
-                  <div className="p-4 text-xs text-zinc-500 dark:text-zinc-400 text-center">No recent notifications.</div>
+                  <div className="p-4 text-xs text-zinc-600 dark:text-zinc-400 text-center">No recent notifications.</div>
                 )}
               </div>
             </div>
@@ -185,9 +185,9 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             />
             <div className="hidden text-left md:block">
               <p className="text-xs font-bold text-zinc-800 dark:text-zinc-200 leading-tight">{user?.name || 'Diana Prince'}</p>
-              <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium">{user?.designation || (user?.role === 'admin' ? 'CEO' : 'Employee')}</p>
+              <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-medium">{user?.designation || (user?.role === 'superadmin' ? 'CEO' : (user?.role === 'admin' ? 'Admin' : 'Employee'))}</p>
             </div>
-            <ChevronDown className="h-3.5 w-3.5 text-zinc-400 hidden md:block" />
+            <ChevronDown className="h-3.5 w-3.5 text-zinc-500 hidden md:block" />
           </button>
 
           {isProfileDropdownOpen && (
@@ -231,7 +231,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   }}
                   className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors cursor-pointer text-left outline-none"
                 >
-                  <UserIcon className="h-4 w-4 text-zinc-400" />
+                  <UserIcon className="h-4 w-4 text-zinc-500" />
                   View Profile
                 </button>
                 <div className="h-px bg-zinc-100 dark:bg-zinc-900 mx-1.5" />

@@ -25,7 +25,7 @@ export const HolidayStatistics: React.FC<Props> = ({ stats, loading }) => {
           <CalendarDays size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Total Holidays</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Total Holidays</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.totalHolidays}</p>
         </div>
       </div>
@@ -35,7 +35,7 @@ export const HolidayStatistics: React.FC<Props> = ({ stats, loading }) => {
           <Star size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Optional Holidays</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Optional Holidays</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.optionalHolidays}</p>
         </div>
       </div>
@@ -45,7 +45,7 @@ export const HolidayStatistics: React.FC<Props> = ({ stats, loading }) => {
           <CalendarClock size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Upcoming Holidays</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Upcoming Holidays</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.upcomingHolidays}</p>
         </div>
       </div>
@@ -55,7 +55,7 @@ export const HolidayStatistics: React.FC<Props> = ({ stats, loading }) => {
           <CalendarCheck size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Passed Holidays</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Passed Holidays</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.passedHolidays}</p>
         </div>
       </div>

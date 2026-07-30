@@ -12,7 +12,7 @@ import {
   updateTask as apiUpdateTask,
   deleteTask as apiDeleteTask
 } from '../api/tasks';
-import { updateUserProfile, removeUser, registerUser } from '../api/auth';
+import { updateUserProfile, removeUser, registerUser, blockUserAPI, unblockUserAPI } from '../api/auth';
 
 interface TaskContextType {
   tasks: Task[];
@@ -28,6 +28,8 @@ interface TaskContextType {
   updateEmployeeDesignation: (employeeId: string, designation: string) => Promise<void>;
   updateEmployeeRole: (employeeId: string, role: string) => Promise<void>;
   removeEmployee: (employeeId: string) => Promise<void>;
+  blockEmployee: (employeeId: string) => Promise<void>;
+  unblockEmployee: (employeeId: string) => Promise<void>;
 }
 
 const ACTIVITIES_KEY = 'employee_activity_log';
@@ -353,6 +355,26 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const blockEmployee = async (employeeId: string) => {
+    try {
+      await blockUserAPI(employeeId);
+      setEmployees((prev) => prev.map((emp) => emp.id === employeeId ? { ...emp, isBlocked: true } : emp));
+      toast.success('Team member blocked successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to block team member');
+    }
+  };
+
+  const unblockEmployee = async (employeeId: string) => {
+    try {
+      await unblockUserAPI(employeeId);
+      setEmployees((prev) => prev.map((emp) => emp.id === employeeId ? { ...emp, isBlocked: false } : emp));
+      toast.success('Team member unblocked successfully');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to unblock team member');
+    }
+  };
+
   return (
     <TaskContext.Provider
       value={{
@@ -369,6 +391,8 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateEmployeeDesignation,
         updateEmployeeRole,
         removeEmployee,
+        blockEmployee,
+        unblockEmployee,
       }}
     >
       {children}

@@ -5,6 +5,7 @@ export interface Employee {
   role: string;
   avatarUrl?: string;
   designation?: string;
+  isBlocked?: boolean;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'overdue';

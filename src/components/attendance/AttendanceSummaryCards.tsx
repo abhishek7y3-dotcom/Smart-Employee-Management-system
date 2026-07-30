@@ -22,7 +22,7 @@ export const AttendanceSummaryCards: React.FC = () => {
           <Users size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Present Today</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Present Today</p>
           <div className="flex items-baseline gap-2 mt-1">
             <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{analytics.presentToday}</p>
           </div>
@@ -34,7 +34,7 @@ export const AttendanceSummaryCards: React.FC = () => {
           <Building2 size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Working Remote (WFH)</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Working Remote (WFH)</p>
           <div className="flex items-baseline gap-2 mt-1">
             <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{analytics.wfhToday}</p>
           </div>
@@ -46,7 +46,7 @@ export const AttendanceSummaryCards: React.FC = () => {
           <AlertCircle size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Late Arrivals</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Late Arrivals</p>
           <div className="flex items-baseline gap-2 mt-1">
             <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{analytics.lateToday}</p>
           </div>
@@ -58,7 +58,7 @@ export const AttendanceSummaryCards: React.FC = () => {
           <Clock size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Avg Working Hours</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Avg Working Hours</p>
           <div className="flex items-baseline gap-2 mt-1">
             <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{analytics.avgHours}h</p>
           </div>

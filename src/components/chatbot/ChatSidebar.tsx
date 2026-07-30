@@ -16,13 +16,13 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
           onClick={() => {
             if (window.innerWidth < 768 && onClose) onClose();
           }}
-          className="md:hidden p-2 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
+          className="md:hidden p-2 text-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
         >
           <PanelLeftClose size={20} />
         </button>
         <button
           onClick={onClose}
-          className="hidden md:flex p-2 text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
+          className="hidden md:flex p-2 text-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-200 dark:hover:bg-zinc-800 rounded-md transition-colors"
           title="Close sidebar"
         >
           <PanelLeftClose size={20} />
@@ -53,11 +53,11 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
           {/* Projects Section */}
           <div className="mb-6 group">
             <div className="flex items-center justify-between px-3 mb-2">
-              <h3 className="text-xs font-semibold text-zinc-500">Projects</h3>
+              <h3 className="text-xs font-semibold text-zinc-600">Projects</h3>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button 
                   onClick={() => setIsProjectModalOpen(true)}
-                  className="p-1 text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
+                  className="p-1 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors"
                   title="Create project"
                 >
                   <Plus size={14} />
@@ -67,7 +67,7 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
             
             <div className="flex flex-col gap-1">
               {projects.length === 0 ? (
-                <div className="px-3 py-1 text-xs text-zinc-400">No projects yet</div>
+                <div className="px-3 py-1 text-xs text-zinc-500">No projects yet</div>
               ) : (
                 projects.map(project => (
                   <ProjectSidebarLink 
@@ -87,10 +87,10 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
 
           {/* Recent Chats Section */}
           <div>
-            <h3 className="px-3 text-xs font-semibold text-zinc-500 mb-2">Recent Chats</h3>
+            <h3 className="px-3 text-xs font-semibold text-zinc-600 mb-2">Recent Chats</h3>
             <div className="flex flex-col gap-1">
               {chatHistory.length === 0 ? (
-                <div className="px-3 py-2 text-xs text-zinc-400">No recent chats</div>
+                <div className="px-3 py-2 text-xs text-zinc-500">No recent chats</div>
               ) : (
                 chatHistory.map((chat) => (
                   <ChatItem key={chat._id} chat={chat} onClose={onClose} onOpenChat={onOpenChat} />
@@ -176,7 +176,7 @@ const ProjectSidebarLink = ({ project, onDropChat, onClick }: { project: any, on
 
       {!isEditing && (
         <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isMenuOpen ? 'opacity-100' : ''}`}>
-          <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" title="Rename">
+          <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" title="Rename">
             <Edit2 size={14} />
           </button>
           
@@ -186,7 +186,7 @@ const ProjectSidebarLink = ({ project, onDropChat, onClick }: { project: any, on
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }} 
-              className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" 
+              className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" 
               title="Options"
             >
               <MoreHorizontal size={14} />
@@ -273,7 +273,7 @@ export const ChatItem = ({ chat, onClose, onOpenChat }: { chat: any, onClose?: (
 
       {!isEditing && (
         <div className={`flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity ${isMenuOpen ? 'opacity-100' : ''}`}>
-          <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" title="Rename">
+          <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" title="Rename">
             <Edit2 size={14} />
           </button>
           
@@ -284,7 +284,7 @@ export const ChatItem = ({ chat, onClose, onOpenChat }: { chat: any, onClose?: (
                 setIsMenuOpen(!isMenuOpen);
                 setShowProjectSubmenu(false);
               }} 
-              className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" 
+              className="p-1 hover:bg-zinc-300 dark:hover:bg-zinc-700 rounded text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors" 
               title="Options"
             >
               <MoreHorizontal size={14} />
@@ -312,7 +312,7 @@ export const ChatItem = ({ chat, onClose, onOpenChat }: { chat: any, onClose?: (
                     {showProjectSubmenu && (
                       <div className="absolute left-full top-0 ml-1 w-32 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg py-1">
                         {projects.length === 0 ? (
-                          <div className="px-3 py-1.5 text-zinc-500">No projects</div>
+                          <div className="px-3 py-1.5 text-zinc-600">No projects</div>
                         ) : (
                           projects.map(p => (
                             <button 

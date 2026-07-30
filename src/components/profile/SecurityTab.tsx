@@ -38,7 +38,7 @@ export const SecurityTab: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">Security</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Manage your password and security settings.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Manage your password and security settings.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -98,10 +98,10 @@ export const SecurityTab: React.FC = () => {
             <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 mb-2 flex items-center gap-2 opacity-60">
               <Smartphone className="text-blue-500" size={16} /> Two-Factor Authentication
             </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-4 opacity-60">
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-4 opacity-60">
               Add an extra layer of security to your account by requiring a verification code in addition to your password.
             </p>
-            <button disabled className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-500 px-4 py-2 rounded-xl text-sm font-medium opacity-50 cursor-not-allowed">
+            <button disabled className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 text-zinc-600 px-4 py-2 rounded-xl text-sm font-medium opacity-50 cursor-not-allowed">
               Enable 2FA
             </button>
           </div>
@@ -121,7 +121,7 @@ export const SecurityTab: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Windows • Chrome</p>
-                    <p className="text-[10px] text-zinc-500">Current Session</p>
+                    <p className="text-[10px] text-zinc-600">Current Session</p>
                   </div>
                 </div>
               </div>

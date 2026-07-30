@@ -28,7 +28,7 @@ export const LibraryView = () => {
         
         <div className="flex items-center gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={16} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
             <input 
               type="text" 
               placeholder="Search history..." 
@@ -48,24 +48,24 @@ export const LibraryView = () => {
         <div className="flex items-center gap-6">
           <button 
             onClick={() => setActiveTab('all')}
-            className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${activeTab === 'all' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
+            className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${activeTab === 'all' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
           >
             All
           </button>
           <button 
             onClick={() => setActiveTab('images')}
-            className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${activeTab === 'images' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
+            className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${activeTab === 'images' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
           >
             Images
           </button>
           <button 
             onClick={() => setActiveTab('documents')}
-            className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${activeTab === 'documents' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
+            className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${activeTab === 'documents' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 hover:text-zinc-900 dark:hover:text-zinc-100'}`}
           >
             Documents
           </button>
         </div>
-        <div className="flex items-center gap-4 text-zinc-500">
+        <div className="flex items-center gap-4 text-zinc-600">
           <button className="hover:text-zinc-900 dark:hover:text-zinc-100"><List size={18} /></button>
           <button className="hover:text-zinc-900 dark:hover:text-zinc-100"><Grid size={18} /></button>
           <button className="hover:text-zinc-900 dark:hover:text-zinc-100 ml-2"><List size={18} /></button>
@@ -73,7 +73,7 @@ export const LibraryView = () => {
       </div>
 
       {/* Table Header */}
-      <div className="flex items-center text-xs font-medium text-zinc-500 mb-2 px-2">
+      <div className="flex items-center text-xs font-medium text-zinc-600 mb-2 px-2">
         <div className="flex-1">Name</div>
         <div className="w-48 flex items-center gap-1">Modified <ChevronDown size={12} /></div>
         <div className="w-24">Size</div>
@@ -94,10 +94,10 @@ export const LibraryView = () => {
                     </div>
                     <span className="text-sm text-zinc-800 dark:text-zinc-200">{lib.name}</span>
                   </div>
-                  <div className="w-48 text-xs text-zinc-500">
+                  <div className="w-48 text-xs text-zinc-600">
                     Today
                   </div>
-                  <div className="w-24 text-xs text-zinc-500">
+                  <div className="w-24 text-xs text-zinc-600">
                     —
                   </div>
                 </div>
@@ -112,17 +112,17 @@ export const LibraryView = () => {
                     </div>
                     <span className="text-sm text-zinc-800 dark:text-zinc-200 truncate pr-4">{chat.title}</span>
                   </div>
-                  <div className="w-48 text-xs text-zinc-500">
+                  <div className="w-48 text-xs text-zinc-600">
                     {new Date(chat.updatedAt).toLocaleDateString()}
                   </div>
-                  <div className="w-24 text-xs text-zinc-500">
+                  <div className="w-24 text-xs text-zinc-600">
                     —
                   </div>
                 </div>
               ))}
 
               {filteredLibraries.length === 0 && filteredChats.length === 0 && (
-                <div className="py-10 text-center text-sm text-zinc-500">
+                <div className="py-10 text-center text-sm text-zinc-600">
                    {searchQuery ? 'No results found for your search.' : 'Your library is empty.'}
                 </div>
               )}
@@ -131,11 +131,11 @@ export const LibraryView = () => {
 
           {activeTab === 'images' && (
             <div className="py-20 flex flex-col items-center justify-center text-center">
-               <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4 text-zinc-400">
+               <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4 text-zinc-500">
                  <ImageIcon size={32} />
                </div>
                <h3 className="text-zinc-900 dark:text-zinc-100 font-medium mb-1">Image Search</h3>
-               <p className="text-sm text-zinc-500 max-w-sm">
+               <p className="text-sm text-zinc-600 max-w-sm">
                  You haven't uploaded or generated any images yet. Use the chat to generate images and they will appear here.
                </p>
             </div>
@@ -143,11 +143,11 @@ export const LibraryView = () => {
 
           {activeTab === 'documents' && (
             <div className="py-20 flex flex-col items-center justify-center text-center">
-               <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4 text-zinc-400">
+               <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mb-4 text-zinc-500">
                  <FileText size={32} />
                </div>
                <h3 className="text-zinc-900 dark:text-zinc-100 font-medium mb-1">Document Search</h3>
-               <p className="text-sm text-zinc-500 max-w-sm">
+               <p className="text-sm text-zinc-600 max-w-sm">
                  You haven't uploaded any documents yet. Upload PDFs or text files in the chat to see them here.
                </p>
             </div>

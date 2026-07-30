@@ -15,7 +15,7 @@ export const ThemeToggle: React.FC = () => {
         className={`flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-300 hover:bg-white hover:text-zinc-950 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 dark:hover:bg-zinc-805 dark:hover:text-zinc-50 cursor-pointer ${
           themePreference !== 'auto'
             ? 'bg-white text-blue-600 shadow-sm dark:bg-zinc-800 dark:text-blue-400'
-            : 'text-zinc-500 dark:text-zinc-400'
+            : 'text-zinc-600 dark:text-zinc-400'
         }`}
         title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
@@ -28,7 +28,7 @@ export const ThemeToggle: React.FC = () => {
         className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-extrabold tracking-wider transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 cursor-pointer ${
           themePreference === 'auto'
             ? 'bg-white text-blue-600 shadow-sm dark:bg-zinc-800 dark:text-blue-400'
-            : 'text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+            : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
         }`}
         title="Follow local time: light from 6 AM to 5:59 PM, dark from 6 PM to 5:59 AM"
       >

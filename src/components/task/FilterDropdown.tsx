@@ -23,7 +23,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center gap-1.5 ${className}`}>
       {label && (
-        <span className="text-xs font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500 whitespace-nowrap">
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500 whitespace-nowrap">
           {label}:
         </span>
       )}

@@ -51,6 +51,22 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       });
     }
 
+    if (user.isArchived) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been deactivated by an administrator.',
+        errors: [],
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked by an administrator.',
+        errors: [],
+      });
+    }
+
     // 7. Agar sab theek hai, toh user object ko Request me save kar dena
     req.user = user;
     

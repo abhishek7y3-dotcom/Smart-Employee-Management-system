@@ -13,7 +13,7 @@ export const OverviewTab: React.FC = () => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div>
         <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">Overview</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">Your personal and professional details.</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400">Your personal and professional details.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -68,10 +68,10 @@ export const OverviewTab: React.FC = () => {
 const InfoRow = ({ icon: Icon, label, value }: { icon: any, label: string, value: string }) => (
   <div className="flex items-start gap-3">
     <div className="p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-zinc-200 dark:border-zinc-800 shrink-0">
-      <Icon size={14} className="text-zinc-500" />
+      <Icon size={14} className="text-zinc-600" />
     </div>
     <div>
-      <p className="text-xs font-medium text-zinc-500 dark:text-zinc-400">{label}</p>
+      <p className="text-xs font-medium text-zinc-600 dark:text-zinc-400">{label}</p>
       <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{value || '-'}</p>
     </div>
   </div>

@@ -15,7 +15,7 @@ import { Plus, List, Calendar as CalendarIcon, CheckCircle, XCircle } from 'luci
 
 const LeaveContent = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'Admin' || user?.role === 'HR';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'HR';
   
   const { leaves, loading, fetchLeaves, fetchBalance, fetchStats, updateLeaveStatus, deleteLeave } = useLeave();
   
@@ -59,14 +59,14 @@ const LeaveContent = () => {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Leave Management</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Manage your leaves and view team requests.</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Manage your leaves and view team requests.</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800">
             <button
               onClick={() => setView('table')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                view === 'table' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                view === 'table' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-300'
               }`}
             >
               <List size={16} /> Table
@@ -74,7 +74,7 @@ const LeaveContent = () => {
             <button
               onClick={() => setView('calendar')}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                view === 'calendar' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300'
+                view === 'calendar' ? 'bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm' : 'text-zinc-600 hover:text-zinc-700 dark:hover:text-zinc-300'
               }`}
             >
               <CalendarIcon size={16} /> Calendar

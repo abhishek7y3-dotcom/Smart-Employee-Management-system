@@ -21,7 +21,7 @@ export interface IUser extends Document {
   countryCode?: string;
   email: string;
   password: string;
-  role: 'member' | 'admin';
+  role: 'member' | 'admin' | 'superadmin';
   profilePicture?: string;
   isVerified: boolean;
   verificationOtp?: string;
@@ -48,6 +48,7 @@ export interface IUser extends Document {
   createdAt: Date;
   updatedAt: Date;
   isArchived: boolean;
+  isBlocked: boolean;
   refreshTokens?: string[];
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -120,7 +121,7 @@ const userSchema = new Schema<IUser>(
     // User ka role, by default har naya user 'member' (employee) banega
     role: {
       type: String,
-      enum: ['member', 'admin'],
+      enum: ['member', 'admin', 'superadmin'],
       default: 'member',
     },
     designation: {
@@ -210,6 +211,10 @@ const userSchema = new Schema<IUser>(
       inApp: { type: Boolean, default: true }
     },
     isArchived: {
+      type: Boolean,
+      default: false,
+    },
+    isBlocked: {
       type: Boolean,
       default: false,
     },

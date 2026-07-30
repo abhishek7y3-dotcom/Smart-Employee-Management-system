@@ -64,26 +64,26 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
               <Pin className="h-3 w-3 text-blue-500 shrink-0" />
             )}
           </div>
-          <span className="shrink-0 text-xs text-zinc-400 dark:text-zinc-500 font-medium">
+          <span className="shrink-0 text-xs text-zinc-500 dark:text-zinc-500 font-medium">
             {formatRelativeTime(conversation.lastMessageTime)}
           </span>
         </div>
 
         <div className="flex items-center gap-1.5 mt-0.5">
           <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${getPriorityDot(conversation.priority)}`} />
-          <p className={`truncate text-xs ${!conversation.isRead ? 'font-semibold text-zinc-800 dark:text-zinc-200' : 'text-zinc-500 dark:text-zinc-400'}`}>
+          <p className={`truncate text-xs ${!conversation.isRead ? 'font-semibold text-zinc-800 dark:text-zinc-200' : 'text-zinc-600 dark:text-zinc-400'}`}>
             {conversation.subject}
           </p>
         </div>
 
         <div className="flex items-center justify-between gap-2 mt-1">
-          <p className="truncate text-xs text-zinc-400 dark:text-zinc-500 leading-relaxed">
-            <span className="font-medium text-zinc-500 dark:text-zinc-400">{conversation.lastMessageSender}:</span>{' '}
+          <p className="truncate text-xs text-zinc-500 dark:text-zinc-500 leading-relaxed">
+            <span className="font-medium text-zinc-600 dark:text-zinc-400">{conversation.lastMessageSender}:</span>{' '}
             {conversation.lastMessage}
           </p>
           <div className="flex items-center gap-1.5 shrink-0">
             {conversation.hasAttachments && (
-              <Paperclip className="h-3 w-3 text-zinc-400 dark:text-zinc-500" />
+              <Paperclip className="h-3 w-3 text-zinc-500 dark:text-zinc-500" />
             )}
             {conversation.unreadCount > 0 && (
               <span className="flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-blue-600 px-1.5 text-[10px] font-bold text-white">
@@ -109,7 +109,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         {onPin && (
           <button
             onClick={(e) => { e.stopPropagation(); onPin(); }}
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
           >
             <Pin className="h-3 w-3" />
           </button>
@@ -117,7 +117,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
         {onArchive && (
           <button
             onClick={(e) => { e.stopPropagation(); onArchive(); }}
-            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
+            className="rounded-md p-1 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-300 transition-colors"
             title={conversation.isArchived ? 'Unarchive' : 'Archive'}
           >
             {conversation.isArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}

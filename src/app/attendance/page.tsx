@@ -12,7 +12,7 @@ import { AttendanceRecord } from '../../types/attendance';
 
 const AttendanceContent = () => {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'Admin' || user?.role === 'HR';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'HR';
   
   const { records, loading, fetchRecords, fetchTodayRecord, fetchAnalytics } = useAttendance();
   const [filters, setFilters] = useState({ search: '', status: '', date: '', workMode: '', department: '' });
@@ -34,7 +34,7 @@ const AttendanceContent = () => {
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Attendance Management</h1>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Track working hours, breaks, and daily attendance.</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">Track working hours, breaks, and daily attendance.</p>
         </div>
       </header>
 

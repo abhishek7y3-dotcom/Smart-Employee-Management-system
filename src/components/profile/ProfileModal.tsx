@@ -204,7 +204,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         gender,
         countryCode,
         mobileNumber,
-        ...(user?.role === 'admin' ? { designation } : {})
+        ...((user?.role === 'admin' || user?.role === 'superadmin') ? { designation } : {})
       });
       toast.success('Profile updated successfully');
       onClose();
@@ -261,7 +261,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           </div>
           <button 
             onClick={onClose} 
-            className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 transition-colors"
+            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -279,12 +279,12 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             />
             <div className="text-center sm:text-left space-y-1">
               <h3 className="text-base font-bold text-zinc-900 dark:text-white">{user.name}</h3>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5 justify-center sm:justify-start">
-                <Mail className="h-3.5 w-3.5 text-zinc-400" /> {user.email}
+              <p className="text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 justify-center sm:justify-start">
+                <Mail className="h-3.5 w-3.5 text-zinc-500" /> {user.email}
               </p>
               {user.mobileNumber && (
                 <p className="text-xs text-zinc-550 dark:text-zinc-400 flex items-center gap-1.5 justify-center sm:justify-start">
-                  <Phone className="h-3.5 w-3.5 text-zinc-400" /> {user.countryCode} {user.mobileNumber}
+                  <Phone className="h-3.5 w-3.5 text-zinc-500" /> {user.countryCode} {user.mobileNumber}
                 </p>
               )}
               <div className="flex flex-wrap items-center gap-2 mt-1.5 justify-center sm:justify-start">
@@ -300,7 +300,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
           <form onSubmit={handleSaveProfile} className="space-y-4">
             <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1.5 border-b border-zinc-100 dark:border-zinc-900 pb-2">
-              <Shield className="h-4 w-4 text-zinc-500" /> Basic Details
+              <Shield className="h-4 w-4 text-zinc-600" /> Basic Details
             </h4>
             
             {/* First Name & Last Name inputs */}
@@ -335,7 +335,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             </div>
 
             {/* Designation Field (Editable by admin only) */}
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.role === 'superadmin') && (
               <div className="space-y-1.5">
                 <label htmlFor="profile-designation" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Designation</label>
                 <select
@@ -390,7 +390,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   ))}
                 </select>
                 <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                   <input
                     id="profile-mobile"
                     type="text"
@@ -413,7 +413,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   {profilePicture ? (
                     <img src={profilePicture} alt="Selected profile" className="w-full h-full object-cover" />
                   ) : (
-                    <User className="h-8 w-8 text-zinc-400" />
+                    <User className="h-8 w-8 text-zinc-500" />
                   )}
                 </div>
                 <div className="flex-1 space-y-2">
@@ -422,7 +422,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="block w-full text-xs text-zinc-500
+                    className="block w-full text-xs text-zinc-600
                       file:mr-4 file:py-1.5 file:px-3
                       file:rounded-xl file:border-0
                       file:text-xs file:font-semibold
@@ -431,14 +431,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       dark:file:bg-blue-950/30 dark:file:text-blue-400
                       cursor-pointer"
                   />
-                  <p className="text-[10px] text-zinc-400 dark:text-zinc-500">Choose a photo from your device. Max size 2MB.</p>
+                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500">Choose a photo from your device. Max size 2MB.</p>
                 </div>
               </div>
             </div>
 
             {/* Quick Avatar Presets Selector */}
             <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5"><Camera className="h-3.5 w-3.5" /> Quick Preset Selection</span>
+              <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5"><Camera className="h-3.5 w-3.5" /> Quick Preset Selection</span>
               <div className="flex gap-2.5 pt-1">
                 {avatarPresets.map((preset, index) => (
                   <button
@@ -457,7 +457,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
             <div className="border-t border-zinc-200/80 dark:border-zinc-850 pt-4 flex items-center justify-between">
               <div className="space-y-0.5">
                 <span className="text-xs font-bold text-zinc-900 dark:text-white">Security & Password</span>
-                <p className="text-[10px] text-zinc-500 dark:text-zinc-400">Request code to reset password credentials</p>
+                <p className="text-[10px] text-zinc-600 dark:text-zinc-400">Request code to reset password credentials</p>
               </div>
               <button
                 type="button"

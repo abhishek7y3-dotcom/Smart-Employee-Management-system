@@ -31,7 +31,7 @@ const statuses: Array<{ value: Task['status']; label: string }> = [
 export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDelete, onEdit, onView }) => {
   const { employees } = useTasks();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const employee = employees.find((emp) => emp.id === task.assignedTo);
   const employeeName = employee ? employee.name : 'Unassigned';
@@ -53,7 +53,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
         <StatusBadge status={task.status} />
       </div>
 
-      <p className="mt-3 text-sm leading-6 text-zinc-500 transition-colors duration-300 dark:text-zinc-400 break-words">
+      <p className="mt-3 text-sm leading-6 text-zinc-600 transition-colors duration-300 dark:text-zinc-400 break-words">
         {(() => {
           if (!task.description) return 'No description provided.';
           if (task.description.length <= 25) return task.description;
@@ -62,15 +62,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
       </p>
 
       <div className="mt-auto space-y-4 pt-5">
-        <div className="grid gap-3 rounded-lg bg-zinc-50 p-3 text-xs text-zinc-500 transition-colors duration-300 dark:bg-zinc-900/70 dark:text-zinc-400">
+        <div className="grid gap-3 rounded-lg bg-zinc-50 p-3 text-xs text-zinc-600 transition-colors duration-300 dark:bg-zinc-900/70 dark:text-zinc-400">
           <div className="flex items-center gap-2">
-            <UserRound className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+            <UserRound className="h-4 w-4 text-zinc-500 dark:text-zinc-500" />
             <span className="font-semibold text-zinc-700 dark:text-zinc-300">
               {employeeName}{employee?.designation ? ` (${employee.designation})` : ''}
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <CalendarDays className="h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+            <CalendarDays className="h-4 w-4 text-zinc-500 dark:text-zinc-500" />
             <span>Due {formatDate(task.dueDate)}</span>
           </div>
         </div>

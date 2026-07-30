@@ -19,7 +19,7 @@ export const LineChartCard: React.FC<LineChartCardProps> = ({ tasks, className =
   return (
     <div className={`rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-950 ${className}`}>
       <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Tasks Completed Over Time</h3>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Timeline of completed task accomplishments.</p>
+      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Timeline of completed task accomplishments.</p>
       <div className="mt-6 h-64 w-full">
         {chartData.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
@@ -32,7 +32,7 @@ export const LineChartCard: React.FC<LineChartCardProps> = ({ tasks, className =
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex h-full items-center justify-center text-sm font-semibold text-zinc-400 dark:text-zinc-500">No analytics available</div>
+          <div className="flex h-full items-center justify-center text-sm font-semibold text-zinc-500 dark:text-zinc-500">No analytics available</div>
         )}
       </div>
     </div>

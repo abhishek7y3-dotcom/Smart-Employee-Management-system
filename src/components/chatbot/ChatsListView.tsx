@@ -88,7 +88,7 @@ export const ChatsListView = ({ onOpenChat }: { onOpenChat: () => void }) => {
         <div className="flex items-center gap-3">
           {isSelecting ? (
             <>
-              <span className="text-sm text-zinc-500 mr-2">{selectedChats.length} selected</span>
+              <span className="text-sm text-zinc-600 mr-2">{selectedChats.length} selected</span>
               <button 
                 onClick={handleSelectAll}
                 className="text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 px-4 py-1.5 rounded-md text-sm font-medium hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-colors"
@@ -106,7 +106,7 @@ export const ChatsListView = ({ onOpenChat }: { onOpenChat: () => void }) => {
                 {isMoveDropdownOpen && (
                   <div className="absolute top-full mt-2 right-0 w-48 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-md shadow-lg z-50 py-1 max-h-64 overflow-y-auto">
                     {projects.length === 0 ? (
-                      <div className="px-4 py-2 text-sm text-zinc-500">No projects found</div>
+                      <div className="px-4 py-2 text-sm text-zinc-600">No projects found</div>
                     ) : (
                       projects.map(project => (
                         <button
@@ -184,13 +184,13 @@ export const ChatsListView = ({ onOpenChat }: { onOpenChat: () => void }) => {
       {/* Search Bar */}
       <div className="mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
           <input 
             type="text" 
             placeholder="Search chats..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-blue-400 dark:border-zinc-700 rounded-lg text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-100 dark:focus:ring-zinc-800 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-blue-400 dark:border-zinc-700 rounded-lg text-sm outline-none shadow-sm focus:ring-2 focus:ring-blue-100 dark:focus:ring-zinc-800 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500"
           />
         </div>
       </div>
@@ -199,7 +199,7 @@ export const ChatsListView = ({ onOpenChat }: { onOpenChat: () => void }) => {
       <div className="flex-1 overflow-y-auto pr-2">
         <div className="flex flex-col gap-1">
           {filteredChats.length === 0 ? (
-            <div className="text-center text-zinc-500 mt-10">No chats found.</div>
+            <div className="text-center text-zinc-600 mt-10">No chats found.</div>
           ) : (
             filteredChats.map(chat => (
               <div 
@@ -226,7 +226,7 @@ export const ChatsListView = ({ onOpenChat }: { onOpenChat: () => void }) => {
                   )}
                   <h4 className={`text-sm font-medium ${isSelecting ? 'text-zinc-800 dark:text-zinc-200' : 'text-zinc-800 dark:text-zinc-200 group-hover:text-black dark:group-hover:text-white'}`}>{chat.title}</h4>
                 </div>
-                <span className="text-xs text-zinc-400">{formatTimeAgo(chat.updatedAt)}</span>
+                <span className="text-xs text-zinc-500">{formatTimeAgo(chat.updatedAt)}</span>
               </div>
             ))
           )}

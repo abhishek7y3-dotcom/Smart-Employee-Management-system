@@ -42,7 +42,7 @@ export const CommunicationHub: React.FC = () => {
   } = useCommunication();
 
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'Admin' || user?.role === 'Project Manager';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'Project Manager';
 
   const [activeTab, setActiveTab] = useState<TabId>('inbox');
   const [replyText, setReplyText] = useState('');
@@ -162,7 +162,7 @@ export const CommunicationHub: React.FC = () => {
                     <div className="flex items-center gap-3">
                       <button
                         onClick={() => selectConversation(null)}
-                        className="md:hidden rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                        className="md:hidden rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                       >
                         <ArrowLeft className="h-4 w-4" />
                       </button>
@@ -175,7 +175,7 @@ export const CommunicationHub: React.FC = () => {
                           {selectedConversation.isPinned && <Pin className="h-3 w-3 text-blue-500 shrink-0" />}
                         </div>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-zinc-400 dark:text-zinc-500">
+                          <p className="text-xs text-zinc-500 dark:text-zinc-500">
                             {selectedConversation.participantNames.join(', ')}
                           </p>
                           {selectedConversation.project && (
@@ -186,14 +186,14 @@ export const CommunicationHub: React.FC = () => {
                       <div className="flex items-center gap-1">
                         <button
                           onClick={() => selectedConversation.isPinned ? unpinConversation(selectedConversation.id) : pinConversation(selectedConversation.id)}
-                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                           title={selectedConversation.isPinned ? 'Unpin' : 'Pin'}
                         >
                           <Pin className="h-3.5 w-3.5" />
                         </button>
                         <button
                           onClick={() => selectedConversation.isArchived ? unarchiveConversation(selectedConversation.id) : archiveConversation(selectedConversation.id)}
-                          className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                           title={selectedConversation.isArchived ? 'Unarchive' : 'Archive'}
                         >
                           {selectedConversation.isArchived ? <ArchiveRestore className="h-3.5 w-3.5" /> : <Archive className="h-3.5 w-3.5" />}
@@ -237,7 +237,7 @@ export const CommunicationHub: React.FC = () => {
                         <SendHorizonal className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Press Ctrl+Enter to send</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Press Ctrl+Enter to send</p>
                   </div>
                 </>
               ) : (
@@ -246,8 +246,8 @@ export const CommunicationHub: React.FC = () => {
                     <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900/60">
                       <MessageSquare className="h-8 w-8 text-zinc-300 dark:text-zinc-600" />
                     </div>
-                    <h3 className="mt-4 text-sm font-bold text-zinc-500 dark:text-zinc-400">Select a conversation</h3>
-                    <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Choose a conversation from the list to view messages</p>
+                    <h3 className="mt-4 text-sm font-bold text-zinc-600 dark:text-zinc-400">Select a conversation</h3>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Choose a conversation from the list to view messages</p>
                   </div>
                 </div>
               )}
@@ -261,7 +261,7 @@ export const CommunicationHub: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Drafts</h2>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">Your saved message drafts</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-500">Your saved message drafts</p>
               </div>
               <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-2.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
                 {drafts.length}
@@ -326,7 +326,7 @@ export const CommunicationHub: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Announcements</h2>
-                <p className="text-xs text-zinc-400 dark:text-zinc-500">Important updates from your team leads</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-500">Important updates from your team leads</p>
               </div>
               {isAdmin && (
                 <button
@@ -391,7 +391,7 @@ export const CommunicationHub: React.FC = () => {
                   />
                 </div>
                 <div className="flex items-center gap-2 justify-end">
-                  <button onClick={handleCancelAnnouncementEdit} className="rounded-xl px-4 py-2 text-xs font-bold text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">Cancel</button>
+                  <button onClick={handleCancelAnnouncementEdit} className="rounded-xl px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">Cancel</button>
                   <button
                     onClick={handleSaveAnnouncement}
                     disabled={!announcementForm.title.trim() || !announcementForm.description.trim()}
@@ -430,7 +430,7 @@ export const CommunicationHub: React.FC = () => {
           <div className="p-4 md:p-6 space-y-6">
             <div>
               <h2 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">📊 Communication Analytics</h2>
-              <p className="text-xs text-zinc-400 dark:text-zinc-500">Insights into your team's communication patterns</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-500">Insights into your team's communication patterns</p>
             </div>
             <AnalyticsCard analytics={analytics} />
           </div>
@@ -458,7 +458,7 @@ export const CommunicationHub: React.FC = () => {
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition-all duration-200 ${
                   activeTab === tab.id
                     ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 shadow-sm'
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-200'
+                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-200'
                 }`}
               >
                 {tab.icon}
@@ -484,7 +484,7 @@ export const CommunicationHub: React.FC = () => {
                     setHasViewedNotifications(true);
                   }
                 }}
-                className="relative rounded-xl p-2 text-zinc-500 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors"
+                className="relative rounded-xl p-2 text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-900 transition-colors"
               >
                 <Bell className="h-4 w-4" />
                 {unreadNotificationCount > 0 && !hasViewedNotifications && (

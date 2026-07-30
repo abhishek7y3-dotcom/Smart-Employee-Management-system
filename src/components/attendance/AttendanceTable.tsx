@@ -30,7 +30,7 @@ export const AttendanceTable: React.FC<Props> = ({ records, loading, isAdmin, on
     return (
       <div className="text-center py-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm flex flex-col items-center justify-center">
         <FileText size={48} className="text-zinc-300 dark:text-zinc-700 mb-4" />
-        <p className="text-zinc-500 dark:text-zinc-400 font-medium">No attendance records found.</p>
+        <p className="text-zinc-600 dark:text-zinc-400 font-medium">No attendance records found.</p>
       </div>
     );
   }
@@ -54,7 +54,7 @@ export const AttendanceTable: React.FC<Props> = ({ records, loading, isAdmin, on
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-x-auto">
       <table className="w-full text-left border-collapse min-w-[900px]">
         <thead>
-          <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
+          <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
             <th className="px-6 py-4 font-semibold">Employee</th>
             <th className="px-6 py-4 font-semibold">Date</th>
             <th className="px-6 py-4 font-semibold">Check-In / Out</th>
@@ -69,18 +69,18 @@ export const AttendanceTable: React.FC<Props> = ({ records, loading, isAdmin, on
             <tr key={record._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors">
               <td className="px-6 py-4">
                 <p className="font-semibold text-zinc-900 dark:text-zinc-100">{record.employeeName}</p>
-                <p className="text-xs text-zinc-500">{record.department || 'Employee'}</p>
+                <p className="text-xs text-zinc-600">{record.department || 'Employee'}</p>
               </td>
               <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                 {new Date(record.attendanceDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </td>
               <td className="px-6 py-4 text-sm">
                 <p className="text-zinc-900 dark:text-zinc-100">
-                  <span className="text-zinc-500 text-xs">In: </span>
+                  <span className="text-zinc-600 text-xs">In: </span>
                   {record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                 </p>
                 <p className="text-zinc-900 dark:text-zinc-100 mt-1">
-                  <span className="text-zinc-500 text-xs">Out: </span>
+                  <span className="text-zinc-600 text-xs">Out: </span>
                   {record.checkOutTime ? new Date(record.checkOutTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
                 </p>
               </td>

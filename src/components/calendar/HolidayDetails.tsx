@@ -12,7 +12,7 @@ export const HolidayDetails: React.FC<Props> = ({ holiday }) => {
       <div className="flex items-start justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
         <div>
           <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{holiday.holidayName}</h2>
-          <div className="flex items-center gap-2 mt-2 text-zinc-500 dark:text-zinc-400">
+          <div className="flex items-center gap-2 mt-2 text-zinc-600 dark:text-zinc-400">
             <Calendar size={16} />
             <span>{new Date(holiday.holidayDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
           </div>
@@ -27,17 +27,17 @@ export const HolidayDetails: React.FC<Props> = ({ holiday }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 space-y-3">
           <div className="flex items-center gap-3 text-sm">
-            <Tag size={16} className="text-zinc-400" />
+            <Tag size={16} className="text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400 w-24">Type:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{holiday.holidayType}</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <MapPin size={16} className="text-zinc-400" />
+            <MapPin size={16} className="text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400 w-24">Location:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{holiday.location || 'All Locations'}</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <Building2 size={16} className="text-zinc-400" />
+            <Building2 size={16} className="text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400 w-24">Department:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{holiday.department || 'All Departments'}</span>
           </div>
@@ -45,17 +45,17 @@ export const HolidayDetails: React.FC<Props> = ({ holiday }) => {
 
         <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 space-y-3">
           <div className="flex items-center gap-3 text-sm">
-            <Info size={16} className="text-zinc-400" />
+            <Info size={16} className="text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400 w-24">Optional:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{holiday.isOptional ? 'Yes' : 'No'}</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <Clock size={16} className="text-zinc-400" />
+            <Clock size={16} className="text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400 w-24">Recurring:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{holiday.isRecurring ? `Yes (${holiday.recurrenceType})` : 'No'}</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
-            <User size={16} className="text-zinc-400" />
+            <User size={16} className="text-zinc-500" />
             <span className="text-zinc-600 dark:text-zinc-400 w-24">Created:</span>
             <span className="font-medium text-zinc-900 dark:text-zinc-100">{new Date(holiday.createdAt).toLocaleDateString()}</span>
           </div>

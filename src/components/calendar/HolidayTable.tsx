@@ -30,7 +30,7 @@ export const HolidayTable: React.FC<Props> = ({ holidays, loading, onView, onEdi
   if (holidays.length === 0) {
     return (
       <div className="text-center py-12 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm">
-        <p className="text-zinc-500 dark:text-zinc-400">No holidays found matching your criteria.</p>
+        <p className="text-zinc-600 dark:text-zinc-400">No holidays found matching your criteria.</p>
       </div>
     );
   }
@@ -39,7 +39,7 @@ export const HolidayTable: React.FC<Props> = ({ holidays, loading, onView, onEdi
     <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-sm overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
-          <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-500 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
+          <tr className="bg-zinc-50 dark:bg-zinc-900/50 text-xs uppercase text-zinc-600 dark:text-zinc-400 border-b border-zinc-200 dark:border-zinc-800">
             <th className="px-6 py-4 font-semibold">Holiday Name</th>
             <th className="px-6 py-4 font-semibold">Date</th>
             <th className="px-6 py-4 font-semibold">Type</th>
@@ -53,13 +53,13 @@ export const HolidayTable: React.FC<Props> = ({ holidays, loading, onView, onEdi
             <tr key={holiday._id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/50 transition-colors">
               <td className="px-6 py-4">
                 <p className="font-semibold text-zinc-900 dark:text-zinc-100">{holiday.holidayName}</p>
-                {holiday.department && <p className="text-xs text-zinc-500">{holiday.department}</p>}
+                {holiday.department && <p className="text-xs text-zinc-600">{holiday.department}</p>}
               </td>
               <td className="px-6 py-4">
                 <p className="text-zinc-700 dark:text-zinc-300">
                   {new Date(holiday.holidayDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                 </p>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-zinc-600">
                   {new Date(holiday.holidayDate).toLocaleDateString('en-US', { weekday: 'long' })}
                 </p>
               </td>
@@ -89,7 +89,7 @@ export const HolidayTable: React.FC<Props> = ({ holidays, loading, onView, onEdi
                 <div className="flex items-center justify-end gap-2">
                   <button 
                     onClick={() => onView(holiday)}
-                    className="p-1.5 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
+                    className="p-1.5 text-zinc-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded transition-colors"
                     title="View Details"
                   >
                     <Eye size={16} />
@@ -98,14 +98,14 @@ export const HolidayTable: React.FC<Props> = ({ holidays, loading, onView, onEdi
                     <>
                       <button 
                         onClick={() => onEdit(holiday)}
-                        className="p-1.5 text-zinc-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
+                        className="p-1.5 text-zinc-500 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded transition-colors"
                         title="Edit Holiday"
                       >
                         <Edit2 size={16} />
                       </button>
                       <button 
                         onClick={() => onDelete(holiday)}
-                        className="p-1.5 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
+                        className="p-1.5 text-zinc-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
                         title="Delete Holiday"
                       >
                         <Trash2 size={16} />

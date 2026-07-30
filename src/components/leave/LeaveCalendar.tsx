@@ -47,7 +47,7 @@ export const LeaveCalendar: React.FC<Props> = ({ leaves, onView }) => {
 
       <div className="grid grid-cols-7 gap-px bg-zinc-200 dark:bg-zinc-800 border-t border-l border-zinc-200 dark:border-zinc-800">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="bg-zinc-50 dark:bg-zinc-900/50 py-3 text-center text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+          <div key={day} className="bg-zinc-50 dark:bg-zinc-900/50 py-3 text-center text-xs font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wider">
             {day}
           </div>
         ))}
@@ -78,7 +78,7 @@ export const LeaveCalendar: React.FC<Props> = ({ leaves, onView }) => {
               onClick={() => { if(dayLeaves.length > 0) onView(dayLeaves[0]); }}
               className={`min-h-[100px] p-2 border-b border-r border-zinc-200 dark:border-zinc-800 transition-colors ${dayLeaves.length > 0 ? 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-800/80' : ''} ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10 ring-1 ring-inset ring-blue-500/50' : isSunday ? 'bg-red-50/20 dark:bg-red-900/5' : 'bg-white dark:bg-zinc-900'}`}
             >
-              <div className={`font-bold text-sm mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400' : isSunday ? 'text-red-500 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-400'}`}>
+              <div className={`font-bold text-sm mb-1 ${isToday ? 'text-blue-600 dark:text-blue-400' : isSunday ? 'text-red-500 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'}`}>
                 {d}
               </div>
 

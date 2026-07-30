@@ -32,7 +32,7 @@ export const LeaveStatistics: React.FC<Props> = ({ onCardClick }) => {
           <Users size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">On Leave Today</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">On Leave Today</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.onLeaveToday}</p>
         </div>
       </div>
@@ -45,7 +45,7 @@ export const LeaveStatistics: React.FC<Props> = ({ onCardClick }) => {
           <Clock size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Pending Requests</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Pending Requests</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.pendingRequests}</p>
         </div>
       </div>
@@ -58,7 +58,7 @@ export const LeaveStatistics: React.FC<Props> = ({ onCardClick }) => {
           <CheckCircle size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Approved Leaves</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Approved Leaves</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.approvedLeaves}</p>
         </div>
       </div>
@@ -71,7 +71,7 @@ export const LeaveStatistics: React.FC<Props> = ({ onCardClick }) => {
           <XCircle size={24} />
         </div>
         <div>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Rejected Leaves</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 font-medium">Rejected Leaves</p>
           <p className="text-2xl font-bold text-zinc-800 dark:text-zinc-100">{stats.rejectedLeaves}</p>
         </div>
       </div>

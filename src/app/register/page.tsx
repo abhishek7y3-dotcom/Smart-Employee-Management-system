@@ -11,15 +11,15 @@ import { isValidEmail } from '../../utils/emailValidator';
 import { validateMobileNumber } from '../../utils/phoneValidator';
 
 const inputBase =
-  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-400 dark:focus:placeholder-zinc-600';
+  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-600 dark:focus:placeholder-zinc-600';
 
 const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: string = 'left-9') =>
   `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
-  `${!value ? `top-3 ${leftInset} text-sm text-zinc-400` : '-top-2.5 left-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400'} ` +
+  `${!value ? `top-3 ${leftInset} text-sm text-zinc-600` : '-top-2.5 left-3 text-xs font-semibold text-zinc-700 dark:text-zinc-500'} ` +
   `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
   `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-teal-700 dark:text-teal-500'}`;
 const inputNormal =
-  'border-zinc-300 dark:border-zinc-600 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-400 dark:hover:border-zinc-500';
+  'border-zinc-500 dark:border-zinc-600 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-700 dark:hover:border-zinc-500';
 const inputError =
   'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
@@ -343,7 +343,7 @@ export default function RegisterPage() {
         {/* Profile Picture Upload & Title */}
         <div className="flex flex-col items-center mb-10">
           <div className="relative mb-2">
-            <label htmlFor="profile-pic" className={`cursor-pointer group relative flex h-24 w-24 items-center justify-center rounded-full bg-[#9ca3af] dark:bg-zinc-700 transition-all duration-200 overflow-hidden ${formError?.includes('Image') ? 'ring-2 ring-red-400' : 'hover:bg-zinc-500 dark:hover:bg-zinc-600'}`}>
+            <label htmlFor="profile-pic" className={`cursor-pointer group relative flex h-24 w-24 items-center justify-center rounded-full bg-[#9ca3af] dark:bg-zinc-700 transition-all duration-200 overflow-hidden ${formError?.includes('Image') ? 'ring-2 ring-red-400' : 'hover:bg-zinc-600 dark:hover:bg-zinc-600'}`}>
               {profilePicture ? (
                 <img src={profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
               ) : (
@@ -371,11 +371,11 @@ export default function RegisterPage() {
               </div>
             )}
           </div>
-          <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 mb-6">Upload Profile Picture</span>
+          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-6">Upload Profile Picture</span>
           <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
             Employee Task Manager
           </h1>
-          <p className="mt-1 text-sm text-zinc-400 dark:text-zinc-500">
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
             {successMessage ? 'Verify your email to continue' : 'Create your workspace account'}
           </p>
         </div>
@@ -434,7 +434,7 @@ export default function RegisterPage() {
                   type="button"
                   onClick={handleResendOtp}
                   disabled={resendCooldown > 0 || resendLoading}
-                  className="text-zinc-400 hover:text-zinc-650 transition-colors disabled:opacity-40 cursor-pointer text-sm font-semibold"
+                  className="text-zinc-500 hover:text-zinc-650 transition-colors disabled:opacity-40 cursor-pointer text-sm font-semibold"
                 >
                   {resendLoading ? 'Sendingâ€¦' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
                 </button>
@@ -451,7 +451,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <div className="relative mt-2">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                   <input
                     id="firstName"
                     type="text"
@@ -470,7 +470,7 @@ export default function RegisterPage() {
 
               <div className="space-y-1">
                 <div className="relative mt-2">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                   <input
                     id="lastName"
                     type="text"
@@ -506,7 +506,7 @@ export default function RegisterPage() {
                         onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
                         className="peer sr-only"
                       />
-                      <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-300 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-700/50 peer-checked:border-teal-700 peer-checked:[&>div]:scale-100 bg-white dark:bg-zinc-900 flex items-center justify-center transition-all">
+                      <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-500 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-700/50 peer-checked:border-teal-700 peer-checked:[&>div]:scale-100 bg-white dark:bg-zinc-900 flex items-center justify-center transition-all">
                         <div className="w-[10px] h-[10px] rounded-full bg-teal-700 scale-0 transition-transform duration-200" />
                       </div>
                       <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
@@ -528,10 +528,10 @@ export default function RegisterPage() {
                     onClick={() => setIsQualDropdownOpen(!isQualDropdownOpen)}
                     className={`${inputBase} px-3 py-3 flex items-center justify-between cursor-pointer select-none ${qualificationError ? inputError : inputNormal}`}
                   >
-                    <span className={qualification ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500'}>
+                    <span className={qualification ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-600'}>
                       {qualification || 'Select Qualification'}
                     </span>
-                    <svg className={`h-4 w-4 text-zinc-500 transition-transform duration-200 ${isQualDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className={`h-4 w-4 text-zinc-600 transition-transform duration-200 ${isQualDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
@@ -569,7 +569,7 @@ export default function RegisterPage() {
               <div className="flex gap-2 mt-2">
                 <div 
                   ref={countryDropdownRef}
-                  className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-300 dark:border-zinc-600 shadow-sm hover:border-zinc-400 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
+                  className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-600 shadow-sm hover:border-zinc-500 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
                   onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                 >
                   <div className="flex items-center gap-2 pointer-events-none w-full">
@@ -598,7 +598,7 @@ export default function RegisterPage() {
                           value={countrySearchQuery}
                           onChange={(e) => setCountrySearchQuery(e.target.value)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-500"
+                          className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
                         />
                       </div>
                       <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
@@ -624,11 +624,11 @@ export default function RegisterPage() {
                               className="rounded-[2px] shadow-sm shrink-0"
                             />
                             <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
-                            <span className="text-zinc-500 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                            <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
                           </li>
                         ))}
                         {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
-                          <li className="px-3 py-6 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">No countries found</li>
+                          <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
                         )}
                       </ul>
                     </div>
@@ -636,7 +636,7 @@ export default function RegisterPage() {
                 </div>
 
                 <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                   <input
                     id="mobile"
                     type="text"
@@ -657,7 +657,7 @@ export default function RegisterPage() {
             {/* Email */}
             <div className="space-y-1">
               <div className="relative mt-2">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                 <input
                   id="email"
                   type="text"
@@ -696,7 +696,7 @@ export default function RegisterPage() {
             {/* Password */}
             <div className="space-y-1">
               <div className="relative mt-2">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
@@ -721,7 +721,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-teal-700 dark:text-teal-500"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-teal-700 dark:text-teal-500"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
@@ -739,7 +739,7 @@ export default function RegisterPage() {
             {/* Confirm Password */}
             <div className="space-y-1">
               <div className="relative mt-2">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                 <input
                   id="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -753,7 +753,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

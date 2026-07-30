@@ -30,7 +30,7 @@ export const HolidayModal: React.FC<Props> = ({ isOpen, onClose, title, children
           </h3>
           <button 
             onClick={onClose}
-            className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 rounded-full transition-colors"
+            className="p-2 text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 rounded-full transition-colors"
           >
             <X size={20} />
           </button>

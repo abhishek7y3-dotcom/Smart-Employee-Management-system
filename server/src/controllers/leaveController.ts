@@ -76,7 +76,7 @@ export async function getLeaves(req: AuthRequest, res: Response) {
 
     // If employee, only show their own leaves
     const userRole = req.user?.role as string;
-    if (userRole !== 'admin' && userRole !== 'Admin' && userRole !== 'HR') {
+    if (userRole !== 'admin' && userRole !== 'Admin' && userRole !== 'HR' && userRole !== 'superadmin') {
       query.employeeId = req.user?._id;
     }
 
@@ -112,7 +112,7 @@ export async function getLeaveById(req: AuthRequest, res: Response) {
 
     // Auth check
     const userRole = req.user?.role as string;
-    if (leave.employeeId.toString() !== req.user?._id?.toString() && userRole !== 'admin' && userRole !== 'Admin' && userRole !== 'HR') {
+    if (leave.employeeId.toString() !== req.user?._id?.toString() && userRole !== 'admin' && userRole !== 'Admin' && userRole !== 'HR' && userRole !== 'superadmin') {
       return res.status(403).json({ success: false, message: 'Unauthorized' });
     }
 

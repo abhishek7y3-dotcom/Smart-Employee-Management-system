@@ -19,7 +19,7 @@ export const LeaveDetailsModal: React.FC<Props> = ({ leave, isOpen, onClose }) =
         
         <div className="flex items-center justify-between p-6 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/50">
           <h3 className="text-xl font-bold text-zinc-900 dark:text-zinc-100">Leave Request Details</h3>
-          <button onClick={onClose} className="p-2 text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 text-zinc-500 hover:text-zinc-600 hover:bg-zinc-100 dark:hover:text-zinc-300 dark:hover:bg-zinc-800 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -28,7 +28,7 @@ export const LeaveDetailsModal: React.FC<Props> = ({ leave, isOpen, onClose }) =
           <div className="flex items-start justify-between border-b border-zinc-200 dark:border-zinc-800 pb-4">
             <div>
               <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{leave.employeeName}</h2>
-              <p className="text-zinc-500 dark:text-zinc-400 mt-1">{leave.designation} • {leave.department}</p>
+              <p className="text-zinc-600 dark:text-zinc-400 mt-1">{leave.designation} • {leave.department}</p>
             </div>
             <span className={`px-4 py-1.5 rounded-full text-sm font-bold ${
               leave.status === 'Approved' ? 'bg-green-100 text-green-700' :
@@ -43,19 +43,19 @@ export const LeaveDetailsModal: React.FC<Props> = ({ leave, isOpen, onClose }) =
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 space-y-3">
               <div className="flex items-center gap-3 text-sm">
-                <FileText size={16} className="text-zinc-400" />
+                <FileText size={16} className="text-zinc-500" />
                 <span className="text-zinc-600 dark:text-zinc-400 w-24">Leave Type:</span>
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{leave.leaveType}</span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <Calendar size={16} className="text-zinc-400" />
+                <Calendar size={16} className="text-zinc-500" />
                 <span className="text-zinc-600 dark:text-zinc-400 w-24">Duration:</span>
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
                   {new Date(leave.startDate).toLocaleDateString()} - {new Date(leave.endDate).toLocaleDateString()}
                 </span>
               </div>
               <div className="flex items-center gap-3 text-sm">
-                <Clock size={16} className="text-zinc-400" />
+                <Clock size={16} className="text-zinc-500" />
                 <span className="text-zinc-600 dark:text-zinc-400 w-24">Total Days:</span>
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">
                   {leave.totalDays} Day{leave.totalDays !== 1 && 's'} {leave.halfDay && `(${leave.halfDaySession})`}
@@ -65,20 +65,20 @@ export const LeaveDetailsModal: React.FC<Props> = ({ leave, isOpen, onClose }) =
 
             <div className="bg-zinc-50 dark:bg-zinc-900/50 p-4 rounded-xl border border-zinc-100 dark:border-zinc-800 space-y-3">
               <div className="flex items-center gap-3 text-sm">
-                <Calendar size={16} className="text-zinc-400" />
+                <Calendar size={16} className="text-zinc-500" />
                 <span className="text-zinc-600 dark:text-zinc-400 w-24">Applied On:</span>
                 <span className="font-medium text-zinc-900 dark:text-zinc-100">{new Date(leave.createdAt).toLocaleDateString()}</span>
               </div>
               {leave.approverName && (
                 <div className="flex items-center gap-3 text-sm">
-                  <User size={16} className="text-zinc-400" />
+                  <User size={16} className="text-zinc-500" />
                   <span className="text-zinc-600 dark:text-zinc-400 w-24">Approver:</span>
                   <span className="font-medium text-zinc-900 dark:text-zinc-100">{leave.approverName}</span>
                 </div>
               )}
               {leave.approvedDate && (
                 <div className="flex items-center gap-3 text-sm">
-                  <Clock size={16} className="text-zinc-400" />
+                  <Clock size={16} className="text-zinc-500" />
                   <span className="text-zinc-600 dark:text-zinc-400 w-24">Action Date:</span>
                   <span className="font-medium text-zinc-900 dark:text-zinc-100">{new Date(leave.approvedDate).toLocaleDateString()}</span>
                 </div>

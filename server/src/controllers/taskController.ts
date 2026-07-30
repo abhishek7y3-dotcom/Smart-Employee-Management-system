@@ -73,7 +73,7 @@ import User from '../models/User';
 
 export async function createTask(req: AuthRequest, res: Response) {
   // Role-Based Access Control (RBAC): Ensure only admins can create tasks
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'superadmin') {
     return res.status(403).json({
       success: false,
       message: 'Forbidden. Only administrators can assign tasks.',
@@ -242,7 +242,7 @@ export async function deleteTask(req: AuthRequest, res: Response) {
  * - Only admins can view the archive.
  */
 export async function getArchivedTasks(req: AuthRequest, res: Response) {
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'superadmin') {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
 
@@ -265,7 +265,7 @@ export async function getArchivedTasks(req: AuthRequest, res: Response) {
  * - Only admins can restore tasks.
  */
 export async function restoreTask(req: AuthRequest, res: Response) {
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'superadmin') {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
 
@@ -287,7 +287,7 @@ export async function restoreTask(req: AuthRequest, res: Response) {
 }
 
 export async function permanentDeleteTask(req: AuthRequest, res: Response) {
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'superadmin') {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
 

@@ -9,16 +9,16 @@ import { validateMobileNumber } from '../../utils/phoneValidator';
 import { countries } from '../../constants/countries';
 
 const inputBase =
-  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-400 dark:focus:placeholder-zinc-600';
+  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-600 dark:focus:placeholder-zinc-600';
 
 const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: string = 'left-9') =>
   `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
-  `${!value ? `top-3 ${leftInset} text-sm text-zinc-400` : '-top-2.5 left-3 text-xs font-semibold text-zinc-600 dark:text-zinc-400'} ` +
+  `${!value ? `top-3 ${leftInset} text-sm text-zinc-600` : '-top-2.5 left-3 text-xs font-semibold text-zinc-700 dark:text-zinc-500'} ` +
   `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
   `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-teal-700 dark:peer-focus:text-teal-500'}`;
 
 const inputNormal =
-  'border-zinc-300 dark:border-zinc-700 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-400 dark:hover:border-zinc-600';
+  'border-zinc-500 dark:border-zinc-700 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-700 dark:hover:border-zinc-600';
 const inputError =
   'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
@@ -243,7 +243,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-white font-outfit mb-3">
               Welcome Back!
             </h1>
-            <p className="text-[15px] font-medium text-zinc-500 dark:text-zinc-400 leading-relaxed">
+            <p className="text-[15px] font-medium text-zinc-600 dark:text-zinc-400 leading-relaxed">
               Sign in to access your dashboard and continue optimizing your work process.
             </p>
           </div>
@@ -254,7 +254,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setMode('email'); setSubTab('password'); resetErrors(); }}
-                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
+                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-500 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
               >
                 <Mail className="h-4 w-4 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
                 Continue with Email
@@ -263,7 +263,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setMode('phone'); setSubTab('password'); resetErrors(); }}
-                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
+                className="group flex w-full items-center justify-center gap-2.5 rounded-lg border border-zinc-500 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:border-teal-600 hover:bg-teal-50 dark:hover:bg-teal-900/20 px-5 py-2.5 text-[15px] font-semibold text-zinc-700 dark:text-zinc-200 transition-all duration-300 shadow-sm cursor-pointer"
               >
                 <Phone className="h-4 w-4 text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform" />
                 Continue with Phone
@@ -278,7 +278,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => { setMode('initial'); resetErrors(); }}
-                className="group flex items-center gap-1.5 text-xs font-bold text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors duration-300 cursor-pointer -mt-2"
+                className="group flex items-center gap-1.5 text-xs font-bold text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors duration-300 cursor-pointer -mt-2"
               >
                 <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-1 transition-transform" /> Back to options
               </button>
@@ -323,7 +323,7 @@ export default function LoginPage() {
                   {mode === 'email' ? (
                     <div className="space-y-1">
                       <div className="relative mt-2">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                         <input
                           id="email-input"
                           type="text"
@@ -346,14 +346,14 @@ export default function LoginPage() {
                         <select
                           value={countryCode}
                           onChange={(e) => setCountryCode(e.target.value)}
-                          className="rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                          className="rounded-xl border-2 border-zinc-500 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
                         >
                           {countries.map((c) => (
                             <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
                           ))}
                         </select>
                         <div className="relative flex-1">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                           <input
                             id="mobile-input"
                             type="text"
@@ -379,7 +379,7 @@ export default function LoginPage() {
                       </a>
                     </div>
                     <div className="relative mt-2">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                       <input
                         id="password-input"
                         type={showPassword ? 'text' : 'password'}
@@ -396,7 +396,7 @@ export default function LoginPage() {
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -423,7 +423,7 @@ export default function LoginPage() {
                       {mode === 'email' ? (
                         <div className="space-y-1">
                           <div className="relative mt-2">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                             <input
                               id="email-otp-input"
                               type="text"
@@ -445,14 +445,14 @@ export default function LoginPage() {
                             <select
                               value={countryCode}
                               onChange={(e) => setCountryCode(e.target.value)}
-                              className="rounded-xl border-2 border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                              className="rounded-xl border-2 border-zinc-500 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
                             >
                               {countries.map((c) => (
                                 <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
                               ))}
                             </select>
                             <div className="relative flex-1">
-                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                               <input
                                 id="mobile-otp-input"
                                 type="text"
@@ -561,7 +561,7 @@ export default function LoginPage() {
           )}
 
           {/* Footer */}
-          <div className="mt-12 text-center text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          <div className="mt-12 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">
             Don&apos;t have an Account?{' '}
             <a href="/register" className="font-bold text-teal-800 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline transition-colors decoration-2 underline-offset-2">
               Sign Up

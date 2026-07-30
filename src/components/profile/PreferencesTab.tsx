@@ -40,7 +40,7 @@ export const PreferencesTab: React.FC = () => {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 mb-1">Preferences</h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">Customize your workspace experience.</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">Customize your workspace experience.</p>
         </div>
         <button 
           onClick={savePreferences}
@@ -61,9 +61,9 @@ export const PreferencesTab: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Moon size={14} className="text-zinc-500" /> Theme Mode
+                  <Moon size={14} className="text-zinc-600" /> Theme Mode
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-1">Choose between light, dark, or system preference</p>
+                <p className="text-[10px] text-zinc-600 mt-1">Choose between light, dark, or system preference</p>
               </div>
               <ThemeToggle />
             </div>
@@ -73,9 +73,9 @@ export const PreferencesTab: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
-                  <Type size={14} className="text-zinc-500" /> Font Size
+                  <Type size={14} className="text-zinc-600" /> Font Size
                 </p>
-                <p className="text-[10px] text-zinc-500 mt-1">Adjust text size for better readability</p>
+                <p className="text-[10px] text-zinc-600 mt-1">Adjust text size for better readability</p>
               </div>
               <AccessibilityToggle />
             </div>
@@ -91,7 +91,7 @@ export const PreferencesTab: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">Email Notifications</p>
-                <p className="text-[10px] text-zinc-500 mt-1">Receive daily summaries and critical alerts via email</p>
+                <p className="text-[10px] text-zinc-600 mt-1">Receive daily summaries and critical alerts via email</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" checked={emailNotifs} onChange={(e) => setEmailNotifs(e.target.checked)} />
@@ -104,7 +104,7 @@ export const PreferencesTab: React.FC = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">In-App Notifications</p>
-                <p className="text-[10px] text-zinc-500 mt-1">Receive real-time alerts inside the dashboard</p>
+                <p className="text-[10px] text-zinc-600 mt-1">Receive real-time alerts inside the dashboard</p>
               </div>
               <label className="relative inline-flex items-center cursor-pointer">
                 <input type="checkbox" className="sr-only peer" checked={inAppNotifs} onChange={(e) => setInAppNotifs(e.target.checked)} />

@@ -2,7 +2,7 @@ import React from 'react';
 import { Employee } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { useTasks } from '../../context/TaskContext';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Ban, CheckCircle2 } from 'lucide-react';
 
 interface EmployeeCardProps {
   employee: Employee;
@@ -10,6 +10,7 @@ interface EmployeeCardProps {
 
 const DESIGNATIONS = [
   'CEO',
+  'Admin',
   'Employee',
   'Software Developer',
   'Senior Developer',
@@ -22,11 +23,16 @@ const DESIGNATIONS = [
 
 export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   const { user } = useAuth();
-  const { updateEmployeeDesignation, updateEmployeeRole, removeEmployee } = useTasks();
+  const { updateEmployeeDesignation, updateEmployeeRole, removeEmployee, blockEmployee, unblockEmployee } = useTasks();
 
-  const isAdmin = user?.role === 'admin';
-  const canEditDesignation = isAdmin && (employee.role !== 'admin' || employee.id === user?.id);
-  const canEditRole = isAdmin && employee.id !== user?.id;
+  const isSuperAdmin = user?.role === 'superadmin';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || isSuperAdmin;
+  const canEditDesignation = isAdmin && (employee.role !== 'superadmin' || employee.id === user?.id);
+  const canEditRole = isSuperAdmin && employee.id !== user?.id && employee.role !== 'superadmin';
+  
+  const targetIsAdminOrSuper = employee.role === 'admin' || employee.role === 'superadmin';
+  const canRemoveUser = employee.id !== user?.id && (isSuperAdmin || (isAdmin && !targetIsAdminOrSuper));
+  const canBlockUser = canRemoveUser;
 
   const handleDesignationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     updateEmployeeDesignation(employee.id, e.target.value);
@@ -35,6 +41,18 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   const handleRemoveUser = () => {
     if (window.confirm(`Are you sure you want to remove ${employee.name}?`)) {
       removeEmployee(employee.id);
+    }
+  };
+
+  const handleBlockUser = () => {
+    if (window.confirm(`Are you sure you want to block ${employee.name}? They will lose access.`)) {
+      blockEmployee(employee.id);
+    }
+  };
+
+  const handleUnblockUser = () => {
+    if (window.confirm(`Are you sure you want to unblock ${employee.name}? They will regain access.`)) {
+      unblockEmployee(employee.id);
     }
   };
 
@@ -56,13 +74,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <h4 className="font-bold text-zinc-900 dark:text-zinc-200 text-sm truncate">{employee.name}</h4>
-            {employee.role === 'admin' && (
+            {(employee.role === 'admin' || employee.role === 'superadmin') && (
               <span className="flex items-center gap-1 text-[9px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-200/40 dark:border-amber-900/40 shadow-sm shrink-0">
-                👑 Admin
+                👑 {employee.role === 'superadmin' ? 'Super Admin' : 'Admin'}
               </span>
             )}
           </div>
-          <p className="text-zinc-400 dark:text-zinc-500 text-[10px] truncate">{employee.email}</p>
+          <p className="text-zinc-600 dark:text-zinc-500 text-[10px] truncate">{employee.email}</p>
         </div>
       </div>
 
@@ -70,11 +88,11 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
         {canEditDesignation ? (
           <div className="relative">
             <select
-              value={employee.designation || 'Employee'}
+              value={employee.designation || ''}
               onChange={handleDesignationChange}
-              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-500 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
             >
-              {DESIGNATIONS.map((des) => (
+              {DESIGNATIONS.filter(des => des !== 'CEO' || employee.role === 'superadmin').map((des) => (
                 <option key={des} value={des}>
                   {des}
                 </option>
@@ -83,7 +101,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
           </div>
         ) : (
           <span className="text-zinc-600 dark:text-zinc-400 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-800/40">
-            {employee.designation || (employee.role === 'admin' ? 'Admin' : 'Employee')}
+            {employee.designation || (employee.role === 'superadmin' ? 'CEO' : (employee.role === 'admin' ? 'Admin' : 'Employee'))}
           </span>
         )}
 
@@ -100,11 +118,33 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
           </div>
         )}
 
-        {isAdmin && employee.id !== user?.id && (
+        {canBlockUser && (
+          employee.isBlocked ? (
+            <button
+              type="button"
+              onClick={handleUnblockUser}
+              className="p-1.5 rounded-lg text-amber-500 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-950/20 transition-colors cursor-pointer shrink-0"
+              title={`Unblock ${employee.name}`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleBlockUser}
+              className="p-1.5 rounded-lg text-zinc-600 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-colors cursor-pointer shrink-0"
+              title={`Block ${employee.name}`}
+            >
+              <Ban className="w-4 h-4" />
+            </button>
+          )
+        )}
+
+        {canRemoveUser && (
           <button
             type="button"
             onClick={handleRemoveUser}
-            className="p-1.5 rounded-lg text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer shrink-0"
+            className="p-1.5 rounded-lg text-zinc-600 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer shrink-0"
             title={`Remove ${employee.name}`}
           >
             <Trash2 className="w-4 h-4" />

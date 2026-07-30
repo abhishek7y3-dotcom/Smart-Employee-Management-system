@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     },
   ];
 
-  const isAdmin = user?.role === 'admin' || user?.designation?.toLowerCase() === 'admin' || user?.designation?.toLowerCase() === 'ceo' || user?.designation?.toLowerCase() === 'project manager';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.designation?.toLowerCase() === 'admin' || user?.designation?.toLowerCase() === 'ceo' || user?.designation?.toLowerCase() === 'project manager';
 
   if (isAdmin) {
     navigation.push({
@@ -141,7 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         ${isOpen ? 'flex translate-x-0' : '-translate-x-full md:translate-x-0 hidden'}
       `}>
         <div className="space-y-6">
-          <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-400 dark:text-zinc-500">
+          <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-600 dark:text-zinc-500">
             Workspace Navigation
           </div>
         <nav className="space-y-1">
@@ -162,10 +162,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 href={item.href}
                 className={`group flex items-center gap-3.5 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 ${isActive
                     ? 'bg-zinc-100/80 text-zinc-950 border-blue-600 dark:bg-zinc-900/60 dark:text-zinc-50 dark:border-blue-500 font-bold shadow-sm'
-                    : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-950 border-transparent dark:text-zinc-400 dark:hover:bg-zinc-900/30 dark:hover:text-zinc-100'
+                    : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 border-transparent dark:text-zinc-400 dark:hover:bg-zinc-900/30 dark:hover:text-zinc-100'
                   }`}
               >
-                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-400 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}>
+                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}>
                   {item.icon}
                 </span>
                 {item.name}
@@ -176,7 +176,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </div>
 
       <div className="border-t border-zinc-200/60 pt-4 dark:border-zinc-800/65">
-        <div className="rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-4 text-[11px] text-zinc-500 dark:border-zinc-800/40 dark:bg-zinc-900/20 dark:text-zinc-400">
+        <div className="rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-4 text-[11px] text-zinc-600 dark:border-zinc-800/40 dark:bg-zinc-900/20 dark:text-zinc-400">
           <p className="font-bold text-zinc-800 dark:text-zinc-300">
             Mode: <span className="text-blue-600 dark:text-blue-400">{isMock ? 'Local Mock' : 'Server API'}</span>
           </p>

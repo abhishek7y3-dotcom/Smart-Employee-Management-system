@@ -66,7 +66,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
         {/* Header */}
         <div className="shrink-0 flex items-center justify-between border-b border-zinc-200/60 dark:border-zinc-800/60 px-4 py-3">
           <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+            <Bell className="h-4 w-4 text-zinc-600 dark:text-zinc-400" />
             <h3 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">Notifications</h3>
             {unreadCount > 0 && (
               <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold text-white">
@@ -80,7 +80,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                 <CheckCheck className="h-3 w-3" /> Mark all read
               </button>
             )}
-            <button onClick={onClose} className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
+            <button onClick={onClose} className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors">
               <X className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -93,8 +93,8 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-zinc-50 dark:bg-zinc-900/60">
                 <Bell className="h-6 w-6 text-zinc-300 dark:text-zinc-600" />
               </div>
-              <p className="mt-3 text-sm font-bold text-zinc-500 dark:text-zinc-400">No notifications</p>
-              <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">You're all caught up!</p>
+              <p className="mt-3 text-sm font-bold text-zinc-600 dark:text-zinc-400">No notifications</p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">You're all caught up!</p>
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800/60">
@@ -113,15 +113,15 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <p className={`text-sm font-bold truncate ${!notif.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-500 dark:text-zinc-400'}`}>
+                      <p className={`text-sm font-bold truncate ${!notif.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-600 dark:text-zinc-400'}`}>
                         {notif.title}
                       </p>
                       {!notif.isRead && (
                         <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                       )}
                     </div>
-                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400 line-clamp-2 leading-relaxed">{notif.message}</p>
-                    <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">{formatRelativeTime(notif.createdAt)}</p>
+                    <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">{notif.message}</p>
+                    <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-500">{formatRelativeTime(notif.createdAt)}</p>
                   </div>
                 </div>
               ))}

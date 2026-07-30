@@ -44,7 +44,7 @@ export default function EmployeesPage() {
     avatarUrl: ''
   });
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'Admin' || user?.role === 'Project Manager';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'Project Manager';
 
   const filteredEmployees = employees.filter((emp) =>
     emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,7 +163,7 @@ export default function EmployeesPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between relative z-10">
           <div>
             <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Team Members</h2>
-            <p className="text-xs text-zinc-400 dark:text-zinc-500">Manage designations, workspace roles, and employee records.</p>
+            <p className="text-xs text-zinc-600 dark:text-zinc-500">Manage designations, workspace roles, and employee records.</p>
           </div>
           {isAdmin && (
             <button
@@ -178,15 +178,15 @@ export default function EmployeesPage() {
 
         <div className="flex flex-col gap-4 rounded-2xl border border-zinc-200/60 bg-white/90 p-4.5 shadow-sm dark:border-zinc-800/60 dark:bg-zinc-950/45 backdrop-blur-sm transition-colors duration-300 md:flex-row md:items-center md:justify-between relative z-10">
           <div className="relative max-w-md flex-1">
-            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-400 dark:text-zinc-500" />
+            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-zinc-600 dark:text-zinc-500" />
             <input
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search team members..."
-              className="w-full rounded-xl border border-zinc-300 bg-white py-2.5 pl-11 pr-4 text-xs text-zinc-950 outline-none transition duration-205 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
+              className="w-full rounded-xl border border-zinc-500 bg-white py-2.5 pl-11 pr-4 text-xs text-zinc-950 outline-none transition duration-205 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50"
             />
           </div>
-          <div className="text-xs font-bold text-zinc-400 dark:text-zinc-500">
+          <div className="text-xs font-bold text-zinc-600 dark:text-zinc-500">
             Showing {filteredEmployees.length} of {employees.length} members
           </div>
         </div>
@@ -198,7 +198,7 @@ export default function EmployeesPage() {
             ))
           ) : (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center transition-all duration-300 dark:border-dashed dark:border-zinc-800 dark:bg-zinc-950/40">
-              <p className="text-sm font-semibold text-zinc-500 dark:text-zinc-400">No team members found</p>
+              <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">No team members found</p>
             </div>
           )}
         </div>
@@ -221,7 +221,7 @@ export default function EmployeesPage() {
                   type="button"
                   disabled={loading}
                   onClick={() => setIsModalOpen(false)}
-                  className="rounded-lg p-1 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 cursor-pointer"
+                  className="rounded-lg p-1 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -240,7 +240,7 @@ export default function EmployeesPage() {
                       First Name
                     </label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                       <input
                         id="firstName"
                         type="text"
@@ -253,9 +253,9 @@ export default function EmployeesPage() {
                           setErrors({ ...errors, firstName: '' });
                         }}
                         placeholder="Jane"
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.firstName
+                        className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.firstName
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
                           }`}
                       />
                     </div>
@@ -279,9 +279,9 @@ export default function EmployeesPage() {
                           setErrors({ ...errors, lastName: '' });
                         }}
                         placeholder="Doe"
-                        className={`w-full px-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.lastName
+                        className={`w-full px-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.lastName
                           ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
                           }`}
                       />
                     </div>
@@ -294,7 +294,7 @@ export default function EmployeesPage() {
                     Email
                   </label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                     <input
                       id="email"
                       type="text"
@@ -302,9 +302,9 @@ export default function EmployeesPage() {
                       value={formData.email}
                       onChange={(e) => { setFormData({ ...formData, email: e.target.value.toLowerCase().replace(/\s/g, '') }); setErrors({ ...errors, email: '' }); }}
                       placeholder="jane@company.com"
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.email
+                      className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.email
                         ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
                         }`}
                     />
                   </div>
@@ -316,7 +316,7 @@ export default function EmployeesPage() {
                     Password
                   </label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                     <input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
@@ -324,15 +324,15 @@ export default function EmployeesPage() {
                       value={formData.password}
                       onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
                       placeholder="Enter credentials"
-                      className={`w-full pl-10 pr-28 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-400 dark:placeholder:text-zinc-600 ${errors.password
+                      className={`w-full pl-10 pr-28 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.password
                         ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-400 dark:focus:border-zinc-600 focus:ring-zinc-400/10'
+                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
                         }`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-20 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer animate-in fade-in"
+                      className="absolute right-20 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-200 cursor-pointer animate-in fade-in"
                     >
                       {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                     </button>
@@ -353,14 +353,15 @@ export default function EmployeesPage() {
                       Designation
                     </label>
                     <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                       <select
                         id="designation"
                         value={formData.designation}
                         onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-400 focus:ring-zinc-400/10 appearance-none cursor-pointer"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-500 focus:ring-zinc-500/10 appearance-none cursor-pointer"
                       >
                         <option value="Employee">Employee</option>
+                        <option value="Admin">Admin</option>
                         <option value="Developer">Developer</option>
                         <option value="Designer">Designer</option>
                         <option value="QA Engineer">QA Engineer</option>
@@ -377,12 +378,12 @@ export default function EmployeesPage() {
                       Role
                     </label>
                     <div className="relative">
-                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400 pointer-events-none" />
+                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                       <select
                         id="role"
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-400 focus:ring-zinc-400/10 appearance-none cursor-pointer"
+                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-500 focus:ring-zinc-500/10 appearance-none cursor-pointer"
                       >
                         <option value="user">Employee</option>
                         <option value="admin">Admin</option>
@@ -393,13 +394,13 @@ export default function EmployeesPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="avatarUrl">
-                    Profile Picture <span className="text-zinc-400 dark:text-zinc-500">(optional)</span>
+                    Profile Picture <span className="text-zinc-500 dark:text-zinc-500">(optional)</span>
                   </label>
                   <div className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 bg-white dark:bg-zinc-900 transition duration-150 ${errors.image ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}>
                     {formData.avatarUrl ? (
                       <img src={formData.avatarUrl} alt="Preview" className="h-8 w-8 shrink-0 rounded-full object-cover" />
                     ) : (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-400 dark:bg-zinc-800 dark:text-zinc-500">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500">
                         <Image className="h-3.5 w-3.5" />
                       </div>
                     )}

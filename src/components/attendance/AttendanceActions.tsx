@@ -24,7 +24,7 @@ export const AttendanceActions: React.FC = () => {
       <div className="text-center mb-6">
         <Clock size={32} className="mx-auto text-blue-500 mb-2" />
         <h2 className="text-3xl font-bold text-zinc-900 dark:text-zinc-100 tracking-tight font-mono">{formatTime(time)}</h2>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
       </div>
 
       <div className="flex flex-wrap gap-4 justify-center w-full">
@@ -65,13 +65,13 @@ export const AttendanceActions: React.FC = () => {
       {isCheckedIn && (
         <div className="mt-6 w-full grid grid-cols-2 gap-4 text-center text-sm">
           <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
-            <p className="text-zinc-500 dark:text-zinc-400 mb-1">Check In</p>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-1">Check In</p>
             <p className="font-bold text-zinc-900 dark:text-zinc-100">
               {new Date(todayRecord.checkInTime!).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
             </p>
           </div>
           <div className="p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
-            <p className="text-zinc-500 dark:text-zinc-400 mb-1">Status</p>
+            <p className="text-zinc-600 dark:text-zinc-400 mb-1">Status</p>
             <p className="font-bold text-zinc-900 dark:text-zinc-100">{todayRecord.attendanceStatus}</p>
           </div>
         </div>

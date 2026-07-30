@@ -37,13 +37,13 @@ export const ProjectView = ({ onOpenProjectDetail }: { onOpenProjectDetail?: () 
         {/* Search Bar */}
         <div className="mb-16">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" size={18} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
             <input 
               type="text" 
               placeholder="Search projects..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm outline-none focus:border-zinc-300 dark:focus:border-zinc-700 focus:ring-4 focus:ring-zinc-100 dark:focus:ring-zinc-800/50 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
+              className="w-full pl-10 pr-4 py-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg text-sm outline-none focus:border-zinc-300 dark:focus:border-zinc-700 focus:ring-4 focus:ring-zinc-100 dark:focus:ring-zinc-800/50 transition-all text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-500"
             />
           </div>
         </div>
@@ -56,7 +56,7 @@ export const ProjectView = ({ onOpenProjectDetail }: { onOpenProjectDetail?: () 
                 <LayoutTemplate size={48} strokeWidth={1} />
               </div>
               <h3 className="text-lg font-medium text-zinc-900 dark:text-zinc-100 mb-2">Looking to start a project?</h3>
-              <p className="text-zinc-500 dark:text-zinc-400 text-sm max-w-sm mb-6 leading-relaxed">
+              <p className="text-zinc-600 dark:text-zinc-400 text-sm max-w-sm mb-6 leading-relaxed">
                 Upload materials, set custom Instructions, and organize conversations in one space.
               </p>
               <button 
@@ -139,7 +139,7 @@ const ProjectCard = ({ project, onOpenProjectDetail }: { project: any, onOpenPro
                 e.stopPropagation();
                 setIsMenuOpen(!isMenuOpen);
               }}
-              className="opacity-0 group-hover:opacity-100 p-1 text-zinc-400 hover:text-zinc-800 hover:bg-zinc-100 rounded transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 rounded transition-all"
             >
               <MoreHorizontal size={16} />
             </button>
@@ -166,7 +166,7 @@ const ProjectCard = ({ project, onOpenProjectDetail }: { project: any, onOpenPro
           </div>
         )}
       </div>
-      <p className="text-xs text-zinc-500">{project.chats?.length || 0} chats</p>
+      <p className="text-xs text-zinc-600">{project.chats?.length || 0} chats</p>
     </div>
   );
 };

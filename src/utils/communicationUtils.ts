@@ -70,9 +70,9 @@ export function getPriorityDot(priority: string): string {
     case 'medium':
       return 'bg-blue-500';
     case 'low':
-      return 'bg-zinc-400';
+      return 'bg-zinc-500';
     default:
-      return 'bg-zinc-400';
+      return 'bg-zinc-500';
   }
 }
 
@@ -89,9 +89,9 @@ export function getStatusColor(status: string): string {
     case 'replied':
       return 'text-violet-500';
     case 'archived':
-      return 'text-zinc-400';
+      return 'text-zinc-500';
     default:
-      return 'text-zinc-400';
+      return 'text-zinc-500';
   }
 }
 

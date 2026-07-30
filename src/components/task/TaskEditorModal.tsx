@@ -124,12 +124,12 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Edit Task</h3>
-            <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Update task details without changing the card layout.</p>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Update task details without changing the card layout.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
           >
             <X className="h-4.5 w-4.5" />
           </button>
@@ -138,7 +138,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Title</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Title</span>
               <input
                 maxLength={150}
                 value={title}
@@ -152,7 +152,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
               {titleError && <p className="mt-1 text-xs font-semibold text-red-500">{titleError}</p>}
             </label>
             <label className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Description</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Description</span>
               <textarea
                 value={description}
                 maxLength={500}
@@ -167,7 +167,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
               {descriptionError && <p className="mt-1 text-xs font-semibold text-red-500">{descriptionError}</p>}
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Status</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Status</span>
               <select value={status} onChange={(event) => setStatus(event.target.value as TaskStatus)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="todo">Pending</option>
                 <option value="in_progress">In Progress</option>
@@ -176,7 +176,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
               </select>
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Priority</span>
               <select value={priority} onChange={(event) => setPriority(event.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -184,7 +184,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
               </select>
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Assignee</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Assignee</span>
               <select
                 value={assignedTo}
                 onChange={(event) => setAssignedTo(event.target.value)}
@@ -204,7 +204,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
               {assigneeError && <p className="mt-1 text-xs font-semibold text-red-500">{assigneeError}</p>}
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Due Date</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Due Date</span>
               <input
                 type="date"
                 min={today}

@@ -44,9 +44,9 @@ export const AttachmentPreview: React.FC<AttachmentPreviewProps> = ({ attachment
       <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${colorMap[attachment.type] || colorMap.other}`}>{iconMap[attachment.type] || iconMap.other}</div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-bold text-zinc-900 dark:text-zinc-100">{attachment.name}</p>
-        <p className="text-xs text-zinc-400 dark:text-zinc-500">{formatFileSize(attachment.size)}</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-500">{formatFileSize(attachment.size)}</p>
       </div>
-      {onRemove && <button onClick={onRemove} className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><X className="h-3.5 w-3.5" /></button>}
+      {onRemove && <button onClick={onRemove} className="rounded-lg p-1.5 text-zinc-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors"><X className="h-3.5 w-3.5" /></button>}
     </div>
   );
 };

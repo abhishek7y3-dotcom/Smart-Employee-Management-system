@@ -79,7 +79,7 @@ export const HolidayCard: React.FC<Props> = ({ holidays, loading }) => {
 
         <div className="space-y-3">
           {upcomingHolidays.slice(1).length === 0 && !nextHoliday && (
-            <div className="text-center py-8 text-zinc-500 flex flex-col items-center">
+            <div className="text-center py-8 text-zinc-600 flex flex-col items-center">
               <Calendar size={48} className="text-zinc-300 mb-3" />
               <p>No upcoming holidays found.</p>
             </div>
@@ -89,14 +89,14 @@ export const HolidayCard: React.FC<Props> = ({ holidays, loading }) => {
             <div key={holiday._id} className="flex items-center justify-between p-3 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors rounded-xl">
               <div>
                 <h4 className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm">{holiday.holidayName}</h4>
-                <p className="text-xs text-zinc-500 mt-0.5">{new Date(holiday.holidayDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                <p className="text-xs text-zinc-600 mt-0.5">{new Date(holiday.holidayDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
               </div>
               <div className="text-right">
                 <span className="text-[10px] bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 px-2 py-1 rounded font-medium">
                   {holiday.holidayType.replace(' Holiday', '')}
                 </span>
                 {holiday.location && (
-                  <p className="text-[10px] text-zinc-400 mt-1 flex items-center justify-end gap-1">
+                  <p className="text-[10px] text-zinc-500 mt-1 flex items-center justify-end gap-1">
                     <MapPin size={10} /> {holiday.location}
                   </p>
                 )}

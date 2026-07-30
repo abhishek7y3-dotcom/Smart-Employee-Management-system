@@ -53,7 +53,7 @@ export const TaskSummaryCard: React.FC<TaskSummaryCardProps> = ({
     },
     zinc: {
       iconBg: 'bg-zinc-100/80 text-zinc-600 dark:bg-zinc-900/60 dark:text-zinc-400',
-      activeBorder: 'border-zinc-550 ring-2 ring-zinc-500/10',
+      activeBorder: 'border-zinc-550 ring-2 ring-zinc-600/10',
       hoverBorder: 'hover:border-zinc-350 dark:hover:border-zinc-800/85',
       bgGradient: 'hover:bg-zinc-50/5 dark:hover:bg-zinc-900/5'
     },
@@ -68,7 +68,7 @@ export const TaskSummaryCard: React.FC<TaskSummaryCardProps> = ({
       </div>
       <div className="mt-5 flex items-end justify-between gap-3">
         <span className="text-3xl font-extrabold tracking-tight text-zinc-950 transition-colors duration-300 dark:text-zinc-50 font-outfit">{value}</span>
-        {href && <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-colors duration-300 group-hover:text-blue-600 dark:text-zinc-500 dark:group-hover:text-blue-400">Open</span>}
+        {href && <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 transition-colors duration-300 group-hover:text-blue-600 dark:text-zinc-500 dark:group-hover:text-blue-400">Open</span>}
       </div>
     </>
   );

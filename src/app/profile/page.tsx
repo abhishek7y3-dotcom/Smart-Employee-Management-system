@@ -14,7 +14,7 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState('overview');
 
   if (!user) {
-    return <div className="p-8 text-center text-zinc-500">Loading profile...</div>;
+    return <div className="p-8 text-center text-zinc-600">Loading profile...</div>;
   }
 
   const tabs = [
@@ -24,7 +24,7 @@ export default function ProfilePage() {
     { id: 'activity', label: 'Activity Log', icon: Activity },
   ];
 
-  if (user.role === 'admin') {
+  if ((user.role === 'admin' || user.role === 'superadmin')) {
     tabs.push({ id: 'admin', label: 'Admin Actions', icon: Users });
   }
 
@@ -39,7 +39,7 @@ export default function ProfilePage() {
           />
           <div>
             <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">{user.name}</h1>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">{user.designation || 'Employee'} • {user.role}</p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400">{user.designation || 'Employee'} • {user.role}</p>
           </div>
         </div>
       </header>
@@ -73,7 +73,7 @@ export default function ProfilePage() {
           {activeTab === 'security' && <SecurityTab />}
           {activeTab === 'preferences' && <PreferencesTab />}
           {activeTab === 'activity' && <ActivityLogTab />}
-          {activeTab === 'admin' && user.role === 'admin' && <AdminTab />}
+          {activeTab === 'admin' && (user.role === 'admin' || user.role === 'superadmin') && <AdminTab />}
         </div>
       </div>
     </div>

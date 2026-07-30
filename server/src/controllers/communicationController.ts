@@ -464,7 +464,7 @@ export async function updateAnnouncement(req: AuthRequest, res: Response) {
     const { id } = req.params;
     const { title, description, priority, publishDate, expiryDate } = req.body;
 
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'superadmin') {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. Admin privileges required.',

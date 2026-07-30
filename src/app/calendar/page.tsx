@@ -17,7 +17,7 @@ import { useAuth } from '@/context/AuthContext';
 
 export default function CalendarPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'Admin' || user?.role === 'HR';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'HR';
   
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -144,13 +144,13 @@ export default function CalendarPage() {
           <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-lg">
             <button
               onClick={() => setView('calendar')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${view === 'calendar' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${view === 'calendar' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 hover:text-zinc-700 dark:text-zinc-400'}`}
             >
               <LayoutGrid size={16} /> Calendar
             </button>
             <button
               onClick={() => setView('list')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${view === 'list' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 hover:text-zinc-700 dark:text-zinc-400'}`}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${view === 'list' ? 'bg-white dark:bg-zinc-700 shadow-sm text-zinc-900 dark:text-zinc-100' : 'text-zinc-600 hover:text-zinc-700 dark:text-zinc-400'}`}
             >
               <List size={16} /> List
             </button>
@@ -194,7 +194,7 @@ export default function CalendarPage() {
                 <button onClick={nextMonth} className="px-4 py-2 text-sm font-medium bg-white border border-zinc-200 rounded-lg hover:bg-zinc-100 dark:bg-zinc-800 dark:border-zinc-700 transition-colors">Next</button>
               </div>
               
-              <div className="grid grid-cols-7 text-center font-semibold text-xs text-zinc-500 uppercase tracking-wider bg-zinc-50/50 dark:bg-zinc-900/30 border-b border-zinc-200 dark:border-zinc-800">
+              <div className="grid grid-cols-7 text-center font-semibold text-xs text-zinc-600 uppercase tracking-wider bg-zinc-50/50 dark:bg-zinc-900/30 border-b border-zinc-200 dark:border-zinc-800">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                   <div key={day} className="p-3 border-r border-zinc-200 dark:border-zinc-800 last:border-r-0">{day}</div>
                 ))}
@@ -225,7 +225,7 @@ export default function CalendarPage() {
                       }}
                       className={`h-24 p-2 overflow-y-auto transition-colors border border-zinc-200 dark:border-zinc-800 ${isClickable ? 'cursor-pointer hover:bg-zinc-100 dark:hover:bg-zinc-800' : ''} ${isToday ? 'bg-blue-50/30 dark:bg-blue-900/10 ring-1 ring-inset ring-blue-500/50' : isSunday ? 'bg-red-50 dark:bg-red-900/20' : 'bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800/80'}`}
                     >
-                      <div className={`font-bold text-sm mb-2 ${isToday ? 'text-blue-600 dark:text-blue-400' : isSunday ? 'text-red-500 dark:text-red-400' : 'text-zinc-500 dark:text-zinc-400'}`}>{d}</div>
+                      <div className={`font-bold text-sm mb-2 ${isToday ? 'text-blue-600 dark:text-blue-400' : isSunday ? 'text-red-500 dark:text-red-400' : 'text-zinc-600 dark:text-zinc-400'}`}>{d}</div>
 
                       {dayHolidays.map(h => (
                         <HolidayCalendarEvent key={h._id} holiday={h} onClick={openViewModal} />

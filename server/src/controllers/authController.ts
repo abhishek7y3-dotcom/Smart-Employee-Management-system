@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import { signToken, verifyToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
-import { sendVerificationOtp, sendResetPasswordOtp, sendAdminAccountCreationEmail, sendAccountDeactivationEmail, sendAccountReactivationEmail, sendAccountPermanentDeletionEmail } from '../utils/mailer';
+import { sendVerificationOtp, sendResetPasswordOtp, sendAdminAccountCreationEmail, sendAccountDeactivationEmail, sendAccountReactivationEmail, sendAccountPermanentDeletionEmail, sendAccountBlockedEmail, sendAccountUnblockedEmail } from '../utils/mailer';
 import { sendSmsOtp } from '../utils/twilio';
 import { uploadToCloudinary, uploadDocumentToCloudinary } from '../utils/cloudinary';
 import { AuthRequest } from '../middleware/authMiddleware';
@@ -84,8 +84,8 @@ export async function register(req: Request, res: Response) {
     const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
     const verificationOtpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes (lower from 10 min to 2 min)
 
-    const role = email.toLowerCase().startsWith('admin') ? 'admin' : 'member';
-    const designation = role === 'admin' ? 'CEO' : 'Employee';
+    const role = email.toLowerCase().startsWith('superadmin') ? 'superadmin' : (email.toLowerCase().startsWith('admin') ? 'admin' : 'member');
+    const designation = role === 'superadmin' ? 'CEO' : (role === 'admin' ? 'Admin' : 'Employee');
 
     const user = await User.create({
       name: computedName,
@@ -193,6 +193,14 @@ export async function login(req: Request, res: Response) {
       });
     }
 
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account has been blocked by an administrator.',
+        errors: [],
+      });
+    }
+
     // Check email verification status
     if (!user.isVerified) {
       return res.status(400).json({
@@ -263,6 +271,7 @@ export async function login(req: Request, res: Response) {
           countryCode: user.countryCode,
           email: user.email,
           role: user.role,
+          designation: user.designation,
           profilePicture: user.profilePicture,
           qualification: user.qualification,
           country: user.country,
@@ -456,6 +465,22 @@ export async function resetPassword(req: Request, res: Response) {
       return res.status(400).json({
         success: false,
         message: 'User not found.',
+        errors: [],
+      });
+    }
+
+    if (user.isArchived) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account deactivated.',
+        errors: [],
+      });
+    }
+
+    if (user.isBlocked) {
+      return res.status(403).json({
+        success: false,
+        message: 'Account is blocked.',
         errors: [],
       });
     }
@@ -935,9 +960,10 @@ export async function updateUser(req: Request, res: Response) {
 
   try {
     const isAdmin = authReq.user?.role === 'admin';
+    const isSuperAdmin = authReq.user?.role === 'superadmin';
     const isSelf = authReq.user?._id.toString() === id;
 
-    if (!isAdmin && !isSelf) {
+    if (!isAdmin && !isSuperAdmin && !isSelf) {
       return res.status(403).json({
         success: false,
         message: 'Forbidden. You do not have permission to update this profile.',
@@ -954,22 +980,22 @@ export async function updateUser(req: Request, res: Response) {
       });
     }
 
-    // Role and designation updates are reserved for admins
+    // Role updates are reserved for SUPER ADMINS only
     if (role !== undefined) {
-      if (!isAdmin) {
+      if (!isSuperAdmin) {
         return res.status(403).json({
           success: false,
-          message: 'Forbidden. Only administrators can update user roles.',
+          message: 'Forbidden. Only Super Administrators can update user roles.',
           errors: [],
         });
       }
       // Frontend may still send 'employee' or 'user' for role, map it to 'member'
       const sanitizedRole = (role === 'employee' || role === 'user') ? 'member' : role;
-      user.role = sanitizedRole as 'member' | 'admin';
+      user.role = sanitizedRole as 'member' | 'admin' | 'superadmin';
     }
 
     if (designation !== undefined) {
-      if (!isAdmin) {
+      if (!isAdmin && !isSuperAdmin) {
         return res.status(403).json({
           success: false,
           message: 'Forbidden. Only administrators can update user designations.',
@@ -1135,18 +1161,19 @@ export async function deleteUser(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
-    const isAdmin = authReq.user?.role === 'admin';
+    const isSuperAdmin = authReq.user?.role === 'superadmin';
+    const isAdmin = authReq.user?.role === 'admin' || isSuperAdmin;
     const isSelf = authReq.user?._id.toString() === id;
 
     if (!isAdmin && !isSelf) {
       return res.status(403).json({
         success: false,
-        message: 'Forbidden. You do not have permission to perform this action.',
+        message: 'Forbidden. Only Administrators can perform this action.',
         errors: [],
       });
     }
 
-    if (isAdmin && isSelf) {
+    if (isSuperAdmin && isSelf) {
       return res.status(400).json({
         success: false,
         message: 'You cannot remove your own admin account.',
@@ -1154,7 +1181,27 @@ export async function deleteUser(req: Request, res: Response) {
       });
     }
 
-    const user = await User.findByIdAndUpdate(id, { isArchived: true }, { new: true });
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found.',
+        errors: [],
+      });
+    }
+
+    const targetIsAdmin = targetUser.role === 'admin' || targetUser.role === 'superadmin';
+    if (authReq.user?.role === 'admin' && targetIsAdmin && !isSelf) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. Sub-admins cannot remove other administrators.',
+        errors: [],
+      });
+    }
+
+    targetUser.isArchived = true;
+    await targetUser.save({ validateBeforeSave: false });
+    const user = targetUser;
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -1182,9 +1229,114 @@ export async function deleteUser(req: Request, res: Response) {
   }
 }
 
+export async function blockUser(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const { id } = req.params;
+
+  try {
+    const isSuperAdmin = authReq.user?.role === 'superadmin';
+    const isAdmin = authReq.user?.role === 'admin' || isSuperAdmin;
+    const isSelf = authReq.user?._id.toString() === id;
+
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. Only Administrators can block users.',
+        errors: [],
+      });
+    }
+
+    if (isSelf) {
+      return res.status(400).json({
+        success: false,
+        message: 'You cannot block your own account.',
+        errors: [],
+      });
+    }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found.', errors: [] });
+    }
+
+    const targetIsAdmin = targetUser.role === 'admin' || targetUser.role === 'superadmin';
+    if (authReq.user?.role === 'admin' && targetIsAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. Sub-admins cannot block administrators.',
+        errors: [],
+      });
+    }
+
+    targetUser.isBlocked = true;
+    await targetUser.save({ validateBeforeSave: false });
+
+    sendAccountBlockedEmail(targetUser.email, targetUser.name).catch((err) => {
+      console.error('Failed to send blocked email to', targetUser.email, err);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User blocked successfully.',
+      data: {},
+    });
+  } catch (error) {
+    console.error('authController.ts: blockUser error:', error);
+    return res.status(500).json({ success: false, message: 'An error occurred while blocking the user.', errors: [] });
+  }
+}
+
+export async function unblockUser(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const { id } = req.params;
+
+  try {
+    const isSuperAdmin = authReq.user?.role === 'superadmin';
+    const isAdmin = authReq.user?.role === 'admin' || isSuperAdmin;
+
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. Only Administrators can unblock users.',
+        errors: [],
+      });
+    }
+
+    const targetUser = await User.findById(id);
+    if (!targetUser) {
+      return res.status(404).json({ success: false, message: 'User not found.', errors: [] });
+    }
+
+    const targetIsAdmin = targetUser.role === 'admin' || targetUser.role === 'superadmin';
+    if (authReq.user?.role === 'admin' && targetIsAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. Sub-admins cannot unblock administrators.',
+        errors: [],
+      });
+    }
+
+    targetUser.isBlocked = false;
+    await targetUser.save({ validateBeforeSave: false });
+
+    sendAccountUnblockedEmail(targetUser.email, targetUser.name).catch((err) => {
+      console.error('Failed to send unblocked email to', targetUser.email, err);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'User unblocked successfully.',
+      data: {},
+    });
+  } catch (error) {
+    console.error('authController.ts: unblockUser error:', error);
+    return res.status(500).json({ success: false, message: 'An error occurred while unblocking the user.', errors: [] });
+  }
+}
+
 export async function getArchivedUsers(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  if (authReq.user?.role !== 'admin') {
+  if (authReq.user?.role !== 'admin' && authReq.user?.role !== 'superadmin') {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
 
@@ -1207,7 +1359,7 @@ export async function getArchivedUsers(req: Request, res: Response) {
 
 export async function restoreUser(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  if (authReq.user?.role !== 'admin') {
+  if (authReq.user?.role !== 'admin' && authReq.user?.role !== 'superadmin') {
     return res.status(403).json({ success: false, message: 'Forbidden' });
   }
 
@@ -1293,8 +1445,8 @@ export async function verifyResetOtp(req: Request, res: Response) {
 
 export async function permanentDeleteUser(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  if (authReq.user?.role !== 'admin') {
-    return res.status(403).json({ success: false, message: 'Forbidden' });
+  if (authReq.user?.role !== 'admin' && authReq.user?.role !== 'superadmin') {
+    return res.status(403).json({ success: false, message: 'Forbidden. Only Super Administrators can permanently delete users.' });
   }
 
   const { id } = req.params;

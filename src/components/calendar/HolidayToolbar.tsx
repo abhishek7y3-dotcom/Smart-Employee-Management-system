@@ -31,7 +31,7 @@ export const HolidayToolbar: React.FC<Props> = ({ searchQuery, setSearchQuery, f
       {/* Search */}
       <div className="relative w-full md:w-96">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-          <Search size={18} className="text-zinc-400" />
+          <Search size={18} className="text-zinc-500" />
         </div>
         <input
           type="text"
@@ -44,7 +44,7 @@ export const HolidayToolbar: React.FC<Props> = ({ searchQuery, setSearchQuery, f
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-        <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm font-medium">
+        <div className="flex items-center gap-2 text-zinc-600 dark:text-zinc-400 text-sm font-medium">
           <Filter size={16} /> Filters:
         </div>
         

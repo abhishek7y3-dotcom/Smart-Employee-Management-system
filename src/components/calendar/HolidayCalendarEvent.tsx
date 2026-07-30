@@ -45,7 +45,7 @@ export const HolidayCalendarEvent: React.FC<Props> = ({ holiday, onClick }) => {
         <p className="font-bold text-sm mb-1">{holiday.holidayName}</p>
         <p className="text-zinc-300 mb-1">{new Date(holiday.holidayDate).toLocaleDateString()}</p>
         <div className="inline-block px-1.5 py-0.5 rounded text-[10px] bg-zinc-700 mb-1">{holiday.holidayType}</div>
-        {holiday.description && <p className="text-zinc-400 line-clamp-2 mt-1">{holiday.description}</p>}
+        {holiday.description && <p className="text-zinc-500 line-clamp-2 mt-1">{holiday.description}</p>}
         {/* Tooltip triangle */}
         <div className="absolute left-1/2 -translate-x-1/2 top-full border-4 border-transparent border-t-zinc-900"></div>
       </div>

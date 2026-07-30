@@ -50,7 +50,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         {/* Search */}
         {showSearch && (
           <div className="mt-2.5 relative">
-            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-500" />
             <input
               type="text"
               placeholder="Search messages..."
@@ -61,7 +61,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 transition-colors ${
-                showFilters ? 'bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400' : 'text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300'
+                showFilters ? 'bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400' : 'text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300'
               }`}
             >
               <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -73,7 +73,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         {showFilters && (
           <div className="mt-2.5 space-y-2 rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-3 dark:border-zinc-800/60 dark:bg-zinc-900/30">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">Filters</span>
+              <span className="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-400">Filters</span>
               <button onClick={onResetFilters} className="text-xs font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">
                 Reset All
               </button>

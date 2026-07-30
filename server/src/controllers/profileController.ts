@@ -91,7 +91,7 @@ export async function updatePassword(req: AuthRequest, res: Response) {
 
 export async function getAdminTeam(req: AuthRequest, res: Response) {
   try {
-    if (req.user?.role !== 'admin') {
+    if (req.user?.role !== 'admin' && req.user?.role !== 'superadmin') {
       return res.status(403).json({ success: false, message: 'Forbidden' });
     }
 

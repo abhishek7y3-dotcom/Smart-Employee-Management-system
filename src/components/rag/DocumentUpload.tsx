@@ -90,11 +90,11 @@ export const DocumentUpload = ({ onUploadSuccess }: DocumentUploadProps) => {
             ${isUploading ? 'opacity-50 cursor-not-allowed' : ''}
           `}
         >
-          <FileUp size={32} className={file ? 'text-blue-500' : 'text-zinc-400'} />
+          <FileUp size={32} className={file ? 'text-blue-500' : 'text-zinc-500'} />
           <p className="mt-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">
             {file ? file.name : 'Click to select a PDF document'}
           </p>
-          <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">
+          <p className="text-xs text-zinc-600 dark:text-zinc-500 mt-1">
             (Only .pdf files are supported)
           </p>
         </div>

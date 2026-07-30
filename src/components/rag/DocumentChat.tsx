@@ -77,7 +77,7 @@ export const DocumentChat = ({ documentId }: { documentId: string }) => {
             <h2 className="font-semibold text-zinc-800 dark:text-zinc-200 text-sm">
               Document Analysis Mode
             </h2>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-zinc-600">
               Ask anything about your uploaded PDF document.
             </p>
           </div>
@@ -95,7 +95,7 @@ export const DocumentChat = ({ documentId }: { documentId: string }) => {
               <h3 className="text-lg font-medium text-zinc-800 dark:text-zinc-200">
                 I'm ready to answer!
               </h3>
-              <p className="text-sm text-zinc-500 mt-2 max-w-sm">
+              <p className="text-sm text-zinc-600 mt-2 max-w-sm">
                 Try asking a specific question based on the document you just uploaded.
               </p>
             </div>

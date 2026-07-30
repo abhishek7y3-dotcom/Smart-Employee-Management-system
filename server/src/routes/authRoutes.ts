@@ -12,6 +12,7 @@ import {
   verifyOtp, resendVerificationOtp, resendResetOtp, getAllUsers,
   updateUser, deleteUser, getArchivedUsers, restoreUser, requestLoginOtp,
   loginWithOtp, verifyResetOtp, permanentDeleteUser, refreshToken,
+  blockUser, unblockUser
 } from '../controllers/authController';
 
 // Ye Middlewares hain (Checkers). Controller me jaane se pehle data check hoga.
@@ -62,5 +63,7 @@ router.put('/users/:id', authenticate, updateUser);
 router.delete('/users/:id', authenticate, deleteUser);
 router.put('/users/:id/restore', authenticate, restoreUser);
 router.delete('/users/:id/permanent', authenticate, permanentDeleteUser);
+router.post('/users/:id/block', authenticate, blockUser);
+router.post('/users/:id/unblock', authenticate, unblockUser);
 
 export default router;

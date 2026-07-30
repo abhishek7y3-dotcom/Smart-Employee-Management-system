@@ -182,6 +182,26 @@ export async function removeUser(id: string): Promise<any> {
   }
 }
 
+export async function blockUserAPI(id: string): Promise<any> {
+  if (isMockAuthEnabled()) return { success: true };
+  try {
+    const response = await axiosInstance.post<any>(`/auth/users/${id}/block`);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function unblockUserAPI(id: string): Promise<any> {
+  if (isMockAuthEnabled()) return { success: true };
+  try {
+    const response = await axiosInstance.post<any>(`/auth/users/${id}/unblock`);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 
 export async function requestLoginOtp(payload: { email?: string; mobileNumber?: string; countryCode?: string }): Promise<{ message: string; email?: string }> {
   if (isMockAuthEnabled()) {

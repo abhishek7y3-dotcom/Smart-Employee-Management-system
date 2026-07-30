@@ -18,7 +18,7 @@ const reactSelectClassNames = {
   option: (state: any) => `!cursor-pointer !text-zinc-900 dark:!text-zinc-100 hover:!bg-zinc-100 dark:hover:!bg-zinc-800 ${state.isSelected ? '!bg-blue-50 dark:!bg-blue-900/30' : '!bg-transparent'}`,
   singleValue: () => '!text-zinc-950 dark:!text-zinc-50',
   input: () => '!text-zinc-950 dark:!text-zinc-50',
-  placeholder: () => '!text-zinc-500',
+  placeholder: () => '!text-zinc-600',
   menuList: () => '!p-1',
 };
 
@@ -319,7 +319,7 @@ export default function SettingsPage() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto">
         <div className="space-y-1">
           <h1 className="text-xl font-bold text-zinc-950 dark:text-white md:text-2xl font-outfit">Account Settings</h1>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">Manage your system credentials and security options.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-500">Manage your system credentials and security options.</p>
         </div>
 
         <div className="grid grid-cols-1 gap-6">
@@ -430,7 +430,7 @@ export default function SettingsPage() {
                     type="email"
                     defaultValue={user?.email}
                     readOnly
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-500 dark:text-zinc-400 outline-none cursor-not-allowed"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -517,7 +517,7 @@ export default function SettingsPage() {
                     type="text"
                     defaultValue={user?.role}
                     readOnly
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-500 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -658,7 +658,7 @@ export default function SettingsPage() {
                   
                   {existingDocuments.length > 0 && (
                     <div className="mb-2 space-y-1">
-                      <p className="text-xs text-zinc-500">Currently uploaded documents:</p>
+                      <p className="text-xs text-zinc-600">Currently uploaded documents:</p>
                       <div className="flex flex-wrap gap-2">
                         {existingDocuments.map((doc, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">
@@ -682,7 +682,7 @@ export default function SettingsPage() {
 
                   {newDocumentsBase64.length > 0 && (
                     <div className="mb-2 space-y-1">
-                      <p className="text-xs text-zinc-500">Files ready to upload:</p>
+                      <p className="text-xs text-zinc-600">Files ready to upload:</p>
                       <div className="flex flex-wrap gap-2">
                         {newDocumentsBase64.map((_, idx) => (
                           <div key={idx} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded text-xs text-blue-700 dark:text-blue-300">
@@ -708,7 +708,7 @@ export default function SettingsPage() {
                     multiple
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                     disabled={isConvertingFiles}
-                    className="block w-full text-sm text-zinc-500 dark:text-zinc-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700 outline-none cursor-pointer"
+                    className="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700 outline-none cursor-pointer"
                     onChange={async (e) => {
                       const files = e.target.files;
                       if (!files || files.length === 0) return;
@@ -745,7 +745,7 @@ export default function SettingsPage() {
                     }}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                   />
-                  {isConvertingFiles && <span className="text-xs text-zinc-500 flex items-center gap-1 mt-1"><Loader2 className="w-3 h-3 animate-spin" /> Processing files...</span>}
+                  {isConvertingFiles && <span className="text-xs text-zinc-600 flex items-center gap-1 mt-1"><Loader2 className="w-3 h-3 animate-spin" /> Processing files...</span>}
                 </div>
                 <div className="space-y-1.5 sm:col-span-2 flex items-center gap-2 mt-2">
                   <input
@@ -858,7 +858,7 @@ export default function SettingsPage() {
             <div className="max-w-xl space-y-4">
               {!showPasswordSection ? (
                 <div className="space-y-3">
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">Update your account login password periodically to keep your workspace secure.</p>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Update your account login password periodically to keep your workspace secure.</p>
                   <button
                     type="button"
                     onClick={() => setShowPasswordSection(true)}
@@ -964,7 +964,7 @@ export default function SettingsPage() {
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-650 cursor-pointer"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
                         >
                           {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
                         </button>
@@ -1042,7 +1042,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-zinc-900 dark:text-white">Delete Profile permanently?</h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-normal">
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-normal">
                     This action is irreversible. For security, we require OTP verification to delete your account.
                   </p>
                 </div>
@@ -1159,7 +1159,7 @@ export default function SettingsPage() {
           <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Terms & Conditions (Registration & Profile Update)</h3>
-              <button onClick={() => setIsTermsModalOpen(false)} className="text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300">
+              <button onClick={() => setIsTermsModalOpen(false)} className="text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300">
                 <Trash2 className="w-5 h-5 hidden" />
                 <span className="text-2xl leading-none">&times;</span>
               </button>

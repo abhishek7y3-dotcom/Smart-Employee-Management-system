@@ -249,7 +249,79 @@ Employee Management System`
       console.log('=============================================================\n');
     }
   } catch (err) {
-    console.error('mailer.ts: Error sending account deactivation email:', err);
+    console.error('mailer.ts: Error sending deactivation email:', err);
+    throw err;
+  }
+}
+
+export async function sendAccountBlockedEmail(email: string, name: string): Promise<void> {
+  try {
+    const transporter = await getTransporter();
+    const SMTP_FROM = process.env.SMTP_FROM || 'noreply@employeemanager.com';
+
+    const mailOptions = {
+      from: SMTP_FROM,
+      to: email,
+      subject: `Important Notice: Your EMS Account Has Been Blocked`,
+      text: `Dear ${name},
+
+Your Employee Management System account has been blocked due to a violation of the organization's policies or administrative guidelines.
+
+Your account will remain inaccessible until the matter has been reviewed and resolved.
+
+If you believe this decision was made in error, please contact the HR department for clarification.
+
+Regards,
+HR Department
+Employee Management System`
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`\n✉️ [EMAIL] Sent account blocked email to ${email}. MessageId: ${info.messageId}\n`);
+    
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`[TEST EMAIL SENT] Account Blocked preview link: ${previewUrl}\n`);
+    }
+  } catch (err) {
+    console.error('mailer.ts: Error sending blocked email:', err);
+    throw err;
+  }
+}
+
+export async function sendAccountUnblockedEmail(email: string, name: string): Promise<void> {
+  try {
+    const transporter = await getTransporter();
+    const SMTP_FROM = process.env.SMTP_FROM || 'noreply@employeemanager.com';
+
+    const mailOptions = {
+      from: SMTP_FROM,
+      to: email,
+      subject: `Your EMS Account Has Been Reactivated`,
+      text: `Dear ${name},
+
+We are pleased to inform you that your access to the Employee Management System has been restored.
+
+You can now log in using your existing credentials and continue using all authorized system features.
+
+If you experience any issues while accessing your account, please contact the HR department or the system administrator.
+
+Welcome back.
+
+Regards,
+HR Department
+Employee Management System`
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`\n✉️ [EMAIL] Sent account unblocked email to ${email}. MessageId: ${info.messageId}\n`);
+    
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log(`[TEST EMAIL SENT] Account Unblocked preview link: ${previewUrl}\n`);
+    }
+  } catch (err) {
+    console.error('mailer.ts: Error sending unblocked email:', err);
     throw err;
   }
 }

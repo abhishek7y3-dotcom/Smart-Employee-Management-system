@@ -76,7 +76,7 @@ export const KPICard: React.FC<KPICardProps> = ({ tasks, className = '' }) => {
   return (
     <div className={`rounded-lg border border-zinc-200 bg-white p-5 shadow-sm transition-colors duration-300 dark:border-zinc-800 dark:bg-zinc-950 ${className}`}>
       <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50">Key Performance Indicators</h3>
-      <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">Real-time snapshot of team productivity metrics.</p>
+      <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Real-time snapshot of team productivity metrics.</p>
 
       <div className="mt-5 grid grid-cols-2 gap-3">
         {kpis.map((kpi) => (
@@ -93,13 +93,13 @@ export const KPICard: React.FC<KPICardProps> = ({ tasks, className = '' }) => {
               {kpi.trend === 'down' && <TrendingDown className="h-3 w-3 text-red-500" />}
             </div>
             <p className={`mt-2 text-2xl font-extrabold tracking-tight ${kpi.color}`}>{kpi.value}</p>
-            <p className="mt-1 text-[10px] font-medium text-zinc-500 dark:text-zinc-400 leading-tight">{kpi.subtext}</p>
+            <p className="mt-1 text-[10px] font-medium text-zinc-600 dark:text-zinc-400 leading-tight">{kpi.subtext}</p>
           </div>
         ))}
       </div>
 
       {tasks.length === 0 && (
-        <div className="mt-4 flex items-center justify-center py-4 text-sm font-semibold text-zinc-400 dark:text-zinc-500">
+        <div className="mt-4 flex items-center justify-center py-4 text-sm font-semibold text-zinc-500 dark:text-zinc-500">
           No tasks yet — KPIs will appear once tasks are created.
         </div>
       )}

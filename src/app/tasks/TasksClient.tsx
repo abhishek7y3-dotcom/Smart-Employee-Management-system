@@ -44,7 +44,7 @@ const priorityWeights: Record<string, number> = {
 export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const { tasks, employees, addTask, updateTask, updateTaskStatus, deleteTask } = useTasks();
   const { user } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin');
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskUrlStatus>(initialStatus);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -204,7 +204,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Tasks</h2>
-          <p className="text-xs text-zinc-400 dark:text-zinc-500">Review, create, and update task tracking logs assigned to employees.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-500">Review, create, and update task tracking logs assigned to employees.</p>
         </div>
         {isAdmin && (
           <button
@@ -230,12 +230,12 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Create Task</h3>
-                <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">Create a new task and assign it to a team member.</p>
+                <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Create a new task and assign it to a team member.</p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowAddForm(false)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl text-zinc-500 transition-all duration-300 hover:bg-zinc-100 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200"
               >
                 <X className="h-4.5 w-4.5" />
               </button>
@@ -244,7 +244,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             <form onSubmit={handleAddTask} className="mt-6 space-y-5">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <label className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Title</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Title</span>
               <input
                 maxLength={120}
                 value={newTitle}
@@ -267,7 +267,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               {titleError && <p className="mt-1 text-xs font-semibold text-red-500">{titleError}</p>}
             </label>
             <label className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Description</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Description</span>
               <textarea
                 maxLength={1000}
                 value={newDescription}
@@ -287,7 +287,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               {descriptionError && <p className="mt-1 text-xs font-semibold text-red-500">{descriptionError}</p>}
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Priority</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Priority</span>
               <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
                 <option value="low">Low</option>
                 <option value="medium">Medium</option>
@@ -296,7 +296,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               </select>
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-550">Assignee</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-550">Assignee</span>
               <select
                 value={newAssignee}
                 onChange={(e) => setNewAssignee(e.target.value)}
@@ -312,7 +312,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               {assigneeError && <p className="mt-1 text-xs font-semibold text-red-500">{assigneeError}</p>}
             </label>
             <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 dark:text-zinc-500">Due Date</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Due Date</span>
               <input
                 min={getTodayString()}
                 type="date"
@@ -338,7 +338,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
 
       <div className="enterprise-card flex flex-col gap-4 rounded-2xl p-4.5 md:flex-row md:items-center md:justify-between">
         <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-400 dark:text-zinc-500 pointer-events-none" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4.5 w-4.5 text-zinc-500 dark:text-zinc-500 pointer-events-none" />
           <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-11 pr-4 text-sm text-zinc-900 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50" />
         </div>
         <div className="flex flex-wrap items-center gap-3">

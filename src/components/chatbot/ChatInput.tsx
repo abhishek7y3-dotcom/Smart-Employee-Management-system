@@ -78,7 +78,7 @@ export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void;
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="absolute left-2 p-2 rounded-full text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="absolute left-2 p-2 rounded-full text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <Plus size={18} />
           </button>

@@ -75,7 +75,7 @@ export default function DashboardPage() {
         <section className="enterprise-card rounded-2xl p-6 relative z-10">
           <div className="flex items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+              <BarChart3 className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
               <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Analytics Overview</h3>
             </div>
           </div>
@@ -92,7 +92,7 @@ export default function DashboardPage() {
             <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+                  <ClipboardList className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Recent Tasks</h3>
                 </div>
                 <Link href="/tasks" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">View All</Link>
@@ -105,9 +105,9 @@ export default function DashboardPage() {
                         <div key={task.id} className="grid gap-3 p-4.5 transition-all duration-300 hover:bg-zinc-100/50 dark:hover:bg-zinc-900/30 md:grid-cols-[1fr_auto] md:items-center">
                           <div>
                             <h4 className="text-sm font-bold text-zinc-950 dark:text-zinc-50">{task.title}</h4>
-                            <p className="mt-1 line-clamp-1 text-xs text-zinc-400 dark:text-zinc-500">{task.description || 'No description provided.'}</p>
+                            <p className="mt-1 line-clamp-1 text-xs text-zinc-500 dark:text-zinc-500">{task.description || 'No description provided.'}</p>
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-400 dark:text-zinc-500">
+                          <div className="flex items-center gap-1.5 text-xs font-semibold text-zinc-500 dark:text-zinc-500">
                             <TimerReset className="h-3.5 w-3.5" />
                             <span>Due {formatDate(task.dueDate)}</span>
                           </div>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Recent Activity</h3>
-                  <p className="text-xs text-zinc-400 dark:text-zinc-500">Latest team actions across tasks.</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-500">Latest team actions across tasks.</p>
                 </div>
                 <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-3 py-1 text-xs font-bold text-blue-600 dark:text-blue-400">Latest 10</span>
               </div>
@@ -157,7 +157,7 @@ export default function DashboardPage() {
             <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+                  <MessageSquare className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Communication</h3>
                 </div>
                 <Link href="/communication" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">Open Hub</Link>
@@ -169,7 +169,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-zinc-900 dark:text-zinc-50">Inbox</p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{unreadMessageCount} unread</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-500">{unreadMessageCount} unread</p>
                   </div>
                 </Link>
                 <Link href="/communication" className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/40 p-3 transition-all duration-300 hover:shadow-sm hover:scale-[1.01] dark:border-zinc-900 dark:bg-zinc-900/25">
@@ -178,7 +178,7 @@ export default function DashboardPage() {
                   </div>
                   <div>
                     <p className="text-xs font-bold text-zinc-900 dark:text-zinc-50">Announcements</p>
-                    <p className="text-[10px] text-zinc-400 dark:text-zinc-500">{announcements.length} active</p>
+                    <p className="text-[10px] text-zinc-500 dark:text-zinc-500">{announcements.length} active</p>
                   </div>
                 </Link>
               </div>
@@ -188,7 +188,7 @@ export default function DashboardPage() {
                     <Link key={conv.id} href="/communication" className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900/30">
                       <div className={`h-2 w-2 rounded-full shrink-0 ${conv.unreadCount > 0 ? 'bg-blue-500' : 'bg-zinc-300 dark:bg-zinc-600'}`} />
                       <span className="font-bold text-zinc-800 dark:text-zinc-200 truncate">{conv.subject}</span>
-                      <span className="text-[10px] text-zinc-400 dark:text-zinc-500 ml-auto shrink-0">{conv.participantNames[0]}</span>
+                      <span className="text-[10px] text-zinc-500 dark:text-zinc-500 ml-auto shrink-0">{conv.participantNames[0]}</span>
                     </Link>
                   ))}
                 </div>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
             <section className="enterprise-card rounded-2xl p-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2">
-                  <Users className="h-5 w-5 text-zinc-400 dark:text-zinc-500" />
+                  <Users className="h-5 w-5 text-zinc-500 dark:text-zinc-500" />
                   <h3 className="text-lg font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Team Members</h3>
                 </div>
                 <Link href="/employees" className="text-xs font-bold text-blue-600 transition hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300">View All</Link>
@@ -211,7 +211,7 @@ export default function DashboardPage() {
                         <img src={employee.avatarUrl || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'} alt={employee.name} className="h-9 w-9 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-800" />
                         <div>
                           <h4 className="text-xs font-bold text-zinc-900 dark:text-zinc-50">{employee.name}</h4>
-                          <p className="text-[10px] text-zinc-400 dark:text-zinc-500 font-semibold">{employee.designation || 'Specialist'}</p>
+                          <p className="text-[10px] text-zinc-500 dark:text-zinc-500 font-semibold">{employee.designation || 'Specialist'}</p>
                         </div>
                       </div>
                       <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-[9px] font-bold text-zinc-600 dark:bg-zinc-800/60 dark:text-zinc-400">Active</span>

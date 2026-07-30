@@ -29,13 +29,13 @@ export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement
             <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-bold ${getPriorityColor(announcement.priority)}`}>
               {announcement.priority}
             </span>
-            <span className="flex items-center gap-1 text-xs text-zinc-400 dark:text-zinc-500">
+            <span className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-500">
               <Eye className="h-3 w-3" /> {announcement.readBy.length} views
             </span>
           </div>
           <h3 className="mt-2 text-base font-bold text-zinc-950 dark:text-zinc-50">{announcement.title}</h3>
-          <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 leading-relaxed line-clamp-3">{announcement.description}</p>
-          <div className="mt-3 flex items-center gap-3 text-xs text-zinc-400 dark:text-zinc-500">
+          <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed line-clamp-3">{announcement.description}</p>
+          <div className="mt-3 flex items-center gap-3 text-xs text-zinc-500 dark:text-zinc-500">
             <span className="flex items-center gap-1">
               <Megaphone className="h-3 w-3" />
               {announcement.authorName}
@@ -50,17 +50,17 @@ export const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement
         {isAdmin && (
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             {onPin && (
-              <button onClick={onPin} className={`rounded-lg p-1.5 transition-colors ${announcement.isPinned ? 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30' : 'text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`} title={announcement.isPinned ? 'Unpin' : 'Pin'}>
+              <button onClick={onPin} className={`rounded-lg p-1.5 transition-colors ${announcement.isPinned ? 'text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-950/30' : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`} title={announcement.isPinned ? 'Unpin' : 'Pin'}>
                 <Pin className="h-3.5 w-3.5" />
               </button>
             )}
             {onEdit && (
-              <button onClick={onEdit} className="rounded-lg p-1.5 text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" title="Edit">
+              <button onClick={onEdit} className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors" title="Edit">
                 <Edit2 className="h-3.5 w-3.5" />
               </button>
             )}
             {onDelete && (
-              <button onClick={onDelete} className="rounded-lg p-1.5 text-zinc-400 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors" title="Delete">
+              <button onClick={onDelete} className="rounded-lg p-1.5 text-zinc-500 hover:bg-red-50 hover:text-red-500 dark:hover:bg-red-950/30 dark:hover:text-red-400 transition-colors" title="Delete">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}

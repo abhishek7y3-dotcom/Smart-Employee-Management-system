@@ -21,7 +21,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, on
       <div className={`max-w-[75%] space-y-1 ${isOwn ? 'items-end' : 'items-start'}`}>
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-zinc-700 dark:text-zinc-300">{message.senderName}</span>
-          <span className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+          <span className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-500">
             <Clock className="h-2.5 w-2.5" />
             {formatRelativeTime(message.timestamp)}
           </span>
@@ -42,12 +42,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn, on
         )}
         <div className="flex items-center gap-2">
           {isOwn && (
-            <span className="text-zinc-400 dark:text-zinc-500">
+            <span className="text-zinc-500 dark:text-zinc-500">
               {message.status === 'read' ? <CheckCheck className="h-3 w-3 text-blue-500" /> : <Check className="h-3 w-3" />}
             </span>
           )}
           {onReply && (
-            <button onClick={onReply} className="text-xs text-zinc-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5">
+            <button onClick={onReply} className="text-xs text-zinc-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5">
               <Reply className="h-2.5 w-2.5" /> Reply
             </button>
           )}
