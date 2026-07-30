@@ -1,4 +1,4 @@
-const pdfParse = require('pdf-parse');
+import { PDFParse } from 'pdf-parse';
 
 /**
  * Extracts raw text from a PDF file buffer.
@@ -7,7 +7,9 @@ const pdfParse = require('pdf-parse');
  */
 export const extractTextFromPdf = async (fileBuffer: Buffer): Promise<string> => {
   try {
-    const data = await pdfParse(fileBuffer);
+    const uint8Array = new Uint8Array(fileBuffer);
+    const parser = new PDFParse(uint8Array);
+    const data = await parser.getText();
     return data.text || '';
   } catch (error) {
     console.error('Error extracting text from PDF:', error);

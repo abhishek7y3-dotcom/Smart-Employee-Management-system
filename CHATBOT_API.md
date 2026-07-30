@@ -145,3 +145,24 @@ Permanently deletes a specific conversation session and its associated messages.
 ## Future Endpoints (Phase 2)
 - `POST /stream`: Streaming equivalent of `POST /` using Server-Sent Events (SSE) for lower perceived latency.
 - `GET /suggestions`: Returns dynamic suggested prompts based on the user's current context and role.
+
+---
+
+## 5. RAG (Document Q&A) Endpoints
+
+The RAG module provides endpoints to upload and query PDF documents using Vector Search.
+
+### 5.1 Upload Document
+- **Endpoint**: `POST /rag/upload`
+- **Protected**: Yes
+- **Body**: `multipart/form-data` with a `file` field containing the PDF.
+
+### 5.2 Ask Document Question
+- **Endpoint**: `POST /rag/ask`
+- **Protected**: Yes
+- **Body**: JSON `{ "documentId": "...", "question": "..." }`
+
+### 5.3 Get Documents
+- **Endpoint**: `GET /rag/documents`
+- **Protected**: Yes
+- **Returns**: A list of documents uploaded by the current user.

@@ -8,7 +8,7 @@ interface DocumentUploadProps {
 
 export const DocumentUpload = ({ onUploadSuccess }: DocumentUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   // Component States
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -33,7 +33,7 @@ export const DocumentUpload = ({ onUploadSuccess }: DocumentUploadProps) => {
   // Upload handler
   const handleUpload = async () => {
     if (!file) return;
-    
+
     setIsUploading(true);
     setError(null);
     setSuccess(false);
@@ -42,11 +42,13 @@ export const DocumentUpload = ({ onUploadSuccess }: DocumentUploadProps) => {
       // API call to upload the document
       const response = await uploadDocument(file);
       
-      if (response.success && response.data?.documentId) {
+      const docId = response.data?.documentId || response.data?.document?._id;
+
+      if (response.success && docId) {
         setSuccess(true);
         // Parent component ko naya documentId bhej rahe hain
-        onUploadSuccess(response.data.documentId);
-        
+        onUploadSuccess(docId);
+
         // Reset file input after 2 seconds
         setTimeout(() => {
           setFile(null);
@@ -69,18 +71,18 @@ export const DocumentUpload = ({ onUploadSuccess }: DocumentUploadProps) => {
   return (
     <div className="p-4 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl">
       <div className="flex flex-col gap-4">
-        
+
         {/* Hidden File Input */}
-        <input 
-          type="file" 
-          ref={fileInputRef} 
-          onChange={handleFileChange} 
-          className="hidden" 
-          accept=".pdf" 
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileChange}
+          className="hidden"
+          accept=".pdf"
         />
-        
+
         {/* Dropzone / Upload Area */}
-        <div 
+        <div
           onClick={() => !isUploading && fileInputRef.current?.click()}
           className={`
             border-2 border-dashed rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors

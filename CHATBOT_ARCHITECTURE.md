@@ -69,7 +69,20 @@ The Orchestrator is the brain of the backend chatbot infrastructure. It is respo
 
 ---
 
-## 4. Existing Module Integration
+## 4. RAG (Retrieval-Augmented Generation) Architecture
+
+To support document querying, the Chatbot incorporates an isolated RAG pipeline:
+
+1. **Upload & Extract**: A user uploads a PDF. The backend extracts raw text using `pdf-parse`.
+2. **Chunking**: Text is split into chunks of ~800 characters with a 150-character overlap (to preserve context boundaries).
+3. **Embedding Generation**: Each chunk is passed to Gemini (`gemini-embedding-2`) to generate a 768-dimensional vector representation.
+4. **Vector Storage**: Embeddings are saved to MongoDB in the `document_chunks` collection.
+5. **Retrieval**: When a user asks a question about the document, the question is embedded, and MongoDB `$vectorSearch` retrieves the top 5 most semantically similar chunks.
+6. **Generation**: The retrieved chunks are injected as Context into a rigid system prompt, and Gemini generates the final answer grounded solely in the document.
+
+---
+
+## 5. Existing Module Integration
 
 A core design principle of this architecture is **DRY (Don't Repeat Yourself)** regarding business logic. The chatbot **never** mutates or reads MongoDB directly. 
 

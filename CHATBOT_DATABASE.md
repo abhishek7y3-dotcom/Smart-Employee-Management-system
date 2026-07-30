@@ -147,3 +147,25 @@ When a user sends a message, the following database operations occur in the `cha
 To prevent the database from ballooning indefinitely:
 - Implement a **TTL (Time-To-Live)** index on `ConversationMemory` if compliance allows deleting chat logs older than 90 days.
 - Alternatively, run a background cron job to set `isArchived: true` on `ChatHistory` documents inactive for over 30 days to hide them from the primary UI fetches.
+
+---
+
+## 5. RAG Collections
+
+The Retrieval-Augmented Generation module uses two collections:
+
+### 5.1 Document Collection (`documents`)
+Stores the metadata for uploaded PDF documents.
+- `userId`: Reference to the uploader.
+- `fileName`: Original file name.
+- `status`: `processing` | `completed` | `failed`.
+- `uploadDate`: Timestamp.
+
+### 5.2 DocumentChunk Collection (`document_chunks`)
+Stores the embedded chunks of text for Vector Search.
+- `documentId`: Reference to the parent Document.
+- `text`: The raw text chunk (approx 800 chars).
+- `embedding`: A 768-dimensional number array (vector).
+- `chunkIndex`: Order of the chunk.
+
+**Important**: A MongoDB Atlas Search Index named `vector_index` MUST be manually created on the `embedding` field to enable `$vectorSearch`.

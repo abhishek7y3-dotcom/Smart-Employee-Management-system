@@ -32,7 +32,8 @@ export const chunkText = (text: string, chunkSize: number = 800, overlap: number
       chunks.push(chunk);
     }
 
-    startIndex = endIndex - overlap;
+    const nextStartIndex = endIndex - overlap;
+    startIndex = nextStartIndex > startIndex ? nextStartIndex : endIndex;
   }
 
   return chunks;

@@ -30,11 +30,17 @@ src/
 │       ├── MarkdownRenderer.tsx   # Parses and renders Gemini markdown output
 │       └── ChatHistory.tsx        # Drawer/List of past conversations
 │
+│   └── rag/
+│       ├── DocumentUpload.tsx     # PDF upload dropzone
+│       └── DocumentChat.tsx       # Question/answer chat UI for specific document
+│
 ├── services/
-│   └── chatbot/
-│       ├── chatApi.ts             # Axios calls to POST /api/chat
-│       ├── chatHistoryApi.ts      # Fetching/Deleting previous sessions
-│       └── conversationApi.ts     # Managing conversation IDs
+│   ├── chatbot/
+│   │   ├── chatApi.ts             # Axios calls to POST /api/chat
+│   │   ├── chatHistoryApi.ts      # Fetching/Deleting previous sessions
+│   │   └── conversationApi.ts     # Managing conversation IDs
+│   └── rag/
+│       └── ragApi.ts              # Axios calls: uploadDocument, askQuestion, getDocuments
 │
 ├── hooks/
 │   └── chatbot/
@@ -64,10 +70,12 @@ The backend follows the Controller-Service architecture, utilizing Gemini Functi
 ```text
 server/src/
 ├── controllers/
-│   └── chatController.ts          # Express endpoint handler (POST /api/chat)
+│   ├── chatController.ts          # Express endpoint handler (POST /api/chat)
+│   └── ragController.ts           # Handlers for PDF upload and asking questions
 │
 ├── routes/
-│   └── chatRoutes.ts              # Express router for /api/chat endpoints
+│   ├── chatRoutes.ts              # Express router for /api/chat endpoints
+│   └── ragRoutes.ts               # Express router for /api/rag endpoints
 │
 ├── middleware/
 │   └── chatRateLimiter.ts         # Prevents API abuse and token exhaustion
@@ -86,6 +94,13 @@ server/src/
 │       ├── dashboardService.ts        # Tool wrapper calling core Dashboard logic
 │       ├── communicationService.ts    # Tool wrapper calling core Comm logic
 │       └── reportService.ts           # Tool wrapper for aggregating data
+│
+│   └── rag/
+│       ├── pdfExtractor.ts            # Parses raw text from PDF buffers
+│       ├── chunkingService.ts         # Splits text into overlapping chunks
+│       ├── embeddingService.ts        # Calls Gemini to get vectors
+│       ├── vectorStore.ts             # Saves and queries vectors from MongoDB
+│       └── ragService.ts              # Orchestrates the RAG flow
 │
 ├── models/
 │   ├── ChatHistory.ts             # Mongoose schema for saved user chats
