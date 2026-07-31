@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock, User as UserIcon } from 'lucide-react';
+import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock, User as UserIcon, Edit2, Camera } from 'lucide-react';
 import { toast } from 'sonner';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -13,8 +13,8 @@ import Select from 'react-select';
 import { sanitizePhoneNumber, validatePhoneNumber } from '../../utils/phoneValidation';
 
 const reactSelectClassNames = {
-  control: () => '!bg-transparent !border-zinc-200 dark:!border-zinc-800 !rounded-xl !shadow-none !py-0.5',
-  menu: () => '!bg-white dark:!bg-zinc-900 !border !border-zinc-200 dark:!border-zinc-800 !rounded-xl !mt-1',
+  control: () => '!bg-transparent !border-2 !border-zinc-600 dark:!border-zinc-600 !rounded-xl !shadow-none !py-0.5',
+  menu: () => '!bg-white dark:!bg-zinc-900 !border !border-2 !border-zinc-600 dark:!border-zinc-600 !rounded-xl !mt-1',
   option: (state: any) => `!cursor-pointer !text-zinc-900 dark:!text-zinc-100 hover:!bg-zinc-100 dark:hover:!bg-zinc-800 ${state.isSelected ? '!bg-blue-50 dark:!bg-blue-900/30' : '!bg-transparent'}`,
   singleValue: () => '!text-zinc-950 dark:!text-zinc-50',
   input: () => '!text-zinc-950 dark:!text-zinc-50',
@@ -162,6 +162,48 @@ export default function SettingsPage() {
       if (prevInput) {
         (prevInput as HTMLInputElement).focus();
       }
+    }
+  };
+
+  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('File is too large. Max size is 2MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        try {
+          await updateUser({ profilePicture: base64 });
+          toast.success('Profile picture updated!');
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to update picture');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCoverPicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File is too large. Max size is 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        try {
+          await updateUser({ coverPicture: base64 });
+          toast.success('Cover picture updated!');
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to update cover picture');
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -330,6 +372,60 @@ export default function SettingsPage() {
               <UserIcon className="h-4.5 w-4.5 text-blue-500" />
               Profile Details
             </h2>
+            {/* Profile Banner & Avatar Section */}
+            <div className="relative w-full mb-16 md:mb-6">
+              {/* Cover Picture */}
+              <div className="h-32 sm:h-48 w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-xl overflow-hidden relative group">
+                <img 
+                  src={user?.coverPicture || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200'} 
+                  alt="Cover" 
+                  className="w-full h-full object-cover"
+                />
+                <label htmlFor="settings-cover-upload" className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                  <Camera className="h-5 w-5" />
+                </label>
+                <input
+                  id="settings-cover-upload"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleCoverPicChange}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Profile Avatar */}
+              <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0">
+                <div className="relative group cursor-pointer">
+                  <label htmlFor="settings-photo-upload" className="cursor-pointer">
+                    <img 
+                      src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'} 
+                      alt={user?.name || 'Profile'}
+                      className="h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-zinc-950 shadow-md transition-transform group-hover:scale-105 bg-white dark:bg-zinc-950"
+                    />
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="h-7 w-7 text-white" />
+                    </div>
+                  </label>
+                  <input
+                    id="settings-photo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProfilePicChange}
+                    className="hidden"
+                  />
+                  <div className="absolute bottom-1 right-1 h-6 w-6 rounded-full bg-green-500 border-4 border-white dark:border-zinc-950" title="Online" />
+                </div>
+              </div>
+            </div>
+
+            {/* Name and Role */}
+            <div className="flex flex-col items-center md:items-start md:pl-[160px] pb-6 mt-16 md:mt-2">
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white font-outfit">{user?.name}</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}
+              </p>
+            </div>
+
             <div className="w-full space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -349,7 +445,7 @@ export default function SettingsPage() {
                         (window as any)._tempEditFirstName = val;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -372,7 +468,7 @@ export default function SettingsPage() {
                         (window as any)._tempEditLastName = val;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -430,7 +526,7 @@ export default function SettingsPage() {
                     type="email"
                     defaultValue={user?.email}
                     readOnly
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none cursor-not-allowed"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -473,9 +569,9 @@ export default function SettingsPage() {
                       }
                     }}
                     inputStyle={{ width: '100%', height: '42px', borderRadius: '0.75rem', background: 'transparent' }}
-                    inputClass="!border-zinc-200 dark:!border-zinc-800 !text-zinc-950 dark:!text-zinc-50"
-                    buttonClass="!bg-transparent !border-zinc-200 dark:!border-zinc-800 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
-                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-zinc-200 dark:!border-zinc-800"
+                    inputClass="!border-2 !border-zinc-600 dark:!border-zinc-600 !text-zinc-950 dark:!text-zinc-50"
+                    buttonClass="!bg-transparent !border-2 !border-zinc-600 dark:!border-zinc-600 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
+                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-2 !border-zinc-600 dark:!border-zinc-600"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -488,7 +584,7 @@ export default function SettingsPage() {
                         (window as any)._tempEditGender = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   >
                     <option value="">Select Gender</option>
                     <option value="Male">Male</option>
@@ -507,7 +603,7 @@ export default function SettingsPage() {
                         (window as any)._tempEditQualification = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -517,7 +613,7 @@ export default function SettingsPage() {
                     type="text"
                     defaultValue={user?.role}
                     readOnly
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -531,7 +627,7 @@ export default function SettingsPage() {
                         (window as any)._tempEditPermanentAddress = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -545,7 +641,7 @@ export default function SettingsPage() {
                         (window as any)._tempEditCurrentAddress = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -588,9 +684,9 @@ export default function SettingsPage() {
                       }
                     }}
                     inputStyle={{ width: '100%', height: '42px', borderRadius: '0.75rem', background: 'transparent' }}
-                    inputClass="!border-zinc-200 dark:!border-zinc-800 !text-zinc-950 dark:!text-zinc-50"
-                    buttonClass="!bg-transparent !border-zinc-200 dark:!border-zinc-800 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
-                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-zinc-200 dark:!border-zinc-800"
+                    inputClass="!border-2 !border-zinc-600 dark:!border-zinc-600 !text-zinc-950 dark:!text-zinc-50"
+                    buttonClass="!bg-transparent !border-2 !border-zinc-600 dark:!border-zinc-600 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
+                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-2 !border-zinc-600 dark:!border-zinc-600"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -653,100 +749,7 @@ export default function SettingsPage() {
                     className="text-sm"
                   />
                 </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <label htmlFor="settings-documents" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Documents</label>
-                  
-                  {existingDocuments.length > 0 && (
-                    <div className="mb-2 space-y-1">
-                      <p className="text-xs text-zinc-600">Currently uploaded documents:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {existingDocuments.map((doc, idx) => (
-                          <div key={idx} className="flex items-center gap-1 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded text-xs">
-                            <a href={doc} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline truncate max-w-[150px]">
-                              Document {idx + 1}
-                            </a>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setExistingDocuments(prev => prev.filter((_, i) => i !== idx));
-                              }}
-                              className="text-red-500 hover:text-red-700 ml-1"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                  {newDocumentsBase64.length > 0 && (
-                    <div className="mb-2 space-y-1">
-                      <p className="text-xs text-zinc-600">Files ready to upload:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {newDocumentsBase64.map((_, idx) => (
-                          <div key={idx} className="flex items-center gap-1 bg-blue-50 dark:bg-blue-900/30 px-2 py-1 rounded text-xs text-blue-700 dark:text-blue-300">
-                            <span>New File {idx + 1}</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setNewDocumentsBase64(prev => prev.filter((_, i) => i !== idx));
-                              }}
-                              className="text-red-500 hover:text-red-700 ml-1"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <input
-                    id="settings-documents"
-                    type="file"
-                    multiple
-                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                    disabled={isConvertingFiles}
-                    className="block w-full text-sm text-zinc-600 dark:text-zinc-400 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-zinc-100 file:text-zinc-700 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700 outline-none cursor-pointer"
-                    onChange={async (e) => {
-                      const files = e.target.files;
-                      if (!files || files.length === 0) return;
-                      
-                      // Fake file validation
-                      const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'image/jpeg', 'image/png', 'image/jpg'];
-                      const validFiles = Array.from(files).filter(file => allowedTypes.includes(file.type));
-                      
-                      if (validFiles.length !== files.length) {
-                        toast.error('Invalid or fake file detected. Only PDF, DOCX, JPG, and PNG are allowed.');
-                        e.target.value = '';
-                        return;
-                      }
-
-                      setIsConvertingFiles(true);
-                      
-                      const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.readAsDataURL(file);
-                        reader.onload = () => resolve(reader.result as string);
-                        reader.onerror = error => reject(error);
-                      });
-
-                      try {
-                        const base64Files = await Promise.all(Array.from(files).map(toBase64));
-                        setNewDocumentsBase64(prev => [...prev, ...base64Files]);
-                        // Reset input so same file can be selected again if removed
-                        e.target.value = '';
-                      } catch (error) {
-                        toast.error('Failed to process one or more files.');
-                      } finally {
-                        setIsConvertingFiles(false);
-                      }
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                  />
-                  {isConvertingFiles && <span className="text-xs text-zinc-600 flex items-center gap-1 mt-1"><Loader2 className="w-3 h-3 animate-spin" /> Processing files...</span>}
-                </div>
                 <div className="space-y-1.5 sm:col-span-2 flex items-center gap-2 mt-2">
                   <input
                     id="settings-terms"
@@ -819,8 +822,7 @@ export default function SettingsPage() {
                     if ((window as any)._tempEditState !== undefined) updates.state = (window as any)._tempEditState;
                     if ((window as any)._tempEditDistrict !== undefined) updates.district = (window as any)._tempEditDistrict;
                     
-                    // Combine existing documents and newly uploaded base64 documents
-                    updates.documents = [...existingDocuments, ...newDocumentsBase64];
+
 
                     if ((window as any)._tempEditTerms !== undefined) updates.termsAndConditions = (window as any)._tempEditTerms;
                     
@@ -862,7 +864,7 @@ export default function SettingsPage() {
                   <button
                     type="button"
                     onClick={() => setShowPasswordSection(true)}
-                    className="flex items-center gap-1.5 py-2 px-5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
+                    className="flex items-center gap-1.5 py-2 px-5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
                   >
                     🔑 Request Password Change
                   </button>
@@ -912,7 +914,7 @@ export default function SettingsPage() {
                               disabled={passwordTimer <= 0}
                               onChange={(e) => handleBoxChange(idx, e.target.value, otpDigits, setOtpDigits, 'pass-otp')}
                               onKeyDown={(e) => handleBoxKeyDown(idx, e, otpDigits, 'pass-otp')}
-                              className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
+                              className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
                             />
                           ))}
                         </div>
@@ -929,7 +931,7 @@ export default function SettingsPage() {
                             setOtpDigits(['', '', '', '', '', '']);
                             setPasswordTimer(0);
                           }}
-                          className="flex-1 py-2 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-150 dark:hover:bg-zinc-900 transition cursor-pointer"
+                          className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-150 dark:hover:bg-zinc-900 transition cursor-pointer"
                         >
                           Back
                         </button>
@@ -958,7 +960,7 @@ export default function SettingsPage() {
                           type={showPassword ? 'text' : 'password'}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                           placeholder="At least 8 characters"
                         />
                         <button
@@ -978,7 +980,7 @@ export default function SettingsPage() {
                         type={showPassword ? 'text' : 'password'}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                        className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                         placeholder="Repeat password"
                       />
                     </div>
@@ -988,7 +990,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={() => setIsOtpVerified(false)}
-                      className="py-2 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                      className="py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
                     >
                       Back
                     </button>
@@ -1035,7 +1037,7 @@ export default function SettingsPage() {
         {/* Delete Account Confirmation Modal (OTP & Timer) */}
         {isDeleteModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="w-full max-w-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="w-full max-w-md bg-white dark:bg-zinc-950 border-2 border-zinc-600 dark:border-zinc-600 rounded-2xl shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200">
               <div className="flex items-start gap-3 text-red-600">
                 <div className="bg-red-100 dark:bg-red-950/50 p-2 rounded-xl shrink-0">
                   <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
@@ -1057,7 +1059,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={closeDeleteModal}
-                      className="flex-1 py-2 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                      className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -1099,7 +1101,7 @@ export default function SettingsPage() {
                           disabled={deleteTimer <= 0}
                           onChange={(e) => handleBoxChange(idx, e.target.value, deleteOtpDigits, setDeleteOtpDigits, 'del-otp')}
                           onKeyDown={(e) => handleBoxKeyDown(idx, e, deleteOtpDigits, 'del-otp')}
-                          className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
+                          className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-red-500/30 focus:border-red-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
                         />
                       ))}
                     </div>
@@ -1114,7 +1116,7 @@ export default function SettingsPage() {
                       type="text"
                       value={confirmText}
                       onChange={(e) => setConfirmText(e.target.value)}
-                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 font-mono outline-none transition focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
+                      className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 font-mono outline-none transition focus:ring-2 focus:ring-red-500/20 focus:border-red-500"
                       placeholder="delete"
                     />
                   </div>
@@ -1127,7 +1129,7 @@ export default function SettingsPage() {
                     <button
                       type="button"
                       onClick={closeDeleteModal}
-                      className="flex-1 py-2 px-4 rounded-xl border border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                      className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -1156,7 +1158,7 @@ export default function SettingsPage() {
       {/* Terms and Conditions Modal */}
       {isTermsModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="bg-white dark:bg-zinc-950 border-2 border-zinc-600 dark:border-zinc-600 rounded-2xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="p-5 border-b border-zinc-100 dark:border-zinc-900 flex items-center justify-between">
               <h3 className="text-lg font-bold text-zinc-900 dark:text-white">Terms & Conditions (Registration & Profile Update)</h3>
               <button onClick={() => setIsTermsModalOpen(false)} className="text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300">

@@ -2,7 +2,7 @@
 
 export type MessagePriority = 'low' | 'medium' | 'high' | 'urgent';
 export type MessageStatus = 'sent' | 'delivered' | 'read' | 'unread' | 'replied' | 'archived';
-export type ConversationType = 'direct' | 'announcement' | 'broadcast';
+export type ConversationType = 'direct' | 'announcement' | 'broadcast' | 'group';
 
 export interface Attachment {
   id: string;
@@ -31,6 +31,7 @@ export interface Conversation {
   id: string;
   type: ConversationType;
   subject: string;
+  groupName?: string;
   project?: string;
   relatedTaskId?: string;
   relatedTaskTitle?: string;

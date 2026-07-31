@@ -4,6 +4,7 @@ import React from 'react';
 import { Archive, ArchiveRestore, ArrowUp, Bell, Check, Paperclip, Pin, Star } from 'lucide-react';
 import { Conversation } from '../../types/communication';
 import { formatRelativeTime, getPriorityDot } from '../../utils/communicationUtils';
+import { useAuth } from '../../context/AuthContext';
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -20,10 +21,28 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   onArchive,
   onPin,
 }) => {
-  const avatar = conversation.participantAvatars[0] || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150';
-  const name = conversation.type === 'broadcast'
-    ? '📢 Broadcast'
-    : conversation.participantNames.filter(n => n !== 'You').join(', ') || conversation.participantNames[0];
+  const { user } = useAuth();
+
+  const getDisplayAvatar = () => {
+    if (conversation.type === 'broadcast') return 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150';
+    if (conversation.type === 'group') return 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150';
+    if (conversation.type === 'direct') {
+      return conversation.participantAvatars.find(a => a && a !== user?.profilePicture) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150';
+    }
+    return conversation.participantAvatars.find(a => a && a !== user?.profilePicture) || conversation.participantAvatars[0] || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150';
+  };
+
+  const getDisplayName = () => {
+    if (conversation.type === 'broadcast') return '📢 Broadcast';
+    if (conversation.type === 'group') return conversation.groupName || conversation.subject || 'Group Chat';
+    if (conversation.type === 'direct') {
+      return conversation.participantNames.filter(n => n !== 'You' && n !== user?.name).join(', ') || conversation.participantNames[0];
+    }
+    return conversation.subject || conversation.participantNames.filter(n => n !== 'You' && n !== user?.name).join(', ') || conversation.participantNames[0];
+  };
+
+  const avatar = getDisplayAvatar();
+  const name = getDisplayName();
 
   return (
     <div
@@ -57,7 +76,7 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className={`truncate text-sm font-bold ${!conversation.isRead ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>
+            <span className={`truncate text-sm font-bold ${!conversation.isRead && !conversation.id.startsWith('new-') ? 'text-zinc-950 dark:text-zinc-50' : 'text-zinc-700 dark:text-zinc-300'}`}>
               {name}
             </span>
             {conversation.isPinned && (
@@ -69,16 +88,11 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <div className={`h-1.5 w-1.5 rounded-full shrink-0 ${getPriorityDot(conversation.priority)}`} />
-          <p className={`truncate text-xs ${!conversation.isRead ? 'font-semibold text-zinc-800 dark:text-zinc-200' : 'text-zinc-600 dark:text-zinc-400'}`}>
-            {conversation.subject}
-          </p>
-        </div>
-
         <div className="flex items-center justify-between gap-2 mt-1">
-          <p className="truncate text-xs text-zinc-500 dark:text-zinc-500 leading-relaxed">
-            <span className="font-medium text-zinc-600 dark:text-zinc-400">{conversation.lastMessageSender}:</span>{' '}
+          <p className={`truncate text-xs leading-relaxed ${!conversation.isRead && !conversation.id.startsWith('new-') ? 'font-semibold text-zinc-800 dark:text-zinc-200' : 'text-zinc-500 dark:text-zinc-500'}`}>
+            {conversation.type !== 'direct' && conversation.lastMessageSender && (
+              <span className="font-medium text-zinc-600 dark:text-zinc-400">{conversation.lastMessageSender}: </span>
+            )}
             {conversation.lastMessage}
           </p>
           <div className="flex items-center gap-1.5 shrink-0">

@@ -1,10 +1,12 @@
 import { IUser } from '../../models/User';
 import ChatHistory from '../../models/ChatHistory';
 import ConversationMemory from '../../models/ConversationMemory';
-import { sendPromptWithTools } from './geminiService';
+import { sendPromptWithTools, sendPromptWithToolsStream } from './geminiService';
 import { fetchTasksDeclaration, handleFetchTasks, createTaskDeclaration, handleCreateTask, updateTaskStatusDeclaration, handleUpdateTaskStatus } from './taskService';
 import { getEmployeeWorkloadDeclaration, handleGetEmployeeWorkload } from './employeeService';
 import { createAnnouncementDeclaration, handleCreateAnnouncement, fetchAnnouncementsDeclaration, handleFetchAnnouncements } from './communicationService';
+import { searchCompanyDocumentsDeclaration, handleSearchCompanyDocuments, searchCompanyKnowledgeBaseDeclaration, handleSearchCompanyKnowledgeBase } from './knowledgeService';
+
 
 import { getSystemPrompt } from '../../constants/prompts';
 import { isGibberish } from '../../utils/gibberishDetector';
@@ -164,6 +166,12 @@ export async function processChat(user: IUser, message: string = "", conversatio
         case 'fetchAnnouncements':
           resultJSON = await handleFetchAnnouncements(user, args);
           break;
+        case 'searchCompanyDocuments':
+          resultJSON = await handleSearchCompanyDocuments(user, args);
+          break;
+        case 'searchCompanyKnowledgeBase':
+          resultJSON = await handleSearchCompanyKnowledgeBase(user, args);
+          break;
         default:
           resultJSON = { error: 'Unknown tool called by AI.' };
       }
@@ -183,4 +191,154 @@ export async function processChat(user: IUser, message: string = "", conversatio
     message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt },
     systemEvents
   };
+}
+
+// Ye naya function real-time SSE streaming ke liye hai
+export async function* processChatStream(user: IUser, message: string = "", conversationId?: string, attachment?: { name: string, content: string, mimeType: string }): AsyncGenerator<any, void, unknown> {
+  let chatHistoryId = conversationId;
+
+  if (!chatHistoryId) {
+    let fallbackTitle = message.split(' ').slice(0, 5).join(' ') + (message.split(' ').length > 5 ? '...' : '');
+    if (!fallbackTitle.trim()) fallbackTitle = 'New Conversation';
+
+    const newHistory = await ChatHistory.create({
+      userId: user._id,
+      title: fallbackTitle,
+    });
+    chatHistoryId = newHistory._id.toString();
+
+    const generateAndSetTitle = async (historyId: string) => {
+      try {
+        const titlePrompt = `Generate a very short (2-5 words) summary title for a conversation that begins with this message. Do not include quotes or formatting. Just the title text.\n\nMessage: "${message}"`;
+        const titleResponse = await sendPromptWithTools('You are a helpful summarizer.', [], titlePrompt, []);
+        if (titleResponse.text()) {
+          const aiTitle = titleResponse.text().trim().replace(/^["']|["']$/g, '');
+          await ChatHistory.findByIdAndUpdate(historyId, { title: aiTitle });
+        }
+      } catch (err) {
+        console.warn('Failed to generate chat title asynchronously.', err);
+      }
+    };
+    
+    generateAndSetTitle(chatHistoryId);
+  }
+
+  // Yield the conversationId immediately so the client can save it
+  yield { type: 'metadata', data: { conversationId: chatHistoryId, systemEvents: [] } };
+
+  const savedContent = attachment ? `[Attached: ${attachment.name}]\n\n${message}` : message;
+  await ConversationMemory.create({ chatHistoryId, role: 'user', content: savedContent });
+
+  if (!attachment && isGibberish(message)) {
+    const fallbackMessage = "I'm sorry, I couldn't understand your message. Could you please rephrase it?";
+    const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fallbackMessage });
+    yield { type: 'chunk', text: fallbackMessage };
+    yield { type: 'done', message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt } };
+    return;
+  }
+
+  if (!attachment) {
+    const fastTrackResult = matchFastTrack(message, user.role);
+    if (fastTrackResult && fastTrackResult.hit) {
+      const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fastTrackResult.answer });
+      yield { type: 'metadata', data: { conversationId: chatHistoryId, systemEvents: [fastTrackResult.source] } };
+      yield { type: 'chunk', text: fastTrackResult.answer };
+      yield { type: 'done', message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt } };
+      return;
+    }
+  }
+
+  const pastMessages = await ConversationMemory.find({ chatHistoryId }).sort({ createdAt: -1 }).limit(20).lean();
+  let rawHistory = pastMessages.reverse().map(msg => ({
+    role: msg.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: msg.content || ' ' }],
+  }));
+  rawHistory.pop();
+
+  const history: any[] = [];
+  for (const msg of rawHistory) {
+    if (history.length === 0) {
+      if (msg.role === 'user') history.push(msg);
+    } else {
+      if (history[history.length - 1].role !== msg.role) {
+        history.push(msg);
+      }
+    }
+  }
+  if (history.length > 0 && history[history.length - 1].role === 'user') history.pop();
+
+  const tools = [
+    {
+      functionDeclarations: [
+        fetchTasksDeclaration, createTaskDeclaration, updateTaskStatusDeclaration,
+        getEmployeeWorkloadDeclaration, createAnnouncementDeclaration, fetchAnnouncementsDeclaration,
+        searchCompanyDocumentsDeclaration, searchCompanyKnowledgeBaseDeclaration
+      ]
+    }
+  ];
+
+  let promptParts: any = message;
+  if (attachment) {
+    promptParts = [
+      { text: `[Attached File: ${attachment.name}]\n${message}` },
+      { inlineData: { data: attachment.content, mimeType: attachment.mimeType } }
+    ];
+  }
+
+  // Instead of a blocking call, we start a stream immediately
+  const streamResult = await sendPromptWithToolsStream(getSystemPrompt(user), history, promptParts, tools);
+  
+  let functionCall: any = null;
+  let fullText = '';
+  let systemEvents: string[] = [];
+
+  for await (const chunk of streamResult.stream) {
+    if (chunk.functionCalls() && chunk.functionCalls()!.length > 0) {
+      functionCall = chunk.functionCalls()![0];
+      break; // Stop streaming if it decides to call a function
+    }
+    const chunkText = chunk.text();
+    fullText += chunkText;
+    yield { type: 'chunk', text: chunkText };
+  }
+
+  if (functionCall) {
+    let resultJSON: any = null;
+    const args = functionCall.args as any;
+    try {
+      switch (functionCall.name) {
+        case 'fetchTasks': resultJSON = await handleFetchTasks(user, args); break;
+        case 'createTask': resultJSON = await handleCreateTask(user, args); systemEvents.push('TASK_CREATED'); break;
+        case 'updateTaskStatus': resultJSON = await handleUpdateTaskStatus(user, args); systemEvents.push('TASK_UPDATED'); break;
+        case 'getEmployeeWorkload': resultJSON = await handleGetEmployeeWorkload(user, args); break;
+        case 'createAnnouncement': resultJSON = await handleCreateAnnouncement(user, args); systemEvents.push('ANNOUNCEMENT_CREATED'); break;
+        case 'fetchAnnouncements': resultJSON = await handleFetchAnnouncements(user, args); break;
+        case 'searchCompanyDocuments': resultJSON = await handleSearchCompanyDocuments(user, args); break;
+        case 'searchCompanyKnowledgeBase': resultJSON = await handleSearchCompanyKnowledgeBase(user, args); break;
+        default: resultJSON = { error: 'Unknown tool called by AI.' };
+      }
+    } catch (err: any) {
+      resultJSON = { error: 'Internal server error while executing tool: ' + err.message };
+    }
+
+    if (systemEvents.length > 0) {
+      yield { type: 'metadata', data: { conversationId: chatHistoryId, systemEvents } };
+    }
+
+    const followUpPrompt = `The user originally asked: "${message}". The tool returned this data: ${JSON.stringify(resultJSON)}. 
+Please synthesize this data into a highly conversational, friendly, and human-like response. 
+DO NOT just spit out raw data or JSON-like lists. 
+Use rich Markdown formatting (bullet points, bold text for emphasis, spacing) and relevant emojis to make it look premium and easy to read.`;
+    
+    // NOW we stream the synthesis response
+    const followUpStream = await sendPromptWithToolsStream(getSystemPrompt(user), history, followUpPrompt, []);
+    for await (const chunk of followUpStream.stream) {
+      const chunkText = chunk.text();
+      fullText += chunkText;
+      yield { type: 'chunk', text: chunkText };
+    }
+  }
+
+  const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fullText || 'I successfully processed your request.' });
+  yield { type: 'done', message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt } };
 }

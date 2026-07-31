@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { sendChatMessage, getChatHistory, getArchivedChatsApi, getConversation, getLibraries, createLibrary, addChatToLibrary, createProject, getProjects, addChatToProject, deleteChatHistory, renameChatApi, pinChatApi, archiveChatApi } from '../services/chatbot/chatApi';
+import { getChatHistory, sendChatMessage, sendChatMessageStream, getConversation, getLibraries, createLibrary, addChatToLibrary, createProject, getProjects, addChatToProject, deleteChatHistory, renameChatApi, pinChatApi, archiveChatApi, getArchivedChatsApi } from '../services/chatbot/chatApi';
 import { useAuth } from './AuthContext';
 
 export interface ChatMessage {
@@ -335,54 +335,99 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       timestamp: new Date().toISOString(),
     };
 
+    // 1. LOCAL GREETINGS FASTPATH (Frontend Only)
+    // If it's a simple greeting without an attachment, handle it locally instantly
+    const lowerText = messageText.toLowerCase().trim();
+    const greetings = ['hi', 'hello', 'hey', 'good', 'morning', 'good morning', 'good afternoon', 'good evening', 'hola', 'namaste'];
+    if (!attachmentData && greetings.includes(lowerText)) {
+      setMessages((prev) => [...prev, userMessage]);
+      setTimeout(() => {
+        const aiMessage: ChatMessage = {
+          id: (Date.now() + 1).toString(),
+          role: 'model',
+          content: 'Hello! 👋 How can I help you manage your workspace today?',
+          timestamp: new Date().toISOString(),
+        };
+        setMessages((prev) => [...prev, aiMessage]);
+      }, 500); // 500ms delay for natural feel
+      return; // Stop here, do not hit the backend
+    }
+
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
       if (!token) throw new Error('Not authenticated');
 
-      const response = await sendChatMessage(messageText, token, conversationId || undefined, attachmentData);
+      const aiMessageId = (Date.now() + 1).toString();
+      
+      // Initialize an empty AI message to stream into
+      const initialAiMessage: ChatMessage = {
+        id: aiMessageId,
+        role: 'model',
+        content: '',
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, initialAiMessage]);
 
-      if (response.success && response.data) {
-        const isNewConversation = !conversationId;
-
-        if (isNewConversation) {
-          setConversationId(response.data.conversationId);
-          if (activeProjectId) {
-            await addChatToProjectAction(activeProjectId, response.data.conversationId);
+      await sendChatMessageStream(
+        messageText, 
+        token, 
+        conversationId || undefined, 
+        attachmentData,
+        {
+          onChunk: (text) => {
+            setMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === aiMessageId 
+                  ? { ...msg, content: msg.content + text } 
+                  : msg
+              )
+            );
+          },
+          onMetadata: async (data) => {
+            if (!conversationId && data.conversationId) {
+              setConversationId(data.conversationId);
+              if (activeProjectId) {
+                await addChatToProjectAction(activeProjectId, data.conversationId);
+              }
+              refreshHistory();
+            }
+            if (data.systemEvents && Array.isArray(data.systemEvents)) {
+              data.systemEvents.forEach((event: string) => {
+                window.dispatchEvent(new Event(event));
+              });
+            }
+          },
+          onDone: (message) => {
+            // Optional: Finalize the message if needed
+            setIsLoading(false);
+          },
+          onError: (error) => {
+            console.error('Chat Stream Error:', error);
+            const fallbackError = 'Sorry, an error occurred processing the request.';
+            setMessages((prev) => 
+              prev.map((msg) => 
+                msg.id === aiMessageId 
+                  ? { ...msg, content: msg.content + '\n\n**[Error]** ' + (error || fallbackError) } 
+                  : msg
+              )
+            );
+            setIsLoading(false);
           }
-          refreshHistory(); // Refresh sidebar to show new chat
         }
-
-        const aiMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: response.data.message.role,
-          content: response.data.message.content,
-          timestamp: response.data.message.timestamp,
-        };
-
-        setMessages((prev) => [...prev, aiMessage]);
-
-        // Dispatch real-time system events if the AI updated any backend state
-        if (response.data.systemEvents && Array.isArray(response.data.systemEvents)) {
-          response.data.systemEvents.forEach((event: string) => {
-            window.dispatchEvent(new Event(event));
-          });
-        }
-      }
+      );
     } catch (error: any) {
       console.error('Chat Error:', error);
-      const apiError = error?.response?.data?.message;
-      const fallbackError = 'Sorry, this request does not seem related to Employee Task Management, or an error occurred processing the file. Please ask a relevant question.';
+      const fallbackError = 'Sorry, an error occurred processing the request.';
       
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'system',
-        content: apiError || fallbackError,
+        content: fallbackError,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMessage]);
-    } finally {
       setIsLoading(false);
     }
   };

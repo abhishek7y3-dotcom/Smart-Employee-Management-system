@@ -23,6 +23,7 @@ export interface IUser extends Document {
   password: string;
   role: 'member' | 'admin' | 'superadmin';
   profilePicture?: string;
+  coverPicture?: string;
   isVerified: boolean;
   verificationOtp?: string;
   verificationOtpExpires?: Date;
@@ -30,6 +31,10 @@ export interface IUser extends Document {
   resetPasswordOtpExpires?: Date;
   loginOtp?: string;
   loginOtpExpires?: Date;
+  phoneChangeOtp?: string;
+  phoneChangeOtpExpires?: Date;
+  pendingMobileNumber?: string;
+  pendingCountryCode?: string;
   designation?: string;
   department?: string;
   permanentAddress?: string;
@@ -174,6 +179,10 @@ const userSchema = new Schema<IUser>(
       type: String,
       default: '',
     },
+    coverPicture: {
+      type: String,
+      default: '',
+    },
     // OTP verification status, account create hone par by default false hota hai
     isVerified: {
       type: Boolean,
@@ -202,6 +211,22 @@ const userSchema = new Schema<IUser>(
     loginOtpExpires: {
       type: Date,
       select: false,
+    },
+    phoneChangeOtp: {
+      type: String,
+      select: false,
+    },
+    phoneChangeOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    pendingMobileNumber: {
+      type: String,
+      trim: true,
+    },
+    pendingCountryCode: {
+      type: String,
+      trim: true,
     },
     lastLogin: {
       type: Date,

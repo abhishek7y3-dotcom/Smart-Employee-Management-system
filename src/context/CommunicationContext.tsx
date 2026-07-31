@@ -19,6 +19,7 @@ import {
   mockMessages,
   mockNotifications,
 } from '../data/mockCommunication';
+import { mockEmployees } from '../constants/mockData';
 
 const emptyAnalytics: CommunicationAnalytics = {
   totalMessages: 0,
@@ -55,6 +56,7 @@ interface CommunicationContextType {
   composePrefill: (Partial<ComposeFormData> & { id?: string }) | null;
   isMobileListOpen: boolean;
   isLoading: boolean;
+  employees: commApi.EmployeeOption[];
 
   // Actions
   setFilters: (filters: Partial<CommunicationFilters>) => void;
@@ -62,8 +64,10 @@ interface CommunicationContextType {
   selectConversation: (conversation: Conversation | null) => void;
   openCompose: (prefill?: Partial<ComposeFormData> & { id?: string }) => void;
   closeCompose: () => void;
-  sendMessage: (data: ComposeFormData) => void;
-  replyToConversation: (conversationId: string, content: string, attachments?: File[]) => void;
+  sendMessage: (data: ComposeFormData) => Promise<Conversation>;
+  replyToConversation: (conversationId: string, content: string, attachments?: File[]) => Promise<void>;
+  createGroup: (data: { groupName: string; participants: string[]; relatedTaskId?: string; initialMessage?: string }) => Promise<Conversation>;
+  addMembersToGroup: (conversationId: string, newParticipantIds: string[]) => Promise<void>;
   saveDraft: (data: ComposeFormData, draftId?: string) => void;
   deleteDraft: (draftId: string) => void;
   markAsRead: (conversationId: string) => void;
@@ -88,6 +92,7 @@ interface CommunicationContextType {
   archivedConversations: Conversation[];
   unreadNotificationCount: number;
   unreadMessageCount: number;
+  startDirectConversation: (employeeId: string) => void;
 }
 
 const defaultFilters: CommunicationFilters = {
@@ -119,41 +124,90 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
   const [composePrefill, setComposePrefill] = useState<(Partial<ComposeFormData> & { id?: string }) | null>(null);
   const [isMobileListOpen, setIsMobileListOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [employees, setEmployees] = useState<commApi.EmployeeOption[]>([]);
 
-  // ─── Load data from API (with localStorage/mock fallback) ────────────────
+  // ─── Actions ─────────────────────────────────────────────────────────────
+
+  const createGroupChat = useCallback(
+    async (data: { groupName: string; participants: string[]; relatedTaskId?: string; initialMessage?: string }) => {
+      try {
+        const res = await commApi.createGroup(data);
+        const newGroup = res.conversation;
+        setConversations((prev) => [newGroup, ...prev]);
+        toast.success('Group created successfully');
+        return newGroup;
+      } catch (error) {
+        console.error('Failed to create group:', error);
+        toast.error('Failed to create group');
+        throw error;
+      }
+    },
+    []
+  );
+
+  const addMembersToGroup = useCallback(async (conversationId: string, newParticipantIds: string[]) => {
+    try {
+      const conversation = conversations.find(c => c.id === conversationId);
+      if (!conversation) throw new Error('Conversation not found');
+
+      // Fetch the details for the new participants
+      const newEmployees = employees.filter(e => newParticipantIds.includes(e.id));
+      const newNames = newEmployees.map(e => e.name);
+      const newAvatars = newEmployees.map(e => e.avatar || '');
+
+      const updatedParticipants = [...new Set([...conversation.participants, ...newParticipantIds])];
+      const updatedParticipantNames = [...conversation.participantNames, ...newNames];
+      const updatedParticipantAvatars = [...conversation.participantAvatars, ...newAvatars];
+
+      const res = await commApi.updateConversation(conversationId, {
+        participants: updatedParticipants,
+        participantNames: updatedParticipantNames,
+        participantAvatars: updatedParticipantAvatars
+      });
+
+      setConversations(prev => prev.map(c => c.id === conversationId ? res : c));
+      toast.success('Members added successfully');
+    } catch (error) {
+      console.error('Failed to add members:', error);
+      toast.error('Failed to add members');
+      throw error;
+    }
+  }, [conversations, employees]);
+
+  // ─── Load data from API ──────────────────────────────────────────────────
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Try fetching from API first
-      const token = typeof window !== 'undefined' ? window.localStorage.getItem('auth_token') : null;
-
       let conversationsList: Conversation[] = [];
       let announcementsList: Announcement[] = [];
 
-      if (token) {
-        const [convData, annData, analyticsData] = await Promise.allSettled([
+      // if user exists, they are authenticated
+      if (user) {
+        const [convData, annData, analyticsData, empData] = await Promise.allSettled([
           commApi.fetchConversations(),
           commApi.fetchAnnouncements(),
           commApi.fetchAnalytics(),
+          commApi.fetchEmployees(),
         ]);
+
+        if (empData.status === 'fulfilled') {
+          setEmployees(empData.value);
+        } else {
+          setEmployees([]); // strictly use empty array if API fails, no mock data
+        }
 
         if (convData.status === 'fulfilled') {
           conversationsList = convData.value;
           setConversations(convData.value);
         } else {
-          // Fallback to localStorage, then mock
-          const stored = loadFromStorage(STORAGE_KEYS.conversations);
-          conversationsList = stored || mockConversations;
-          setConversations(conversationsList);
+          setConversations([]);
         }
 
         if (annData.status === 'fulfilled') {
           announcementsList = annData.value;
           setAnnouncements(annData.value);
         } else {
-          const stored = loadFromStorage(STORAGE_KEYS.announcements);
-          announcementsList = stored || mockAnnouncements;
-          setAnnouncements(announcementsList);
+          setAnnouncements([]);
         }
 
         if (analyticsData.status === 'fulfilled') {
@@ -162,20 +216,11 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
           console.warn('communicationContext: Failed to fetch analytics from DB:', (analyticsData as PromiseRejectedResult).reason);
         }
       } else {
-        // No token — use localStorage or mock
-        const storedConv = loadFromStorage(STORAGE_KEYS.conversations);
-        conversationsList = storedConv || mockConversations;
-        setConversations(conversationsList);
-
-        const storedAnn = loadFromStorage(STORAGE_KEYS.announcements);
-        announcementsList = storedAnn || mockAnnouncements;
-        setAnnouncements(announcementsList);
-
-        const storedMsg = loadFromStorage(STORAGE_KEYS.messages);
-        if (storedMsg) setMessages(storedMsg);
-
-        const storedDrafts = loadFromStorage(STORAGE_KEYS.drafts);
-        if (storedDrafts) setDrafts(storedDrafts);
+        // No token — use empty state
+        setConversations([]);
+        setAnnouncements([]);
+        setEmployees([]);
+        setMessages({});
       }
 
       // Generate real notifications dynamically
@@ -306,6 +351,56 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
     setComposePrefill(null);
   }, []);
 
+
+
+  const startDirectConversation = useCallback((employeeId: string) => {
+    // Check if we already have a direct conversation with this employee
+    const existing = conversations.find(
+      (c) =>
+        c.type === 'direct' &&
+        c.participants.includes(userId) &&
+        c.participants.includes(employeeId) &&
+        c.participants.length === 2
+    );
+
+    if (existing) {
+      selectConversation(existing);
+      return;
+    }
+
+    // Find employee details
+    const emp = employees.find((e) => e.id === employeeId);
+    if (!emp) return;
+
+    // Create a temporary "draft" conversation in state to chat with
+    const tempConv: Conversation = {
+      id: `temp-${employeeId}`,
+      subject: `Chat with ${emp.name}`,
+      type: 'direct',
+      priority: 'medium',
+      status: 'in_progress',
+      participants: [userId, employeeId],
+      participantNames: [user?.name || 'You', emp.name],
+      participantAvatars: [user?.profilePicture || '', emp.profilePicture],
+      lastMessage: 'Say hi to start the conversation',
+      lastMessageTime: new Date().toISOString(),
+      lastMessageSender: '',
+      unreadCount: 0,
+      isRead: true,
+      isPinned: false,
+      isArchived: false,
+      hasAttachments: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      createdBy: userId,
+    };
+
+    setConversations((prev) => [tempConv, ...prev]);
+    selectConversation(tempConv);
+  }, [conversations, userId, user, employees, selectConversation]);
+
+
+
   const sendMessage = useCallback(async (data: ComposeFormData) => {
     try {
       const result = await commApi.createConversation({
@@ -319,7 +414,10 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       // Add to local state
-      setConversations((prev) => [result.conversation, ...prev]);
+      setConversations((prev) => [
+        result.conversation,
+        ...prev.filter(c => !c.id.startsWith('temp-') && !c.id.startsWith('new-'))
+      ]);
       setMessages((prev) => ({ ...prev, [result.conversation.id]: [result.message] }));
 
       // Add notification
@@ -339,6 +437,7 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
 
       toast.success('Message sent successfully');
       setIsComposeOpen(false);
+      return result.conversation;
     } catch {
       // Fallback to local-only
       const newConversationId = `conv-${Date.now()}`;
@@ -383,8 +482,9 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
 
       setConversations((prev) => [newConversation, ...prev]);
       setMessages((prev) => ({ ...prev, [newConversationId]: [newMessage] }));
-      toast.success('Message saved locally (server unavailable)');
+      toast.success('Message sent successfully (offline)');
       setIsComposeOpen(false);
+      return newConversation;
     }
   }, [userId, user]);
 
@@ -887,6 +987,8 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
         closeCompose,
         sendMessage,
         replyToConversation,
+        createGroup: createGroupChat,
+        addMembersToGroup,
         saveDraft,
         deleteDraft,
         markAsRead,
@@ -903,12 +1005,14 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
         sendBroadcast,
         setMobileListOpen,
         refreshData,
+        startDirectConversation,
         filteredConversations,
         inboxConversations,
         sentConversations,
         archivedConversations,
         unreadNotificationCount,
         unreadMessageCount,
+        employees,
       }}
     >
       {children}

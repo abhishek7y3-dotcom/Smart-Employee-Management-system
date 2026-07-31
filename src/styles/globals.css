@@ -4,11 +4,11 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fcfcfd;
+  --background: #f4f4f5;
   --foreground: #09090b;
-  --border-glass: rgba(228, 228, 231, 0.6);
-  --bg-glass: rgba(255, 255, 255, 0.7);
-  --shadow-color: rgba(9, 9, 11, 0.05);
+  --border-glass: rgba(212, 212, 216, 0.8);
+  --bg-glass: rgba(255, 255, 255, 0.95);
+  --shadow-color: rgba(9, 9, 11, 0.08);
 }
 
 .dark {

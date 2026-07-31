@@ -41,16 +41,23 @@ export function matchFastTrack(userQuery: string, userRole: string): FastTrackRe
       }
     }
 
-    const score = overlapCount / entry.intentKeywords.length;
+    // A better scoring mechanism:
+    // If the user types a very short query (e.g. 1-2 words), we just need 1 keyword to match.
+    // If the query is long, we check how much of the meaningful keywords matched.
+    const score = overlapCount > 0 ? (overlapCount / Math.min(queryTokens.size, entry.intentKeywords.length)) : 0;
 
-    if (score > highestScore) {
-      highestScore = score;
+    // Give a slight boost if overlap count is higher, so more specific matches win
+    const finalScore = score + (overlapCount * 0.1);
+
+    if (finalScore > highestScore) {
+      highestScore = finalScore;
       bestMatch = entry;
     }
   }
 
   // 3. Threshold Check
-  if (highestScore >= MATCH_THRESHOLD && bestMatch) {
+  // Lowered the effective threshold for small queries
+  if (highestScore > 0 && bestMatch) {
     // 4. RBAC (Role-Based Access Control) Check
     if (bestMatch.requiresRole && bestMatch.requiresRole !== 'any') {
       if (bestMatch.requiresRole !== userRole) {

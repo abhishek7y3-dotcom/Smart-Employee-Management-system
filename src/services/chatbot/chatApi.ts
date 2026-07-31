@@ -1,6 +1,6 @@
 import axios from '../axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export const sendChatMessage = async (message: string, token: string, conversationId?: string, attachment?: { name: string, content: string, mimeType: string }) => {
   const response = await axios.post(
@@ -14,6 +14,81 @@ export const sendChatMessage = async (message: string, token: string, conversati
     }
   );
   return response.data;
+};
+
+export const sendChatMessageStream = async (
+  message: string, 
+  token: string, 
+  conversationId: string | undefined, 
+  attachment: any, 
+  callbacks: {
+    onChunk: (text: string) => void;
+    onMetadata: (data: any) => void;
+    onDone: (message: any) => void;
+    onError: (error: string) => void;
+  }
+) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/chat`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      credentials: 'include',
+      body: JSON.stringify({ message, conversationId, attachment })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP Error ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder('utf-8');
+
+    if (!reader) {
+      throw new Error('ReadableStream not supported in this browser.');
+    }
+
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop() || ''; // Keep the last incomplete chunk in the buffer
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const dataStr = line.replace('data: ', '').trim();
+          
+          if (dataStr === '[DONE]') {
+            continue; // Handled by standard 'done' type event now, but kept for safety
+          }
+
+          try {
+            const data = JSON.parse(dataStr);
+            if (data.type === 'chunk') {
+              callbacks.onChunk(data.text);
+            } else if (data.type === 'metadata') {
+              callbacks.onMetadata(data.data);
+            } else if (data.type === 'done') {
+              callbacks.onDone(data.message);
+            } else if (data.type === 'error') {
+              callbacks.onError(data.error);
+            }
+          } catch (e) {
+            console.warn('Failed to parse SSE line:', dataStr);
+          }
+        }
+      }
+    }
+  } catch (error: any) {
+    callbacks.onError(error.message || 'Stream connection failed');
+  }
 };
 
 export const getChatHistory = async (token: string) => {

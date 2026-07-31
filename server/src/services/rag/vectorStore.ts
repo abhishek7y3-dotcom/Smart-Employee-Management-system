@@ -23,10 +23,17 @@ export const storeChunkEmbedding = async (
 
 export const vectorSearch = async (
   queryEmbedding: number[],
-  documentId: string,
+  documentIdOrIds: string | string[],
   limit: number = 5
 ) => {
   try {
+    let filterCondition: any = {};
+    if (Array.isArray(documentIdOrIds)) {
+      filterCondition = { documentId: { $in: documentIdOrIds.map(id => new mongoose.Types.ObjectId(id)) } };
+    } else {
+      filterCondition = { documentId: new mongoose.Types.ObjectId(documentIdOrIds) };
+    }
+
     const results = await DocumentChunk.aggregate([
       {
         $vectorSearch: {
@@ -35,7 +42,8 @@ export const vectorSearch = async (
           queryVector: queryEmbedding,
           numCandidates: 100,
           limit: limit,
-          filter: { documentId: new mongoose.Types.ObjectId(documentId) }
+          filter: filterCondition
+
         }
       },
       {

@@ -15,6 +15,7 @@ import {
   deleteAnnouncement,
   sendBroadcast,
   getAnalytics,
+  createGroup,
 } from '../controllers/communicationController';
 import { authenticate } from '../middleware/authMiddleware';
 
@@ -238,5 +239,20 @@ router.post('/broadcast', sendBroadcast);
  */
 // Analytics
 router.get('/analytics', getAnalytics);
+
+/**
+ * @swagger
+ * /api/communication/groups:
+ *   post:
+ *     summary: Endpoint for /groups
+ *     tags: [Communication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Success
+ */
+// Group endpoints
+router.post('/groups', createGroup);
 
 export default router;

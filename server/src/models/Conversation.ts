@@ -1,11 +1,13 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
 export interface IConversation extends Document {
-  type: 'direct' | 'announcement' | 'broadcast';
+  type: 'direct' | 'announcement' | 'broadcast' | 'group';
   subject: string;
   project?: string;
   relatedTaskId?: string;
   relatedTaskTitle?: string;
+  groupName?: string;
+  groupAdmins?: Types.Array<string>;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   participants: Types.Array<string>;
   participantNames: Types.Array<string>;
@@ -26,11 +28,19 @@ export interface IConversation extends Document {
 
 const conversationSchema = new Schema<IConversation>(
   {
-    // Conversation kis type ki hai (direct chat, ya announcement waghera)
+    // Conversation kis type ki hai (direct chat, ya announcement, ya group)
     type: {
       type: String,
-      enum: ['direct', 'announcement', 'broadcast'],
+      enum: ['direct', 'announcement', 'broadcast', 'group'],
       default: 'direct',
+    },
+    groupName: {
+      type: String,
+      trim: true,
+    },
+    groupAdmins: {
+      type: [{ type: String }],
+      default: [],
     },
     // Conversation ka subject ya title
     subject: {

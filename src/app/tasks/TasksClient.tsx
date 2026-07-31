@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { Plus, Search, X } from 'lucide-react';
+import { Plus, Search, X, Download } from 'lucide-react';
+import { toast } from 'sonner';
 import { useTasks } from '../../context/TaskContext';
 import { ConfirmationModal } from '../../components/ui/ConfirmationModal';
 import { EmptyState } from '../../components/ui/EmptyState';
@@ -189,7 +190,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       if (msg.includes('duplicate') || msg.includes('exists')) setTitleError(msg);
       else if (msg.includes('employee has reached the maximum')) setAssigneeError(msg);
       else if (msg.includes('overdue tasks')) setAssigneeError(msg);
-      else alert(msg);
+      else toast.error(msg);
     }
   };
 
@@ -199,6 +200,48 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
     setTaskToDelete(null);
   };
 
+  const handleDownloadCSV = () => {
+    if (filteredTasks.length === 0) {
+      toast.error('No tasks available to download.');
+      return;
+    }
+
+    const headers = ['Title', 'Description', 'Priority', 'Status', 'Assigned To', 'Due Date', 'Created At'];
+    
+    const csvContent = [
+      headers.join(','),
+      ...filteredTasks.map(task => {
+        const employee = employees.find(e => e.id === task.assignedTo);
+        const assigneeName = employee ? employee.name : 'Unknown';
+        
+        // Escape quotes and commas in fields
+        const escapeCSV = (str: string) => `"${(str || '').replace(/"/g, '""')}"`;
+        
+        return [
+          escapeCSV(task.title),
+          escapeCSV(task.description),
+          escapeCSV(task.priority),
+          escapeCSV(task.status),
+          escapeCSV(assigneeName),
+          escapeCSV(task.dueDate),
+          escapeCSV(new Date(task.createdAt || Date.now()).toLocaleDateString())
+        ].join(',');
+      })
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `tasks_export_${getTodayString()}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-6 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -206,16 +249,26 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Tasks</h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-500">Review, create, and update task tracking logs assigned to employees.</p>
         </div>
-        {isAdmin && (
+        <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => setShowAddForm((current) => !current)}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4.5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-98 cursor-pointer"
+            onClick={handleDownloadCSV}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white border border-zinc-200 dark:border-zinc-800 dark:bg-zinc-900 px-4.5 py-3 text-xs font-bold text-zinc-700 dark:text-zinc-200 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all hover:-translate-y-0.5 active:scale-98 cursor-pointer"
           >
-            {!showAddForm && <Plus className="h-4 w-4" />}
-            Add New Task
+            <Download className="h-4 w-4" />
+            Export CSV
           </button>
-        )}
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setShowAddForm((current) => !current)}
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-4.5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 hover:bg-blue-700 transition-all hover:shadow-lg hover:-translate-y-0.5 active:scale-98 cursor-pointer"
+            >
+              {!showAddForm && <Plus className="h-4 w-4" />}
+              Add New Task
+            </button>
+          )}
+        </div>
       </div>
 
       {showAddForm && isAdmin && (
@@ -240,98 +293,94 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
                 <X className="h-4.5 w-4.5" />
               </button>
             </div>
-            
-            <form onSubmit={handleAddTask} className="mt-6 space-y-5">
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <label className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Title</span>
-              <input
-                maxLength={120}
-                value={newTitle}
-                onChange={(e) => {
-                  let val = e.target.value;
-                  // Block starting with special chars
-                  if (/^[_\-.,/]/.test(val)) return;
-                  // Allow only Alphabets, Numbers, Spaces, _ / () & : , .
-                  val = val.replace(/[^a-zA-Z0-9\s_/\()&:,.]/g, '');
-                  // Title capitalization
-                  val = val.replace(/\b\w/g, c => c.toUpperCase());
-                  setNewTitle(val);
-                }}
-                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
-                  titleError
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
-                }`}
-              />
-              {titleError && <p className="mt-1 text-xs font-semibold text-red-500">{titleError}</p>}
-            </label>
-            <label className="md:col-span-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Description</span>
-              <textarea
-                maxLength={1000}
-                value={newDescription}
-                onChange={(e) => {
-                  let val = e.target.value;
-                  // Emojis regex blocker
-                  val = val.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '');
-                  setNewDescription(val);
-                }}
-                rows={3}
-                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
-                  descriptionError
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
-                }`}
-              />
-              {descriptionError && <p className="mt-1 text-xs font-semibold text-red-500">{descriptionError}</p>}
-            </label>
-            <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Priority</span>
-              <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="critical">Critical</option>
-              </select>
-            </label>
-            <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-550">Assignee</span>
-              <select
-                value={newAssignee}
-                onChange={(e) => setNewAssignee(e.target.value)}
-                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer ${
-                  assigneeError
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
-                }`}
-              >
-                <option value="">Select Employee</option>
-                {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.designation || 'Employee'})</option>)}
-              </select>
-              {assigneeError && <p className="mt-1 text-xs font-semibold text-red-500">{assigneeError}</p>}
-            </label>
-            <label>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Due Date</span>
-              <input
-                min={getTodayString()}
-                type="date"
-                value={newDueDate}
-                onChange={(e) => setNewDueDate(e.target.value)}
-                className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
-                  dueDateError
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
-                }`}
-              />
-              {dueDateError && <p className="mt-1 text-xs font-semibold text-red-500">{dueDateError}</p>}
-            </label>
-          </div>
-          <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-all duration-300 hover:bg-blue-700 active:scale-[0.98] sm:w-auto cursor-pointer">
-            Create Task
-          </button>
 
-        </form>
+            <form onSubmit={handleAddTask} className="mt-6 space-y-5">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="md:col-span-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Title</span>
+                  <input
+                    maxLength={120}
+                    value={newTitle}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      // Block starting with special chars
+                      if (/^[_\-.,/]/.test(val)) return;
+                      // Allow only Alphabets, Numbers, Spaces, _ / () & : , .
+                      val = val.replace(/[^a-zA-Z0-9\s_/\()&:,.]/g, '');
+                      // Title capitalization
+                      val = val.replace(/\b\w/g, c => c.toUpperCase());
+                      setNewTitle(val);
+                    }}
+                    className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${titleError
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                      }`}
+                  />
+                  {titleError && <p className="mt-1 text-xs font-semibold text-red-500">{titleError}</p>}
+                </label>
+                <label className="md:col-span-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Description</span>
+                  <textarea
+                    maxLength={1000}
+                    value={newDescription}
+                    onChange={(e) => {
+                      let val = e.target.value;
+                      // Emojis regex blocker
+                      val = val.replace(/[\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF]/g, '');
+                      setNewDescription(val);
+                    }}
+                    rows={3}
+                    className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${descriptionError
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                      }`}
+                  />
+                  {descriptionError && <p className="mt-1 text-xs font-semibold text-red-500">{descriptionError}</p>}
+                </label>
+                <label>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Priority</span>
+                  <select value={newPriority} onChange={(e) => setNewPriority(e.target.value as TaskPriority)} className="mt-1.5 w-full rounded-xl border border-zinc-300 bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer">
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-550">Assignee</span>
+                  <select
+                    value={newAssignee}
+                    onChange={(e) => setNewAssignee(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 font-semibold cursor-pointer ${assigneeError
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                      }`}
+                  >
+                    <option value="">Select Employee</option>
+                    {employees.map((employee) => <option key={employee.id} value={employee.id}>{employee.name} ({employee.designation || 'Employee'})</option>)}
+                  </select>
+                  {assigneeError && <p className="mt-1 text-xs font-semibold text-red-500">{assigneeError}</p>}
+                </label>
+                <label>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Due Date</span>
+                  <input
+                    min={getTodayString()}
+                    type="date"
+                    value={newDueDate}
+                    onChange={(e) => setNewDueDate(e.target.value)}
+                    className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${dueDateError
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-zinc-300 focus:border-blue-500 dark:border-zinc-700'
+                      }`}
+                  />
+                  {dueDateError && <p className="mt-1 text-xs font-semibold text-red-500">{dueDateError}</p>}
+                </label>
+              </div>
+              <button type="submit" className="inline-flex w-full items-center justify-center rounded-xl bg-blue-600 px-5 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/10 transition-all duration-300 hover:bg-blue-700 active:scale-[0.98] sm:w-auto cursor-pointer">
+                Create Task
+              </button>
+
+            </form>
           </div>
         </div>
       )}

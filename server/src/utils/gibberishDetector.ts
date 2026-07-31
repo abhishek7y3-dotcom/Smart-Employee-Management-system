@@ -28,6 +28,22 @@ export function isGibberish(text: string): boolean {
     return true;
   }
 
+  // 4. Check for high consonant ratio (random typing like 'lkjhgf')
+  // We check words over 5 characters to see if they lack vowels
+  const words = trimmed.split(/\s+/);
+  for (const word of words) {
+    if (word.length > 5) {
+      // Ignore if it looks like a URL or a technical ID
+      if (word.startsWith('http') || /^[0-9a-fA-F-]+$/.test(word)) continue;
+      
+      const vowels = word.match(/[aeiouyAEIOUY]/g);
+      const vowelCount = vowels ? vowels.length : 0;
+      if (vowelCount === 0 || (word.length >= 8 && vowelCount <= 1)) {
+        return true; // No vowels in a 6+ letter word, or 1 vowel in an 8+ letter word = probably gibberish
+      }
+    }
+  }
+
   // If none of the gibberish rules matched, assume it's valid input, a typo, an acronym, or an emoji.
   return false;
 }

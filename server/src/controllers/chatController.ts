@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/authMiddleware';
-import { processChat } from '../services/chatbot/chatService';
+import { processChat, processChatStream } from '../services/chatbot/chatService';
 import ChatHistory from '../models/ChatHistory';
 import ConversationMemory from '../models/ConversationMemory';
 import ChatLibrary from '../models/ChatLibrary';
@@ -23,11 +23,35 @@ export async function handleChatMessage(req: AuthRequest, res: Response) {
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }
-    const response = await processChat(req.user, message, conversationId, attachment);
-    return res.status(200).json({ success: true, data: response });
+
+    // Set headers for SSE (Server-Sent Events)
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders(); // Ensure headers are sent immediately
+
+    const stream = processChatStream(req.user, message, conversationId, attachment);
+
+    for await (const chunk of stream) {
+      res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+    }
+
+    res.write('data: [DONE]\n\n');
+    res.end();
   } catch (error: any) {
     console.error('Chat API Error:', error);
-    return res.status(500).json({ success: false, message: error.message || 'Failed to process chat' });
+    
+    let errorMessage = error.message || 'Failed to process chat';
+    if (errorMessage.includes('429') || errorMessage.includes('Quota exceeded') || errorMessage.includes('Too Many Requests')) {
+      errorMessage = "Server is currently experiencing high traffic (API Quota Exceeded). Please try again in a few minutes.";
+    }
+
+    if (!res.headersSent) {
+      return res.status(500).json({ success: false, message: errorMessage });
+    } else {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: errorMessage })}\n\n`);
+      res.end();
+    }
   }
 }
 

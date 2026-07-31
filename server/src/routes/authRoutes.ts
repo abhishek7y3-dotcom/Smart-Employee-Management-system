@@ -12,7 +12,7 @@ import {
   verifyOtp, resendVerificationOtp, resendResetOtp, getAllUsers,
   updateUser, deleteUser, getArchivedUsers, restoreUser, requestLoginOtp,
   loginWithOtp, verifyResetOtp, permanentDeleteUser, refreshToken,
-  blockUser, unblockUser
+  blockUser, unblockUser, requestPhoneChangeOtp, verifyPhoneChangeOtp
 } from '../controllers/authController';
 
 // Ye Middlewares hain (Checkers). Controller me jaane se pehle data check hoga.
@@ -56,6 +56,10 @@ router.post('/verify-reset-otp', verifyResetOtp);
 
 // Profile fetch karna (Iske liye 'authenticate' middleware zaroori hai, matlab login hona lazmi hai)
 router.get('/profile', authenticate, profile);
+
+// Phone number change ke liye OTP generate aur verify karna
+router.post('/request-phone-change-otp', authenticate, requestPhoneChangeOtp);
+router.post('/verify-phone-change-otp', authenticate, verifyPhoneChangeOtp);
 // Users ki details nikalna, update karna, ya delete karna
 router.get('/users/archived', authenticate, getArchivedUsers);
 router.get('/users', authenticate, getAllUsers);

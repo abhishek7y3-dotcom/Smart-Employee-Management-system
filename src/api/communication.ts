@@ -49,6 +49,16 @@ export async function createConversation(data: {
   return res.data.data;
 }
 
+export async function createGroup(data: {
+  groupName: string;
+  participants: string[];
+  relatedTaskId?: string;
+  initialMessage?: string;
+}): Promise<{ conversation: Conversation }> {
+  const res = await axiosInstance.post('/communication/groups', data);
+  return res.data.data;
+}
+
 export async function updateConversation(id: string, updates: Record<string, any>): Promise<Conversation> {
   const res = await axiosInstance.put(`/communication/conversations/${id}`, updates);
   return res.data.data.conversation;

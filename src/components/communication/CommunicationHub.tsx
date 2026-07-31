@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
   Inbox, Send, FileEdit, Megaphone, Archive, Radio, BarChart3,
   ArrowLeft, Pin, ArchiveRestore, MoreVertical, SendHorizonal,
-  Plus, MessageSquare, Bell, Search,
+  Plus, MessageSquare, Bell, Search, Users, UserPlus,
 } from 'lucide-react';
 import { useCommunication } from '../../context/CommunicationContext';
 import { useAuth } from '../../context/AuthContext';
@@ -12,6 +12,8 @@ import { ConversationList } from './ConversationList';
 import { ConversationItem } from './ConversationItem';
 import { MessageBubble } from './MessageBubble';
 import { ComposeModal } from './ComposeModal';
+import { CreateGroupModal } from './CreateGroupModal';
+import { AddMembersModal } from './AddMembersModal';
 import { AnnouncementCard } from './AnnouncementCard';
 import { DraftCard } from './DraftCard';
 import { AnalyticsCard } from './AnalyticsCard';
@@ -26,6 +28,7 @@ interface TabConfig {
   label: string;
   icon: React.ReactNode;
   adminOnly?: boolean;
+  activeColor: string;
 }
 
 export const CommunicationHub: React.FC = () => {
@@ -38,11 +41,11 @@ export const CommunicationHub: React.FC = () => {
     createAnnouncement, updateAnnouncement, pinAnnouncement, deleteAnnouncement, sendBroadcast,
     markNotificationRead, markAllNotificationsRead, setMobileListOpen,
     inboxConversations, sentConversations, archivedConversations,
-    unreadNotificationCount, unreadMessageCount,
+    unreadNotificationCount, unreadMessageCount, employees,
   } = useCommunication();
 
   const { user } = useAuth();
-  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'Project Manager';
+  const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.role === 'Admin' || user?.role === 'Project Manager' || user?.role === 'CEO' || user?.designation === 'CEO';
 
   const [activeTab, setActiveTab] = useState<TabId>('inbox');
   const [replyText, setReplyText] = useState('');
@@ -53,6 +56,8 @@ export const CommunicationHub: React.FC = () => {
   const [announcementForm, setAnnouncementForm] = useState({
     title: '', description: '', priority: 'medium' as const, publishDate: new Date().toISOString().split('T')[0], expiryDate: '',
   });
+  const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
+  const [isAddMembersOpen, setIsAddMembersOpen] = useState(false);
 
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -66,21 +71,38 @@ export const CommunicationHub: React.FC = () => {
   }, [unreadNotificationCount]);
 
   const tabs: TabConfig[] = [
-    { id: 'inbox', label: 'Inbox', icon: <Inbox className="h-4 w-4" /> },
-    { id: 'sent', label: 'Sent', icon: <Send className="h-4 w-4" /> },
-    { id: 'drafts', label: 'Drafts', icon: <FileEdit className="h-4 w-4" /> },
-    { id: 'announcements', label: 'Announcements', icon: <Megaphone className="h-4 w-4" /> },
-    { id: 'archived', label: 'Archived', icon: <Archive className="h-4 w-4" /> },
+    { id: 'inbox', label: 'Inbox', icon: <Inbox className="h-4 w-4" />, activeColor: 'bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-400 ring-1 ring-blue-500/30 shadow-sm' },
+    { id: 'sent', label: 'Sent', icon: <Send className="h-4 w-4" />, activeColor: 'bg-green-100 text-green-700 dark:bg-green-950/50 dark:text-green-400 ring-1 ring-green-500/30 shadow-sm' },
+    { id: 'drafts', label: 'Drafts', icon: <FileEdit className="h-4 w-4" />, activeColor: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400 ring-1 ring-amber-500/30 shadow-sm' },
+    { id: 'announcements', label: 'Announcements', icon: <Megaphone className="h-4 w-4" />, activeColor: 'bg-purple-100 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400 ring-1 ring-purple-500/30 shadow-sm' },
+    { id: 'archived', label: 'Archived', icon: <Archive className="h-4 w-4" />, activeColor: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400 ring-1 ring-red-500/30 shadow-sm' },
     ...(isAdmin ? [
-      { id: 'analytics' as TabId, label: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, adminOnly: true },
+      { id: 'analytics' as TabId, label: 'Analytics', icon: <BarChart3 className="h-4 w-4" />, activeColor: 'bg-pink-100 text-pink-700 dark:bg-pink-950/50 dark:text-pink-400 ring-1 ring-pink-500/30 shadow-sm', adminOnly: true },
     ] : []),
   ];
 
   const currentMessages = selectedConversation ? (messages[selectedConversation.id] || []) : [];
 
-  const handleReply = () => {
+  const handleReply = async () => {
     if (!replyText.trim() || !selectedConversation) return;
-    replyToConversation(selectedConversation.id, replyText);
+
+    if (selectedConversation.id.startsWith('temp-') || selectedConversation.id.startsWith('new-')) {
+      // This is a new 1-on-1 chat, we need to create it on the backend
+      const otherUserId = selectedConversation.participants.find(p => p !== user?.id && p !== 'emp-1');
+      if (otherUserId) {
+        const newConv = await sendMessage({
+          to: [otherUserId],
+          subject: 'Direct Message', // Backend still requires a subject
+          priority: 'medium',
+          content: replyText,
+        });
+        if (newConv) {
+          selectConversation(newConv);
+        }
+      }
+    } else {
+      replyToConversation(selectedConversation.id, replyText);
+    }
     setReplyText('');
   };
 
@@ -168,22 +190,52 @@ export const CommunicationHub: React.FC = () => {
                       </button>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50 truncate">{selectedConversation.subject}</h3>
-                          <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-bold ${getPriorityColor(selectedConversation.priority)}`}>
-                            {selectedConversation.priority}
-                          </span>
-                          {selectedConversation.isPinned && <Pin className="h-3 w-3 text-blue-500 shrink-0" />}
-                        </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-xs text-zinc-500 dark:text-zinc-500">
-                            {selectedConversation.participantNames.join(', ')}
-                          </p>
-                          {selectedConversation.project && (
-                            <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">· {selectedConversation.project}</span>
-                          )}
+                          <div className="relative shrink-0 mr-2">
+                            <img
+                              src={selectedConversation.type === 'group' ? 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150' : selectedConversation.type === 'direct' ? (selectedConversation.participantAvatars.find(a => a && a !== user?.profilePicture) || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150') : 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150'}
+                              alt="Avatar"
+                              className="h-10 w-10 rounded-full object-cover ring-2 ring-zinc-100 dark:ring-zinc-800"
+                            />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-base font-bold text-zinc-950 dark:text-zinc-50 truncate">
+                                {selectedConversation.type === 'group'
+                                  ? selectedConversation.groupName || selectedConversation.subject || 'Group Chat'
+                                  : selectedConversation.type === 'direct'
+                                  ? (selectedConversation.participantNames.filter(n => n !== 'You' && n !== user?.name).join(', ') || selectedConversation.participantNames[0])
+                                  : selectedConversation.subject}
+                              </h3>
+                              {selectedConversation.type !== 'direct' && (
+                                <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-bold ${getPriorityColor(selectedConversation.priority)}`}>
+                                  {selectedConversation.priority}
+                                </span>
+                              )}
+                              {selectedConversation.isPinned && <Pin className="h-3 w-3 text-blue-500 shrink-0" />}
+                            </div>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <p className="text-xs text-zinc-500 dark:text-zinc-500">
+                                {selectedConversation.type === 'direct' ? (
+                                  employees.find(e => e.id === selectedConversation.participants.find(p => p !== user?.id && p !== user?._id?.toString()))?.designation || 'Offline'
+                                ) : selectedConversation.participantNames.join(', ')}
+                              </p>
+                              {selectedConversation.project && selectedConversation.type !== 'direct' && (
+                                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">· {selectedConversation.project}</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        {selectedConversation.type === 'group' && isAdmin && (
+                          <button
+                            onClick={() => setIsAddMembersOpen(true)}
+                            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                            title="Add Members"
+                          >
+                            <UserPlus className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <button
                           onClick={() => selectedConversation.isPinned ? unpinConversation(selectedConversation.id) : pinConversation(selectedConversation.id)}
                           className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
@@ -226,7 +278,12 @@ export const CommunicationHub: React.FC = () => {
                         onChange={(e) => setReplyText(e.target.value)}
                         placeholder="Type your reply... Use @mention to tag someone."
                         rows={2}
-                        onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleReply(); }}
+                        onKeyDown={(e) => { 
+                          if (e.key === 'Enter' && !e.shiftKey) { 
+                            e.preventDefault(); 
+                            handleReply(); 
+                          } 
+                        }}
                         className="flex-1 rounded-xl border border-zinc-200/60 bg-zinc-50/50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder-zinc-400 transition-colors focus:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-100 dark:border-zinc-800/60 dark:bg-zinc-900/30 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-blue-800 dark:focus:ring-blue-950/50 resize-none"
                       />
                       <button
@@ -237,7 +294,7 @@ export const CommunicationHub: React.FC = () => {
                         <SendHorizonal className="h-4 w-4" />
                       </button>
                     </div>
-                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Press Ctrl+Enter to send</p>
+                    <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">Press Enter to send (Shift+Enter for new line)</p>
                   </div>
                 </>
               ) : (
@@ -391,7 +448,7 @@ export const CommunicationHub: React.FC = () => {
                   />
                 </div>
                 <div className="flex items-center gap-2 justify-end">
-                  <button onClick={handleCancelAnnouncementEdit} className="rounded-xl px-4 py-2 text-xs font-bold text-zinc-600 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors">Cancel</button>
+                  <button onClick={handleCancelAnnouncementEdit} className="rounded-xl px-4 py-2 text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 transition-colors">Cancel</button>
                   <button
                     onClick={handleSaveAnnouncement}
                     disabled={!announcementForm.title.trim() || !announcementForm.description.trim()}
@@ -457,8 +514,8 @@ export const CommunicationHub: React.FC = () => {
                 onClick={() => { setActiveTab(tab.id); selectConversation(null); }}
                 className={`flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400 shadow-sm'
-                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-200'
+                    ? tab.activeColor
+                    : 'text-zinc-600 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-200 border border-transparent'
                 }`}
               >
                 {tab.icon}
@@ -470,6 +527,16 @@ export const CommunicationHub: React.FC = () => {
                 )}
               </button>
             ))}
+            
+            {isAdmin && (
+              <button
+                onClick={() => setIsCreateGroupOpen(true)}
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-bold text-zinc-600 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-900/40 dark:hover:text-zinc-200 border border-transparent transition-all duration-200 ml-2"
+              >
+                <Users className="h-4 w-4 text-blue-500" />
+                Create Group
+              </button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
@@ -542,6 +609,15 @@ export const CommunicationHub: React.FC = () => {
       >
         <Plus className="h-6 w-6" />
       </button>
+      <CreateGroupModal isOpen={isCreateGroupOpen} onClose={() => setIsCreateGroupOpen(false)} />
+      {selectedConversation && (
+        <AddMembersModal 
+          isOpen={isAddMembersOpen} 
+          onClose={() => setIsAddMembersOpen(false)}
+          conversationId={selectedConversation.id}
+          currentParticipants={selectedConversation.participants}
+        />
+      )}
     </div>
   );
 };

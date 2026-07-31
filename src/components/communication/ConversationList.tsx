@@ -2,10 +2,11 @@
 
 import React from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
-import { Conversation } from '../../types/communication';
-import { CommunicationFilters } from '../../types/communication';
+import { Conversation, CommunicationFilters } from '../../types/communication';
 import { ConversationItem } from './ConversationItem';
 import { EmptyState } from '../ui/EmptyState';
+import { useCommunication } from '../../context/CommunicationContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -33,6 +34,55 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   showSearch = true,
 }) => {
   const [showFilters, setShowFilters] = React.useState(false);
+  const { employees, startDirectConversation } = useCommunication();
+  const { user } = useAuth();
+  const currentUserId = user?.id || 'emp-1';
+
+  // Find employees we don't have a direct conversation with yet
+  const chattedEmployeeIds = new Set<string>();
+  conversations.forEach((c) => {
+    if (c.type === 'direct' && c.participants.length === 2) {
+      const otherId = c.participants.find((p) => p !== currentUserId);
+      if (otherId) chattedEmployeeIds.add(otherId);
+    }
+  });
+
+  let unchattedEmployees = employees.filter(
+    (e) => !chattedEmployeeIds.has(e.id) && e.id !== currentUserId && e.id !== user?._id?.toString()
+  );
+
+  // Apply search filter to unchatted employees
+  if (filters.search) {
+    const searchLower = filters.search.toLowerCase();
+    unchattedEmployees = unchattedEmployees.filter(
+      (e) => e.name.toLowerCase().includes(searchLower) || (e.designation || '').toLowerCase().includes(searchLower)
+    );
+  }
+
+  // Generate dummy conversations for unchatted employees
+  const unchattedConversations: Conversation[] = unchattedEmployees.map((emp) => ({
+    id: `new-${emp.id}`,
+    type: 'direct',
+    subject: `Chat with ${emp.name}`,
+    priority: 'medium',
+    status: 'in_progress',
+    participants: [currentUserId, emp.id],
+    participantNames: [user?.name || 'You', emp.name],
+    participantAvatars: [user?.profilePicture || '', emp.profilePicture],
+    lastMessage: 'Tap to start conversation',
+    lastMessageTime: new Date().toISOString(),
+    lastMessageSender: '',
+    unreadCount: 0,
+    isRead: true,
+    isPinned: false,
+    isArchived: false,
+    hasAttachments: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    createdBy: currentUserId,
+  }));
+
+  const allConversations = [...conversations, ...unchattedConversations];
 
   return (
     <div className="flex h-full flex-col">
@@ -116,15 +166,22 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
       {/* List */}
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {conversations.length > 0 ? (
-          conversations.map((conv) => (
+        {allConversations.length > 0 ? (
+          allConversations.map((conv) => (
             <ConversationItem
               key={conv.id}
               conversation={conv}
               isSelected={selectedId === conv.id}
-              onClick={() => onSelect(conv)}
-              onArchive={onArchive ? () => onArchive(conv.id) : undefined}
-              onPin={onPin ? () => onPin(conv.id) : undefined}
+              onClick={() => {
+                if (conv.id.startsWith('new-')) {
+                  const empId = conv.id.replace('new-', '');
+                  startDirectConversation(empId);
+                } else {
+                  onSelect(conv);
+                }
+              }}
+              onArchive={onArchive && !conv.id.startsWith('new-') ? () => onArchive(conv.id) : undefined}
+              onPin={onPin && !conv.id.startsWith('new-') ? () => onPin(conv.id) : undefined}
             />
           ))
         ) : (

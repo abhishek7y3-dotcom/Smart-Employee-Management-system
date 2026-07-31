@@ -18,6 +18,8 @@ import {
   removeUser,
   logoutUser,
   verifyResetOtp as verifyResetOtpApi,
+  requestPhoneChangeOtpApi,
+  verifyPhoneChangeOtpApi,
 } from '../api/auth';
 import {
   AuthUser,
@@ -48,6 +50,8 @@ interface AuthContextType extends AuthState {
   updateUser: (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string; permanentAddress?: string; currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }) => Promise<void>;
   deleteAccount: () => Promise<void>;
   verifyResetOtp: (otp: string) => Promise<void>;
+  requestPhoneChangeOtp: (mobileNumber: string, countryCode: string) => Promise<string>;
+  verifyPhoneChangeOtp: (otp: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -223,6 +227,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
+  const requestPhoneChangeOtp = useCallback(async (mobileNumber: string, countryCode: string) => {
+    if (!user) return '';
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await requestPhoneChangeOtpApi({ mobileNumber, countryCode });
+      return res.message;
+    } catch (apiError) {
+      setError(getFriendlyErrorMessage(apiError));
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const verifyPhoneChangeOtp = useCallback(async (otp: string) => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await verifyPhoneChangeOtpApi(otp);
+      // Update local user state
+      if (res.data) {
+        const updatedUser = { ...user, mobileNumber: res.data.mobileNumber, countryCode: res.data.countryCode };
+        setUser(updatedUser);
+        window.localStorage.setItem(AUTH_STORAGE_KEYS.user, JSON.stringify(updatedUser));
+      }
+    } catch (apiError) {
+      setError(getFriendlyErrorMessage(apiError));
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   const isAuthenticated = Boolean(user && token);
 
   return (
@@ -243,6 +282,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updateUser,
         deleteAccount,
         verifyResetOtp,
+        requestPhoneChangeOtp,
+        verifyPhoneChangeOtp,
       }}
     >
       {children}</AuthContext.Provider>

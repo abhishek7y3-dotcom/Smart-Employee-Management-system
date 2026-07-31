@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axiosInstance from '@/services/axios';
 import { Calendar as CalendarIcon, Plus, LayoutGrid, List } from 'lucide-react';
+import { toast } from 'sonner';
 
 import { Holiday, HolidayStats } from '@/types/holiday';
 import { HolidayStatistics } from '@/components/calendar/HolidayStatistics';
@@ -71,7 +72,7 @@ export default function CalendarPage() {
       setIsModalOpen(false);
       fetchHolidays();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to create holiday');
+      toast.error(error.response?.data?.message || 'Failed to create holiday');
     } finally {
       setIsSubmitting(false);
     }
@@ -85,7 +86,7 @@ export default function CalendarPage() {
       setIsModalOpen(false);
       fetchHolidays();
     } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to update holiday');
+      toast.error(error.response?.data?.message || 'Failed to update holiday');
     } finally {
       setIsSubmitting(false);
     }
@@ -97,7 +98,7 @@ export default function CalendarPage() {
       await axiosInstance.delete(`/holidays/${holiday._id}`);
       fetchHolidays();
     } catch (error) {
-      alert('Failed to delete holiday');
+      toast.error('Failed to delete holiday');
     }
   };
 

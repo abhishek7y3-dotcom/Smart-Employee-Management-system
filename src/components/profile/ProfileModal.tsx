@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, User, Shield, Loader2, Mail, Camera, FileCheck, Phone } from 'lucide-react';
+import { X, User, Mail, Camera, FileCheck, Phone, Briefcase, Loader2, Edit2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -24,194 +24,88 @@ const countries = [
 ];
 
 export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) => {
-  const { user, updateUser, forgotPassword } = useAuth();
-  const router = useRouter();
-  const [isSendingPasswordOtp, setIsSendingPasswordOtp] = useState(false);
+  const { user, updateUser, requestPhoneChangeOtp, verifyPhoneChangeOtp } = useAuth();
   
   // Profile info state
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
-  const [gender, setGender] = useState('');
   const [countryCode, setCountryCode] = useState('+91');
   const [mobileNumber, setMobileNumber] = useState('');
   const [designation, setDesignation] = useState('');
 
-  // Error States
-  const [firstNameError, setFirstNameError] = useState<string | null>(null);
-  const [lastNameError, setLastNameError] = useState<string | null>(null);
-  const [mobileError, setMobileError] = useState<string | null>(null);
-  const [genderError, setGenderError] = useState<string | null>(null);
-
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-
-  // Preset Avatar URLs for quick selection
-  const avatarPresets = [
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150', // Woman 1
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150', // Man 1
-    'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150', // Woman 2
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150', // Man 2
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150', // Woman 3
-  ];
+  const [editingField, setEditingField] = useState<'phone' | 'type' | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otp, setOtp] = useState('');
 
   useEffect(() => {
     if (isOpen && user) {
-      setFirstName(user.firstName || '');
-      setLastName(user.lastName || '');
       setProfilePicture(user.profilePicture || '');
-      setGender(user.gender || '');
       setCountryCode(user.countryCode || '+91');
       setMobileNumber(user.mobileNumber || '');
       setDesignation(user.designation || '');
-      
-      setFirstNameError(null);
-      setLastNameError(null);
-      setMobileError(null);
-      setGenderError(null);
+      setEditingField(null);
+      setIsVerifyingOtp(false);
+      setOtp('');
     }
   }, [isOpen, user]);
 
   if (!isOpen || !user) return null;
 
-  const handleFirstNameChange = (val: string) => {
-    setFirstName(val);
-    if (!val) {
-      setFirstNameError(null);
-      return;
-    }
-    if (val.includes(' ')) {
-      setFirstNameError('Please do not use space in the first name.');
-      return;
-    }
-    if (/\d/.test(val)) {
-      setFirstNameError('First name cannot contain numbers.');
-      return;
-    }
-    const invalidCharRegex = /[^a-zA-Z.'\-]/;
-    if (invalidCharRegex.test(val)) {
-      setFirstNameError("First name can only contain letters, dots (.), quotes ('), and hyphens (-).");
-      return;
-    }
-    if (!/^[a-zA-Z]/.test(val)) {
-      setFirstNameError('First name must start with a letter.');
-      return;
-    }
-    setFirstNameError(null);
-  };
-
-  const handleLastNameChange = (val: string) => {
-    setLastName(val);
-    if (!val) {
-      setLastNameError(null);
-      return;
-    }
-    if (val.startsWith(' ')) {
-      setLastNameError('Last name cannot start with a space.');
-      return;
-    }
-    if (/\d/.test(val)) {
-      setLastNameError('Last name cannot contain numbers.');
-      return;
-    }
-    const invalidCharRegex = /[^a-zA-Z.'\- ]/;
-    if (invalidCharRegex.test(val)) {
-      setLastNameError("Last name can only contain letters, spaces, dots (.), quotes ('), and hyphens (-).");
-      return;
-    }
-    if (!/^[a-zA-Z]/.test(val)) {
-      setLastNameError('Last name must start with a letter.');
-      return;
-    }
-    setLastNameError(null);
-  };
-
   const handleMobileChange = (val: string) => {
     const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
     setMobileNumber(digitsOnly);
-    if (!digitsOnly) {
-      setMobileError(null);
-      return;
-    }
-    if (digitsOnly.startsWith('0')) {
-      setMobileError('Mobile number should never start with 0.');
-      return;
-    }
-    setMobileError(null);
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFirstNameError(null);
-    setLastNameError(null);
-    setMobileError(null);
-    setGenderError(null);
-
-    let hasError = false;
-
-    const firstNameRegex = /^[a-zA-Z][a-zA-Z.'\-]*$/;
-    const lastNameRegex = /^[a-zA-Z][a-zA-Z.'\- ]*$/;
-
-    if (!firstName.trim()) {
-      setFirstNameError('First name is required.');
-      hasError = true;
-    } else if (firstName.includes(' ')) {
-      setFirstNameError('Please do not use space in the first name.');
-      hasError = true;
-    } else if (firstName.trim().length < 2) {
-      setFirstNameError('First name must be at least 2 characters.');
-      hasError = true;
-    } else if (!firstNameRegex.test(firstName)) {
-      setFirstNameError("First name must start with a letter and contain only letters, dots, quotes, and hyphens.");
-      hasError = true;
-    }
-    if (!lastName.trim()) {
-      setLastNameError('Last name is required.');
-      hasError = true;
-    } else if (lastName.startsWith(' ')) {
-      setLastNameError('Last name cannot start with a space.');
-      hasError = true;
-    } else if (/\d/.test(lastName)) {
-      setLastNameError('Last name cannot contain numbers.');
-      hasError = true;
-    } else if (!lastNameRegex.test(lastName)) {
-      setLastNameError("Last name must start with a letter and contain only letters, spaces, dots, quotes, and hyphens.");
-      hasError = true;
-    }
-    if (!gender) {
-      setGenderError('Gender selection is required.');
-      hasError = true;
-    }
-    if (!mobileNumber.trim()) {
-      setMobileError('Mobile number is required.');
-      hasError = true;
-    } else if (mobileNumber.length !== 10) {
-      setMobileError('Mobile number must be exactly 10 digits.');
-      hasError = true;
-    } else if (mobileNumber.startsWith('0')) {
-      setMobileError('Mobile number should never start with 0.');
-      hasError = true;
+  const handleSaveField = async (field: 'phone' | 'type') => {
+    if (field === 'phone') {
+      if (mobileNumber && mobileNumber.length !== 10) {
+        toast.error('Mobile number must be 10 digits.');
+        return;
+      }
+      
+      setIsSaving(true);
+      try {
+        const msg = await requestPhoneChangeOtp(mobileNumber, countryCode);
+        toast.success(msg || 'OTP sent successfully!');
+        setIsVerifyingOtp(true);
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to request OTP');
+      } finally {
+        setIsSaving(false);
+      }
+      return;
     }
 
-    if (hasError) return;
-
-    setIsSavingProfile(true);
+    setIsSaving(true);
     try {
       await updateUser({
-        firstName,
-        lastName,
-        name: `${firstName} ${lastName}`,
-        profilePicture,
-        gender,
-        countryCode,
-        mobileNumber,
-        ...((user?.role === 'admin' || user?.role === 'superadmin') ? { designation } : {})
+        designation,
       });
       toast.success('Profile updated successfully');
-      onClose();
+      setEditingField(null);
     } catch (err: any) {
       toast.error(err?.message || 'Failed to update profile');
     } finally {
-      setIsSavingProfile(false);
+      setIsSaving(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (otp.length !== 6) {
+      toast.error('OTP must be 6 digits.');
+      return;
+    }
+    setIsSaving(true);
+    try {
+      await verifyPhoneChangeOtp(otp);
+      toast.success('Phone number verified and updated successfully!');
+      setIsVerifyingOtp(false);
+      setOtp('');
+      setEditingField(null);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to verify OTP');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -223,267 +117,316 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
         return;
       }
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePicture(reader.result as string);
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        setProfilePicture(base64);
+        try {
+          await updateUser({ profilePicture: base64 });
+          toast.success('Profile picture updated!');
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to update picture');
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handlePasswordChangeRequest = async () => {
-    if (!user?.email) return;
-    setIsSendingPasswordOtp(true);
-    try {
-      await forgotPassword({ email: user.email });
-      toast.success('Verification OTP code sent. Redirecting to reset page...');
-      setTimeout(() => {
-        onClose();
-        router.push(`/reset-password?email=${encodeURIComponent(user.email)}`);
-      }, 1500);
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to send OTP code');
-    } finally {
-      setIsSendingPasswordOtp(false);
+  const handleCoverPicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File is too large. Max size is 5MB.');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result as string;
+        try {
+          await updateUser({ coverPicture: base64 });
+          toast.success('Cover picture updated!');
+        } catch (error: any) {
+          toast.error(error.message || 'Failed to update cover picture');
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-250">
+    <>
       <div 
-        className="w-full max-w-xl bg-white dark:bg-zinc-950 border border-zinc-200/80 dark:border-zinc-800/80 rounded-2xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-250"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-900 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <User className="h-5 w-5 text-zinc-900 dark:text-white" />
-            <h2 className="text-lg font-bold text-zinc-950 dark:text-white font-outfit">My Profile</h2>
-          </div>
-          <button 
-            onClick={onClose} 
-            className="rounded-lg p-1.5 text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:hover:bg-zinc-900 dark:hover:text-zinc-200 transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Scrollable Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          
-          {/* User Details (Display Only) */}
-          <div className="flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl bg-zinc-50 dark:bg-zinc-900/40 border border-zinc-100 dark:border-zinc-900/60">
-            <img 
-              src={profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'} 
-              alt={firstName}
-              className="h-16 w-16 rounded-full object-cover ring-2 ring-zinc-200 dark:ring-zinc-800 shadow-sm"
-            />
-            <div className="text-center sm:text-left space-y-1">
-              <h3 className="text-base font-bold text-zinc-900 dark:text-white">{user.name}</h3>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5 justify-center sm:justify-start">
-                <Mail className="h-3.5 w-3.5 text-zinc-500" /> {user.email}
-              </p>
-              {user.mobileNumber && (
-                <p className="text-xs text-zinc-550 dark:text-zinc-400 flex items-center gap-1.5 justify-center sm:justify-start">
-                  <Phone className="h-3.5 w-3.5 text-zinc-500" /> {user.countryCode} {user.mobileNumber}
-                </p>
-              )}
-              <div className="flex flex-wrap items-center gap-2 mt-1.5 justify-center sm:justify-start">
-                <span className="rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-100/50 dark:border-blue-900/50 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wide">
-                  {user.designation || 'Employee'}
-                </span>
-                <span className="rounded-full bg-zinc-100 dark:bg-zinc-800 border border-zinc-200/50 dark:border-zinc-700/50 px-2 py-0.5 text-[10px] font-bold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
-                  {user.role}
-                </span>
-              </div>
+        className={`fixed inset-0 z-[60] bg-zinc-950/60 backdrop-blur-sm transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={onClose}
+      />
+      
+      <div className={`fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
+        <div 
+          className={`w-full max-w-md bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-2xl flex flex-col transition-all duration-300 ease-in-out pointer-events-auto ${isOpen ? 'scale-100 translate-y-0' : 'scale-95 translate-y-4'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header Section */}
+          <div className="relative border-b border-zinc-200 dark:border-zinc-800 rounded-t-2xl shrink-0">
+            {/* Cover Picture */}
+            <div className="h-32 w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-2xl overflow-hidden relative group">
+              <img 
+                src={user?.coverPicture || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200'} 
+                alt="Cover" 
+                className="w-full h-full object-cover"
+              />
+              <label htmlFor="modal-cover-upload" className="absolute top-4 right-14 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-10">
+                <Camera className="h-4 w-4" />
+              </label>
+              <input
+                id="modal-cover-upload"
+                type="file"
+                accept="image/*"
+                onChange={handleCoverPicChange}
+                className="hidden"
+              />
             </div>
-          </div>
 
-          <form onSubmit={handleSaveProfile} className="space-y-4">
-            <h4 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-1.5 border-b border-zinc-100 dark:border-zinc-900 pb-2">
-              <Shield className="h-4 w-4 text-zinc-600" /> Basic Details
-            </h4>
+            {/* Close Button */}
+            <button 
+              onClick={onClose} 
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/70 text-white transition-colors backdrop-blur-sm z-10"
+            >
+              <X className="h-4 w-4" />
+            </button>
             
-            {/* First Name & Last Name inputs */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <label htmlFor="profile-firstname" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First Name</label>
-                <input
-                  id="profile-firstname"
-                  type="text"
-                  value={firstName}
-                  onChange={(e) => handleFirstNameChange(e.target.value)}
-                  className={`w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${firstNameError ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}
-                  placeholder="First name"
-                  required
-                />
-                {firstNameError && <p className="text-sm text-red-500 font-semibold">{firstNameError}</p>}
-              </div>
-
-              <div className="space-y-1.5">
-                <label htmlFor="profile-lastname" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last Name</label>
-                <input
-                  id="profile-lastname"
-                  type="text"
-                  value={lastName}
-                  onChange={(e) => handleLastNameChange(e.target.value)}
-                  className={`w-full px-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${lastNameError ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}
-                  placeholder="Last name"
-                  required
-                />
-                {lastNameError && <p className="text-sm text-red-500 font-semibold">{lastNameError}</p>}
-              </div>
-            </div>
-
-            {/* Designation Field (Editable by admin only) */}
-            {(user?.role === 'admin' || user?.role === 'superadmin') && (
-              <div className="space-y-1.5">
-                <label htmlFor="profile-designation" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Designation</label>
-                <select
-                  id="profile-designation"
-                  value={designation}
-                  onChange={(e) => setDesignation(e.target.value)}
-                  className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
-                >
-                  <option value="CEO">CEO</option>
-                  <option value="Employee">Employee</option>
-                  <option value="Developer">Developer</option>
-                  <option value="Designer">Designer</option>
-                  <option value="QA Engineer">QA Engineer</option>
-                  <option value="Project Manager">Project Manager</option>
-                  <option value="Specialist">Specialist</option>
-                  <option value="HR Specialist">HR Specialist</option>
-                  <option value="Analyst">Analyst</option>
-                </select>
-              </div>
-            )}
-
-            {/* Gender Selection Dropdown */}
-            <div className="space-y-1.5">
-              <label htmlFor="profile-gender" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Gender</label>
-              <select
-                id="profile-gender"
-                value={gender}
-                onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
-                className="w-full px-3.5 py-2 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none cursor-pointer"
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-              {genderError && <p className="text-sm text-red-500 font-semibold">{genderError}</p>}
-            </div>
-
-            {/* Mobile number & Country dropdown */}
-            <div className="space-y-1.5">
-              <label htmlFor="profile-mobile" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number</label>
-              <div className="flex gap-2">
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-2 py-2 text-xs text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none shrink-0 cursor-pointer font-semibold"
-                >
-                  {countries.map((c) => (
-                    <option key={c.name} value={c.code}>
-                      {c.flag} {c.code}
-                    </option>
-                  ))}
-                </select>
-                <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+            <div className="flex flex-col items-center pb-6">
+              {/* Profile Avatar */}
+              <div className="relative -mt-14 mb-3">
+                <div className="relative group cursor-pointer">
+                  <label htmlFor="quick-photo-upload" className="cursor-pointer">
+                    <img 
+                      src={profilePicture || user.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'} 
+                      alt={user.name}
+                      className="h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-zinc-950 shadow-md transition-transform group-hover:scale-105 bg-white dark:bg-zinc-950"
+                    />
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="h-7 w-7 text-white" />
+                    </div>
+                  </label>
                   <input
-                    id="profile-mobile"
-                    type="text"
-                    inputMode="numeric"
-                    value={mobileNumber}
-                    onChange={(e) => handleMobileChange(e.target.value)}
-                    placeholder="10-digit number"
-                    className={`w-full pl-10 pr-3.5 py-2 rounded-xl border bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 ${mobileError ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}
-                  />
-                </div>
-              </div>
-              {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
-            </div>
-
-            {/* Photo Input (System file selector) */}
-            <div className="space-y-1.5">
-              <label htmlFor="profile-photo" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Profile Photo</label>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <div className="relative group overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900 w-24 h-24 flex items-center justify-center shrink-0">
-                  {profilePicture ? (
-                    <img src={profilePicture} alt="Selected profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User className="h-8 w-8 text-zinc-500" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <input
-                    id="profile-photo-file"
+                    id="quick-photo-upload"
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="block w-full text-xs text-zinc-600
-                      file:mr-4 file:py-1.5 file:px-3
-                      file:rounded-xl file:border-0
-                      file:text-xs file:font-semibold
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100
-                      dark:file:bg-blue-950/30 dark:file:text-blue-400
-                      cursor-pointer"
+                    className="hidden"
                   />
-                  <p className="text-[10px] text-zinc-500 dark:text-zinc-500">Choose a photo from your device. Max size 2MB.</p>
+                  <div className="absolute bottom-1 right-1 h-6 w-6 rounded-full bg-green-500 border-4 border-white dark:border-zinc-950" title="Online" />
                 </div>
               </div>
+              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white font-outfit">{user.name}</h2>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">{user.role === 'superadmin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Employee'}</p>
             </div>
+          </div>
 
-            {/* Quick Avatar Presets Selector */}
-            <div className="space-y-1.5">
-              <span className="text-[11px] font-semibold text-zinc-600 dark:text-zinc-400 flex items-center gap-1.5"><Camera className="h-3.5 w-3.5" /> Quick Preset Selection</span>
-              <div className="flex gap-2.5 pt-1">
-                {avatarPresets.map((preset, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setProfilePicture(preset)}
-                    className={`relative h-10 w-10 rounded-full overflow-hidden border-2 transition hover:scale-105 ${profilePicture === preset ? 'border-blue-600 scale-105' : 'border-zinc-200 dark:border-zinc-800'}`}
-                  >
-                    <img src={preset} alt="preset" className="h-full w-full object-cover" />
-                  </button>
-                ))}
+        {/* Content Section - The Simplified Card */}
+        <div className="flex-1 overflow-y-auto p-6 scrollbar-hide bg-zinc-50/30 dark:bg-zinc-900/20">
+          
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-2 shadow-sm">
+            
+            {/* Name Field (Read Only) */}
+            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-start gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors rounded-t-xl">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg shrink-0 mt-1">
+                <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Full Name</p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.name}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Name changes must be requested through HR.</p>
               </div>
             </div>
 
-            {/* Security Section with Change Password */}
-            <div className="border-t border-zinc-200/80 dark:border-zinc-850 pt-4 flex items-center justify-between">
-              <div className="space-y-0.5">
-                <span className="text-xs font-bold text-zinc-900 dark:text-white">Security & Password</span>
-                <p className="text-[10px] text-zinc-600 dark:text-zinc-400">Request code to reset password credentials</p>
+            {/* Email Field (Read Only) */}
+            <div className="p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-start gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors">
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg shrink-0 mt-1">
+                <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
               </div>
-              <button
-                type="button"
-                onClick={handlePasswordChangeRequest}
-                disabled={isSendingPasswordOtp}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-[10px] font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-55/80 dark:hover:bg-zinc-900 transition shadow-sm cursor-pointer disabled:opacity-50"
-              >
-                {isSendingPasswordOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : '🔑 Change Password'}
-              </button>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Email Address</p>
+                <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.email}</p>
+                <p className="text-[10px] text-zinc-400 mt-0.5">Email is tied to your account and cannot be edited.</p>
+              </div>
             </div>
 
-            {/* Save Profile Button */}
-            <div className="flex justify-end pt-2">
-              <button
-                type="submit"
-                disabled={isSavingProfile}
-                className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 disabled:opacity-50 transition shadow-sm cursor-pointer"
-              >
-                {isSavingProfile ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCheck className="h-3.5 w-3.5" />}
-                Save Details
-              </button>
+            {/* Phone Field (Editable) */}
+            <div 
+              className={`p-4 border-b border-zinc-100 dark:border-zinc-800 flex items-start gap-4 transition-colors group ${editingField !== 'phone' ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer' : ''}`}
+              onClick={() => { if (editingField !== 'phone') setEditingField('phone'); }}
+            >
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg shrink-0 mt-1">
+                <Phone className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1" onClick={(e) => { if(editingField === 'phone') e.stopPropagation(); }}>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Phone Number</p>
+                  {editingField !== 'phone' && (
+                    <button onClick={(e) => { e.stopPropagation(); setEditingField('phone'); }} className="text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md">
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                
+                {editingField === 'phone' ? (
+                  <div className="mt-2 space-y-3 animate-in fade-in duration-200">
+                    {!isVerifyingOtp ? (
+                      <>
+                        <div className="flex gap-2">
+                          <select
+                            value={countryCode}
+                            onChange={(e) => setCountryCode(e.target.value)}
+                            className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-2 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                          >
+                            {countries.map((c) => (
+                              <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
+                            ))}
+                          </select>
+                          <input
+                            type="text"
+                            value={mobileNumber}
+                            onChange={(e) => handleMobileChange(e.target.value)}
+                            placeholder="10 digit number"
+                            className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-1.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={() => {
+                              setCountryCode(user.countryCode || '+91');
+                              setMobileNumber(user.mobileNumber || '');
+                              setEditingField(null);
+                            }}
+                            className="px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-lg transition-colors cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button 
+                            onClick={() => handleSaveField('phone')}
+                            disabled={isSaving}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                          >
+                            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCheck className="h-3.5 w-3.5" />}
+                            Get OTP
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                            placeholder="Enter 6-digit OTP"
+                            className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-1.5 text-sm tracking-widest text-center font-bold focus:ring-2 focus:ring-blue-500 outline-none"
+                          />
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <p className="text-[10px] text-zinc-500">Check terminal or email for OTP</p>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setIsVerifyingOtp(false);
+                                setOtp('');
+                              }}
+                              className="px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-lg transition-colors cursor-pointer"
+                            >
+                              Cancel
+                            </button>
+                            <button 
+                              onClick={handleVerifyPhoneOtp}
+                              disabled={isSaving || otp.length !== 6}
+                              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                            >
+                              {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCheck className="h-3.5 w-3.5" />}
+                              Verify & Save
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    {user.mobileNumber ? `${user.countryCode} ${user.mobileNumber}` : <span className="text-zinc-400 italic">Click to add phone number</span>}
+                  </p>
+                )}
+              </div>
             </div>
-          </form>
 
+            {/* Employee Type (Editable for Admins only) */}
+            <div 
+              className={`p-4 flex items-start gap-4 transition-colors rounded-b-xl group ${editingField !== 'type' && (user.role === 'admin' || user.role === 'superadmin') ? 'hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer' : ''}`}
+              onClick={() => { 
+                if (editingField !== 'type' && (user.role === 'admin' || user.role === 'superadmin')) {
+                  setEditingField('type'); 
+                }
+              }}
+            >
+              <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg shrink-0 mt-1">
+                <Briefcase className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1" onClick={(e) => { if(editingField === 'type') e.stopPropagation(); }}>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Employee Type</p>
+                  {editingField !== 'type' && (user.role === 'admin' || user.role === 'superadmin') && (
+                    <button onClick={(e) => { e.stopPropagation(); setEditingField('type'); }} className="text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md">
+                      <Edit2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+                
+                {editingField === 'type' ? (
+                  <div className="mt-2 space-y-3 animate-in fade-in duration-200">
+                    <select
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value)}
+                      className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 px-3 py-2 text-sm font-semibold focus:ring-2 focus:ring-blue-500 outline-none"
+                    >
+                      <option value="CEO">CEO</option>
+                      <option value="Employee">Employee</option>
+                      <option value="Developer">Developer</option>
+                      <option value="Designer">Designer</option>
+                      <option value="QA Engineer">QA Engineer</option>
+                      <option value="Project Manager">Project Manager</option>
+                      <option value="Specialist">Specialist</option>
+                      <option value="HR Specialist">HR Specialist</option>
+                      <option value="Analyst">Analyst</option>
+                    </select>
+                    <div className="flex justify-end gap-2">
+                      <button 
+                        onClick={() => {
+                          setDesignation(user.designation || '');
+                          setEditingField(null);
+                        }}
+                        className="px-3 py-1.5 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 rounded-lg transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={() => handleSaveField('type')}
+                        disabled={isSaving}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                      >
+                        {isSaving && editingField === 'type' ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileCheck className="h-3.5 w-3.5" />}
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    {user.designation || <span className="text-zinc-400 italic">No employee type set</span>}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };

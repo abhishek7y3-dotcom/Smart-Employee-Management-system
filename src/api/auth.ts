@@ -252,6 +252,32 @@ export async function verifyResetOtp(email: string, otp: string): Promise<{ mess
   }
 }
 
+export async function requestPhoneChangeOtpApi(payload: { mobileNumber: string; countryCode: string }): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP sent to new mobile number.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/request-phone-change-otp', payload);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function verifyPhoneChangeOtpApi(otp: string): Promise<{ message: string, data: any }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP verified.', data: {} };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/verify-phone-change-otp', { otp });
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
 function normalizeApiError(error: unknown): Error {
   if (error instanceof Error) {
     return error;

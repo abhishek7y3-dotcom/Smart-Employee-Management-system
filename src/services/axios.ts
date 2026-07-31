@@ -1,6 +1,7 @@
 'use client';
 
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import { toast } from 'sonner';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -81,7 +82,7 @@ axiosInstance.interceptors.response.use(
 
       // Handle 403 Forbidden (e.g. Account deactivated by Admin)
       if (status === 403 && typeof window !== 'undefined') {
-        alert(message || 'Your account has been deactivated by an administrator.');
+        toast.error(message || 'Your account has been deactivated by an administrator.');
         window.localStorage.removeItem('auth_user');
         window.location.href = '/login';
       }

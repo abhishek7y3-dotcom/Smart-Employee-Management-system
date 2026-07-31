@@ -15,11 +15,11 @@ interface ComposeModalProps {
   prefill?: (Partial<ComposeFormData> & { id?: string }) | null;
 }
 
-const priorityOptions: { value: MessagePriority; label: string; color: string }[] = [
-  { value: 'low', label: 'Low', color: 'text-zinc-600 bg-zinc-50 dark:bg-zinc-900/30' },
-  { value: 'medium', label: 'Medium', color: 'text-blue-600 bg-blue-50 dark:bg-blue-950/30' },
-  { value: 'high', label: 'High', color: 'text-orange-600 bg-orange-50 dark:bg-orange-950/30' },
-  { value: 'urgent', label: 'Urgent', color: 'text-red-600 bg-red-50 dark:bg-red-950/30' },
+const priorityOptions: { value: MessagePriority; label: string; activeColor: string; inactiveColor: string }[] = [
+  { value: 'low', label: 'Low', activeColor: 'text-green-700 bg-green-100 border-green-300 dark:text-green-400 dark:bg-green-950/50 dark:border-green-800/50 ring-2 ring-green-500/20 shadow-sm', inactiveColor: 'text-green-600 border-green-200/60 bg-white hover:bg-green-50 dark:text-green-500 dark:border-green-900/30 dark:bg-transparent dark:hover:bg-green-950/20' },
+  { value: 'medium', label: 'Medium', activeColor: 'text-blue-700 bg-blue-100 border-blue-300 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-800/50 ring-2 ring-blue-500/20 shadow-sm', inactiveColor: 'text-blue-600 border-blue-200/60 bg-white hover:bg-blue-50 dark:text-blue-500 dark:border-blue-900/30 dark:bg-transparent dark:hover:bg-blue-950/20' },
+  { value: 'high', label: 'High', activeColor: 'text-amber-700 bg-amber-100 border-amber-300 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-800/50 ring-2 ring-amber-500/20 shadow-sm', inactiveColor: 'text-amber-600 border-amber-200/60 bg-white hover:bg-amber-50 dark:text-amber-500 dark:border-amber-900/30 dark:bg-transparent dark:hover:bg-amber-950/20' },
+  { value: 'urgent', label: 'Urgent', activeColor: 'text-red-700 bg-red-100 border-red-300 dark:text-red-400 dark:bg-red-950/50 dark:border-red-800/50 ring-2 ring-red-500/20 shadow-sm', inactiveColor: 'text-red-600 border-red-200/60 bg-white hover:bg-red-50 dark:text-red-500 dark:border-red-900/30 dark:bg-transparent dark:hover:bg-red-950/20' },
 ];
 
 export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onSend, onSaveDraft, isBroadcast, prefill }) => {
@@ -293,7 +293,7 @@ export const ComposeModal: React.FC<ComposeModalProps> = ({ isOpen, onClose, onS
             <label className="text-xs font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Priority</label>
             <div className="mt-1 flex gap-2">
               {priorityOptions.map((opt) => (
-                <button key={opt.value} onClick={() => setForm({ ...form, priority: opt.value })} className={`rounded-lg border px-3 py-1.5 text-xs font-bold transition-all ${form.priority === opt.value ? `${opt.color} border-current/20 ring-2 ring-current/10` : 'border-zinc-200/60 text-zinc-600 dark:border-zinc-800/60 dark:text-zinc-400'}`}>
+                <button key={opt.value} onClick={(e) => { e.preventDefault(); setForm({ ...form, priority: opt.value }); }} className={`rounded-lg border px-4 py-1.5 text-xs font-bold transition-all ${form.priority === opt.value ? opt.activeColor : opt.inactiveColor}`}>
                   {opt.label}
                 </button>
               ))}

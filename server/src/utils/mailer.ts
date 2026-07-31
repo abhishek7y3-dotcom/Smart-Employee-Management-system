@@ -157,41 +157,47 @@ export async function sendResetPasswordOtp(email: string, name: string, otp: str
 }
 
 // User ko notify karna ki admin ne uska account create kiya hai, password ke sath
-export async function sendAdminAccountCreationEmail(email: string, name: string, pass: string): Promise<void> {
+export async function sendAdminAccountCreationEmail(user: any, pass: string): Promise<void> {
   try {
     const transporter = await getTransporter();
     const SMTP_FROM = process.env.SMTP_FROM || 'noreply@employeemanager.com';
 
+    // Backwards compatibility with the older signature where user was passed as email
+    const email = typeof user === 'string' ? user : user.email;
+    const name = typeof user === 'string' ? arguments[1] : user.name;
+    const actualPass = typeof user === 'string' ? arguments[2] : pass;
+
     const mailOptions = {
       from: SMTP_FROM,
       to: email,
-      subject: `Welcome to Employee Task Manager, ${name}!`,
+      subject: `Welcome to Employee Management System, ${name}!`,
       html: `
-        <div style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 550px; margin: 0 auto; padding: 40px; border: 1px solid #e4e4e7; border-radius: 24px; background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <div style="display: inline-flex; justify-content: center; align-items: center; width: 64px; height: 64px; border-radius: 50%; background: #0f172a; box-shadow: 0 4px 15px -3px rgba(15, 23, 42, 0.3);">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><polyline points="16 11 18 13 22 9"></polyline>
-              </svg>
-            </div>
-            <h1 style="color: #090a0b; font-size: 26px; font-weight: 800; margin: 20px 0 0 0; letter-spacing: -0.5px;">Account Created</h1>
-          </div>
+        <div style="font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px; border: 1px solid #e4e4e7; border-radius: 12px; background: #ffffff;">
           
-          <div style="background-color: #ffffff; border: 1px solid #f4f4f5; border-radius: 16px; padding: 30px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);">
-            <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">Hello <strong style="color: #18181b;">${name}</strong>,</p>
-            <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">An administrator has just set up a new account for you on Employee Task Manager. You can now log in using the credentials below:</p>
-            
-            <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; padding: 20px; text-align: center; margin-bottom: 25px;">
-              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Email</p>
-              <p style="margin: 0 0 20px 0; color: #0f172a; font-size: 18px; font-weight: 700;">${email}</p>
-              <p style="margin: 0 0 10px 0; color: #64748b; font-size: 14px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Temporary Password</p>
-              <p style="margin: 0; color: #0f172a; font-size: 24px; font-weight: 800; letter-spacing: 2px;">${pass}</p>
-            </div>
-            
-            <p style="color: #ef4444; font-size: 14px; font-weight: 600; text-align: center; margin: 0;">Please change your password immediately after logging in.</p>
-          </div>
+          <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">Dear <strong>${name}</strong>,</p>
           
-          <p style="color: #71717a; font-size: 13px; text-align: center; margin: 0;">If you need assistance, please contact your administrator.</p>
+          <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 15px 0;">Welcome to <strong>Employee Management System</strong>!</p>
+          
+          <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 25px 0;">We are pleased to inform you that your employee account has been successfully created by the system administrator.</p>
+          
+          <h3 style="color: #0f172a; font-size: 18px; font-weight: 700; margin: 0 0 15px 0; border-bottom: 2px solid #f4f4f5; padding-bottom: 8px;">Your Account Details</h3>
+          
+          <ul style="list-style: none; padding: 0; margin: 0 0 25px 0; color: #3f3f46; font-size: 16px; line-height: 1.8;">
+            <li><strong>Name:</strong> ${name}</li>
+            <li><strong>Email:</strong> ${email}</li>
+            <li><strong>Designation:</strong> ${user?.designation || 'Employee'}</li>
+            <li><strong>Role:</strong> ${user?.role || 'Member'}</li>
+            <li><strong>Temporary Password:</strong> <span style="font-family: monospace; background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">${actualPass}</span></li>
+          </ul>
+          
+          <p style="color: #ef4444; font-size: 15px; font-weight: 600; margin: 0 0 25px 0;">Please reset your password immediately after your first successful login.</p>
+          
+          <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0 0 20px 0;">If you experience any issues accessing your account, please contact the System Administrator.</p>
+          
+          <p style="color: #3f3f46; font-size: 16px; line-height: 1.6; margin: 0;">Warm regards,<br>
+          <strong>HR & Administration Team</strong><br>
+          <strong>Employee Management System</strong></p>
+          
         </div>
       `
     };

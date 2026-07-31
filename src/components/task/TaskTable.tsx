@@ -6,7 +6,7 @@ import { formatDate } from '../../utils/format';
 import { StatusBadge } from './StatusBadge';
 import { EmptyState } from '../ui/EmptyState';
 import { LoadingState } from '../ui/LoadingState';
-import { Trash2, Pencil, Eye } from 'lucide-react';
+import { Trash2, Pencil, Eye, Download } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface TaskTableProps {
@@ -22,9 +22,17 @@ interface TaskTableProps {
 }
 
 const priorityColors = {
-  low: 'bg-green-50/70 text-green-700 dark:bg-green-950/30 dark:text-green-400 border-green-200/40 dark:border-green-900/30 font-bold',
-  medium: 'bg-amber-50/70 text-amber-705 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/40 dark:border-amber-900/30 font-bold',
-  high: 'bg-red-50/70 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200/40 dark:border-red-900/30 font-bold',
+  low: 'bg-green-100 text-green-700 dark:bg-green-900/80 dark:text-green-300 border-green-300 dark:border-green-700 font-bold shadow-sm',
+  medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/80 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold shadow-sm',
+  high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/80 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-bold shadow-sm',
+  urgent: 'bg-red-100 text-red-700 dark:bg-red-900/80 dark:text-red-300 border-red-300 dark:border-red-700 font-bold shadow-sm',
+};
+
+const statusColors: Record<string, string> = {
+  todo: 'bg-red-100 text-red-700 dark:bg-red-900/80 dark:text-red-300 border-red-300 dark:border-red-700',
+  in_progress: 'bg-amber-100 text-amber-700 dark:bg-amber-900/80 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+  'in-progress': 'bg-amber-100 text-amber-700 dark:bg-amber-900/80 dark:text-amber-300 border-amber-300 dark:border-amber-700',
+  completed: 'bg-green-100 text-green-700 dark:bg-green-900/80 dark:text-green-300 border-green-300 dark:border-green-700',
 };
 
 const getEmployeeDisplayName = (employees: Employee[], assignedTo: string) => {
@@ -51,6 +59,39 @@ export const TaskTable: React.FC<TaskTableProps> = ({
   };
   const { user } = useAuth();
   const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin');
+
+  const handleDownloadSingleCSV = (task: Task) => {
+    const headers = ['Title', 'Description', 'Priority', 'Status', 'Assigned To', 'Due Date', 'Created At'];
+    const employee = employees.find(e => e.id === task.assignedTo);
+    const assigneeName = employee ? employee.name : 'Unknown';
+    
+    const escapeCSV = (str: string) => `"${(str || '').replace(/"/g, '""')}"`;
+    
+    const row = [
+      escapeCSV(task.title),
+      escapeCSV(task.description),
+      escapeCSV(task.priority),
+      escapeCSV(task.status),
+      escapeCSV(assigneeName),
+      escapeCSV(task.dueDate),
+      escapeCSV(new Date(task.createdAt || Date.now()).toLocaleDateString())
+    ].join(',');
+    
+    const csvContent = `${headers.join(',')}\n${row}`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `task_${task.id.substring(0, 8)}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="rounded-2xl border border-zinc-200/60 bg-white p-6 dark:border-zinc-800/60 dark:bg-zinc-950 transition-colors duration-300">
@@ -69,26 +110,12 @@ export const TaskTable: React.FC<TaskTableProps> = ({
         <table className="w-full border-collapse text-left text-base text-zinc-800 dark:text-zinc-200">
           <thead className="bg-zinc-50/50 text-[13px] font-bold uppercase tracking-[0.1em] text-zinc-950 border-b border-zinc-200/60 dark:bg-zinc-900/20 dark:text-zinc-50 dark:border-zinc-800/60">
             <tr>
-              <th className="pl-6 pr-2 py-4">Task</th>
-              <th className="pl-2 pr-6 py-4">Assigned To</th>
-              <th className="px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <span>Priority</span>
-                  <select 
-                    value={priorityFilter}
-                    onChange={(e) => onPriorityFilterChange?.(e.target.value)}
-                    className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded-md px-2 py-1 text-[11px] font-bold uppercase tracking-wider outline-none cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                  >
-                    <option value="all">All</option>
-                    <option value="high">High</option>
-                    <option value="medium">Medium</option>
-                    <option value="low">Low</option>
-                  </select>
-                </div>
-              </th>
-              <th className="px-6 py-4">Status</th>
-              <th className="px-6 py-4">Due Date</th>
-              <th className="px-6 py-4 text-right">Actions</th>
+              <th className="pl-6 pr-2 py-4 text-blue-700 dark:text-blue-400">Task</th>
+              <th className="pl-2 pr-6 py-4 text-purple-700 dark:text-purple-400">Assigned To</th>
+              <th className="px-6 py-4 text-amber-700 dark:text-amber-400">Priority</th>
+              <th className="px-6 py-4 text-pink-700 dark:text-pink-400">Status</th>
+              <th className="px-6 py-4 text-cyan-700 dark:text-cyan-400">Due Date</th>
+              <th className="px-6 py-4 text-right text-slate-700 dark:text-slate-400">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
@@ -105,24 +132,19 @@ export const TaskTable: React.FC<TaskTableProps> = ({
                   </span>
                 </td>
                 <td className="px-6 py-4">
-                  {isAdmin ? (
-                    <select
-                      value={task.status}
-                      onChange={(e) => onStatusChange?.(task.id, e.target.value as Task['status'])}
-                      className="text-sm bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-800 dark:text-zinc-100 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-bold cursor-pointer"
-                    >
-                      <option value="todo">Pending</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-
-                    </select>
-                  ) : (
-                    <StatusBadge status={task.status} />
-                  )}
+                  <StatusBadge status={task.status} />
                 </td>
                 <td className="px-6 py-4 text-sm font-bold text-zinc-700 dark:text-zinc-300">{formatDate(task.dueDate)}</td>
                 <td className="px-6 py-4 text-right whitespace-nowrap">
                   <div className="inline-flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadSingleCSV(task)}
+                      className="rounded-xl p-2 text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 hover:scale-105 transition-all dark:text-indigo-400 dark:hover:bg-indigo-950/20 dark:hover:text-indigo-300 cursor-pointer"
+                      title="Download CSV"
+                    >
+                      <Download className="h-4.5 w-4.5" />
+                    </button>
                     {onViewTask && (
                       <button
                         type="button"

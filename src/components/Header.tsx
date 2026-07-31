@@ -1,13 +1,14 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Bell, ClipboardCheck, User as UserIcon, LogOut, ChevronDown } from 'lucide-react';
+import { Bell, ClipboardCheck, User as UserIcon, LogOut, ChevronDown, Menu } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import { AccessibilityToggle } from './AccessibilityToggle';
 import { useTasks } from '../context/TaskContext';
 import { useAuth } from '../context/AuthContext';
 import { useNotification } from '../context/NotificationContext';
 import { useRouter } from 'next/navigation';
+import { ProfileModal } from './profile/ProfileModal';
 
 
 
@@ -18,6 +19,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const currentDate = typeof window === 'undefined'
     ? ''
     : new Date().toLocaleDateString(undefined, {
@@ -91,17 +93,27 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200/40 bg-white/60 px-4 backdrop-blur-xl shadow-sm transition-colors duration-300 dark:border-zinc-800/50 dark:bg-zinc-900/60 md:px-6">
-      <div
-        className="flex min-w-0 items-center gap-3 cursor-pointer select-none"
-        onClick={onMenuClick}
-      >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm hover:scale-105 transition-all duration-300">
-          <ClipboardCheck className="h-5 w-5" />
-        </div>
-        <div className="min-w-0">
-          <h1 className="truncate text-base font-bold leading-tight text-zinc-950 dark:text-zinc-50 md:text-lg hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Employee Task Manager</h1>
-          <p className="hidden text-xs text-zinc-500 dark:text-zinc-500 sm:block">Workspace Dashboard</p>
+    <>
+      <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b border-zinc-200/40 bg-white/60 px-4 backdrop-blur-xl shadow-sm transition-colors duration-300 dark:border-zinc-800/50 dark:bg-zinc-900/60 md:px-6">
+      <div className="flex items-center gap-2 md:gap-3">
+        <button 
+          onClick={onMenuClick} 
+          className="lg:hidden p-2 -ml-2 mr-1 rounded-xl text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+          aria-label="Toggle Menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div
+          className="flex min-w-0 items-center gap-3 cursor-pointer select-none group"
+          onClick={() => router.push('/')}
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-sm group-hover:scale-105 transition-all duration-300">
+            <ClipboardCheck className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-bold leading-tight text-zinc-950 dark:text-zinc-50 md:text-lg group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">Employee Task Manager</h1>
+            <p className="hidden text-xs text-zinc-500 dark:text-zinc-500 sm:block">Workspace Dashboard</p>
+          </div>
         </div>
       </div>
 
@@ -226,7 +238,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </div>
                 <button
                   onClick={() => {
-                    router.push('/profile');
+                    setIsProfileModalOpen(true);
                     setIsProfileDropdownOpen(false);
                   }}
                   className="w-full flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors cursor-pointer text-left outline-none"
@@ -251,5 +263,12 @@ export const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         </div>
       </div>
     </header>
+      
+    {/* Profile Modal - rendered outside header to escape backdrop-filter containing block */}
+    <ProfileModal 
+      isOpen={isProfileModalOpen} 
+      onClose={() => setIsProfileModalOpen(false)} 
+    />
+    </>
   );
 };

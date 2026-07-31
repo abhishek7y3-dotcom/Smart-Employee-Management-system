@@ -44,25 +44,27 @@ export const ChatLayout = () => {
       {/* Main Area */}
       <div className="flex-1 flex flex-col relative min-w-0">
         {/* Top Header - Minimal */}
-        <div className="flex-none h-14 px-4 flex items-center sticky top-0 z-10 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-sm gap-2">
+        <div className="flex-none h-14 px-4 flex items-center sticky top-0 z-10 bg-white dark:bg-zinc-950 border-b border-zinc-100 dark:border-zinc-800/50 gap-3">
           {!isSidebarOpen && (
             <button 
               onClick={() => setIsSidebarOpen(true)}
-              className="p-2 text-zinc-600 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-md transition-colors"
+              className="p-2 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800/50 rounded-lg transition-all"
               title="Open sidebar"
             >
-              <PanelLeftOpen size={20} />
+              <PanelLeftOpen size={18} />
             </button>
           )}
           {currentView === 'chat' && (
-            <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2 pl-2">
-              AI Assistant
-            </h1>
+            <div className="flex items-center gap-3">
+               <span className="font-semibold text-zinc-800 dark:text-zinc-100 tracking-tight text-sm">AI Assistant</span>
+               <span className="px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold uppercase tracking-wider border border-blue-100 dark:border-blue-800/50">Enterprise</span>
+            </div>
           )}
           {currentView === 'rag' && (
-            <h1 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 flex items-center gap-2 pl-2">
-              Document Q&A
-            </h1>
+            <div className="flex items-center gap-3">
+               <span className="font-semibold text-zinc-800 dark:text-zinc-100 tracking-tight text-sm">Document Q&A</span>
+               <span className="px-2 py-0.5 rounded-full bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold uppercase tracking-wider border border-purple-100 dark:border-purple-800/50">Enterprise</span>
+            </div>
           )}
         </div>
         

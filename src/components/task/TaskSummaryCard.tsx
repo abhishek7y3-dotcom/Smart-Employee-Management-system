@@ -76,7 +76,7 @@ export const TaskSummaryCard: React.FC<TaskSummaryCardProps> = ({
   const classes = `group rounded-2xl border p-5 shadow-sm transition-all duration-300 hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50 ${
     isActive
       ? `${selectedColor.activeBorder} bg-zinc-50/80 dark:bg-zinc-900/80`
-      : `border-zinc-200/70 bg-white/90 dark:border-zinc-800/80 dark:bg-zinc-950/30 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-md ${selectedColor.hoverBorder} ${selectedColor.bgGradient}`
+      : `border-zinc-300/80 bg-white/90 shadow-[0_2px_10px_-3px_rgba(0,0,0,0.05)] dark:border-zinc-800/80 dark:bg-zinc-950/30 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-md ${selectedColor.hoverBorder} ${selectedColor.bgGradient}`
   } ${className}`;
 
   if (href) {

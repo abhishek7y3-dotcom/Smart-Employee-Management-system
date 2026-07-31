@@ -56,3 +56,32 @@ export async function sendPromptWithTools(
   
   return response;
 }
+
+// Ye naya function streaming ke liye hai
+export async function sendPromptWithToolsStream(
+  systemInstruction: string,
+  history: any[],
+  prompt: string | any[],
+  tools: { functionDeclarations: FunctionDeclaration[] }[]
+) {
+  const modelConfig: any = {
+    model: 'gemini-flash-latest',
+    systemInstruction,
+  };
+
+  if (tools && tools.length > 0) {
+    modelConfig.tools = tools;
+  }
+
+  const modelWithConfig = genAI.getGenerativeModel(
+    modelConfig,
+    { customFetch } as any
+  );
+
+  const chat = modelWithConfig.startChat({
+    history,
+  });
+
+  const result = await chat.sendMessageStream(prompt);
+  return result;
+}

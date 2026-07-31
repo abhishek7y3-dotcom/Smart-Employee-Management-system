@@ -24,7 +24,27 @@ export const ChatWindow = () => {
                  <Sparkles className="text-zinc-600" size={32} />
               </div>
               <h2 className="text-2xl font-medium mb-2">How can I help you today?</h2>
-              <p className="text-sm text-zinc-600">Ask about your tasks, team workload, or workspace updates.</p>
+              <p className="text-sm text-zinc-600 mb-8">Ask about your tasks, team workload, or workspace updates.</p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
+                {[
+                  { title: "Pending Tasks", query: "Show me all my pending tasks" },
+                  { title: "Team Members", query: "List all active team members in this workspace" },
+                  { title: "Leave Requests", query: "Show me all pending leave requests" },
+                  { title: "Today's Attendance", query: "Show today's attendance report for the team" },
+                  { title: "Workload Analysis", query: "What is my team's current workload?" },
+                  { title: "Admin Users", query: "Show admin users in the workspace" }
+                ].map((prompt, index) => (
+                  <button
+                    key={index}
+                    onClick={() => sendMessage(prompt.query)}
+                    className="flex flex-col text-left p-3.5 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:border-blue-200 dark:hover:border-blue-900/50 transition-all cursor-pointer group"
+                  >
+                    <span className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{prompt.title}</span>
+                    <span className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 truncate w-full">{prompt.query}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="pt-10 pb-4 flex flex-col gap-6">

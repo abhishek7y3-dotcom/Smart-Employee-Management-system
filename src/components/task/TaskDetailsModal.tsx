@@ -14,9 +14,10 @@ interface TaskDetailsModalProps {
 }
 
 const priorityColors = {
-  low: 'bg-green-50/70 text-green-700 dark:bg-green-950/30 dark:text-green-400 border-green-200/40 dark:border-green-900/30 font-bold',
-  medium: 'bg-amber-50/70 text-amber-705 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/40 dark:border-amber-900/30 font-bold',
-  high: 'bg-red-50/70 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200/40 dark:border-red-900/30 font-bold',
+  low: 'bg-green-100 text-green-700 dark:bg-green-900/80 dark:text-green-300 border-green-300 dark:border-green-700 font-bold shadow-sm',
+  medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/80 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold shadow-sm',
+  high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/80 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-bold shadow-sm',
+  urgent: 'bg-red-100 text-red-700 dark:bg-red-900/80 dark:text-red-300 border-red-300 dark:border-red-700 font-bold shadow-sm',
 };
 
 export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task, employees, onClose }) => {
@@ -37,7 +38,7 @@ export const TaskDetailsModal: React.FC<TaskDetailsModalProps> = ({ isOpen, task
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-zinc-950/60 backdrop-blur-md transition-opacity duration-300" onClick={onClose} />
-      
+
       {/* Content Container */}
       <div className="relative z-10 w-full max-w-lg rounded-2xl border border-zinc-200/80 bg-white/95 p-6 shadow-2xl backdrop-blur-xl dark:border-zinc-800/80 dark:bg-zinc-900/95 transition-all duration-300 animate-in fade-in zoom-in-95 font-sans">
         <div className="flex items-start justify-between gap-4 border-b border-zinc-150 dark:border-zinc-800/60 pb-4 mb-5">

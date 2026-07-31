@@ -11,7 +11,7 @@ export async function getEmployees(req: AuthRequest, res: Response) {
   try {
     const currentUserId = req.user?._id.toString();
     const users = await User.find(
-      { _id: { $ne: currentUserId }, isVerified: true },
+      { _id: { $ne: currentUserId } },
       'name email role designation profilePicture'
     );
 
@@ -46,6 +46,12 @@ export async function getConversations(req: AuthRequest, res: Response) {
     const { type, isArchived, search } = req.query;
 
     const filter: any = { participants: userId };
+    
+    // Admin override to see all conversations
+    if (req.query.all === 'true' && (req.user?.role === 'admin' || req.user?.role === 'superadmin')) {
+      delete filter.participants;
+    }
+
     if (type) filter.type = type;
     if (isArchived === 'true') filter.isArchived = true;
     else if (isArchived === 'false') filter.isArchived = false;
@@ -84,6 +90,18 @@ export async function getConversationById(req: AuthRequest, res: Response) {
       return res.status(404).json({
         success: false,
         message: 'Conversation not found.',
+        errors: [],
+      });
+    }
+
+    // Security check: Only participants or admins can access
+    const isAdmin = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    const isParticipant = conversation.participants.some(p => p.toString() === req.user?._id.toString());
+    
+    if (!isAdmin && !isParticipant) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You are not a participant in this conversation.',
         errors: [],
       });
     }
@@ -267,6 +285,28 @@ export async function deleteConversation(req: AuthRequest, res: Response) {
 export async function getMessages(req: AuthRequest, res: Response) {
   try {
     const { conversationId } = req.params;
+    
+    // Security check: Fetch conversation first
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conversation not found.',
+        errors: [],
+      });
+    }
+
+    const isAdmin = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    const isParticipant = conversation.participants.some(p => p.toString() === req.user?._id.toString());
+    
+    if (!isAdmin && !isParticipant) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You are not a participant in this conversation.',
+        errors: [],
+      });
+    }
+
     const messages = await Message.find({ conversationId }).sort({ timestamp: 1 });
 
     return res.status(200).json({
@@ -296,6 +336,27 @@ export async function sendMessage(req: AuthRequest, res: Response) {
       return res.status(400).json({
         success: false,
         message: 'Message content is required.',
+        errors: [],
+      });
+    }
+
+    // Security check: Ensure conversation exists and user is participant/admin
+    const conversationCheck = await Conversation.findById(conversationId);
+    if (!conversationCheck) {
+      return res.status(404).json({
+        success: false,
+        message: 'Conversation not found.',
+        errors: [],
+      });
+    }
+
+    const isAdmin = req.user?.role === 'admin' || req.user?.role === 'superadmin';
+    const isParticipant = conversationCheck.participants.some(p => p.toString() === userId);
+
+    if (!isAdmin && !isParticipant) {
+      return res.status(403).json({
+        success: false,
+        message: 'Forbidden. You cannot send messages to this conversation.',
         errors: [],
       });
     }
@@ -797,6 +858,7 @@ function formatConversation(conv: any) {
     id: conv._id.toString(),
     type: conv.type,
     subject: conv.subject,
+    groupName: conv.groupName,
     project: conv.project || undefined,
     relatedTaskId: conv.relatedTaskId || undefined,
     relatedTaskTitle: conv.relatedTaskTitle || undefined,
@@ -850,4 +912,81 @@ function formatAnnouncement(ann: any) {
     readBy: ann.readBy || [],
     createdAt: ann.createdAt?.toISOString() || new Date().toISOString(),
   };
+}
+
+// ─── Group Chat ─────────────────────────────────────────────────────────────
+export async function createGroup(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?._id.toString();
+    const userRole = req.user?.role;
+
+    if (!userId || !userRole) {
+      return res.status(401).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    if (userRole !== 'admin' && userRole !== 'superadmin') {
+      return res.status(403).json({ success: false, message: 'Only admins and superadmins can create groups.' });
+    }
+
+    const { groupName, participants, relatedTaskId, initialMessage } = req.body;
+
+    if (!groupName || !participants || !Array.isArray(participants)) {
+      return res.status(400).json({ success: false, message: 'Invalid data.' });
+    }
+
+    const participantIds = [userId, ...participants];
+    // Remove duplicates
+    const uniqueParticipants = Array.from(new Set(participantIds));
+
+    // Fetch user details for names and avatars
+    const users = await User.find(
+      { _id: { $in: uniqueParticipants } },
+      'name profilePicture'
+    );
+
+    const participantNames = users.map((u) => u.name);
+    const participantAvatars = users.map((u) => u.profilePicture || '');
+
+    const group = await Conversation.create({
+      type: 'group',
+      groupName,
+      groupAdmins: [userId],
+      subject: groupName,
+      relatedTaskId: relatedTaskId || '',
+      participants: uniqueParticipants,
+      participantNames,
+      participantAvatars,
+      lastMessage: initialMessage || 'Group created',
+      lastMessageTime: new Date(),
+      lastMessageSender: req.user?.name || 'Admin',
+      unreadCount: 0,
+      isRead: true,
+      status: 'sent',
+      createdBy: userId,
+    });
+
+    if (initialMessage) {
+      await Message.create({
+        conversationId: group._id.toString(),
+        senderId: userId,
+        senderName: req.user?.name || 'Admin',
+        senderAvatar: req.user?.profilePicture || '',
+        content: initialMessage,
+        status: 'sent',
+        attachments: [],
+        mentions: [],
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Group created successfully.',
+      data: {
+        conversation: formatConversation(group),
+      },
+    });
+  } catch (error: any) {
+    console.error('communicationController: createGroup error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to create group.' });
+  }
 }

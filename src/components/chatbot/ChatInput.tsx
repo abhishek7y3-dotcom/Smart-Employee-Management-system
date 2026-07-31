@@ -56,8 +56,8 @@ export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void;
   };
 
   return (
-    <div className="p-4 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800">
-      <div className="max-w-4xl mx-auto flex flex-col gap-2">
+    <div className="w-full">
+      <div className="max-w-3xl mx-auto flex flex-col gap-2 relative">
         
         {/* Attached File Badge */}
         {attachedFile && (
@@ -73,14 +73,15 @@ export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void;
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="relative flex items-center">
+        <form onSubmit={handleSubmit} className="relative flex items-center bg-white dark:bg-zinc-900 border-2 border-zinc-300 dark:border-zinc-700 rounded-3xl shadow-md focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:border-blue-500 transition-all px-2 py-1.5">
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="absolute left-2 p-2 rounded-full text-zinc-600 hover:bg-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="shrink-0 p-2 rounded-full text-zinc-500 hover:text-zinc-800 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            title="Attach file"
           >
-            <Plus size={18} />
+            <Plus size={20} />
           </button>
           <input 
             type="file" 
@@ -93,17 +94,17 @@ export const ChatInput = ({ onSend, disabled }: { onSend: (msg: string) => void;
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask me about your tasks or team..."
-            className="w-full bg-zinc-100 dark:bg-zinc-900 border-none rounded-2xl py-3 pl-12 pr-12 text-sm focus:ring-2 focus:ring-blue-500 resize-none h-[48px] overflow-hidden leading-tight"
+            placeholder="Ask AI Assistant anything..."
+            className="w-full bg-transparent border-none py-3 px-2 text-[15px] text-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400 dark:placeholder:text-zinc-500 focus:outline-none resize-none h-[48px] overflow-hidden leading-tight"
             disabled={disabled}
             rows={1}
           />
           <button
             type="submit"
             disabled={(!text.trim() && !attachedFile) || disabled}
-            className="absolute right-2 p-2 rounded-full text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className={`shrink-0 p-2 rounded-full transition-all flex items-center justify-center h-9 w-9 ${(!text.trim() && !attachedFile) ? 'text-zinc-400 dark:text-zinc-600 bg-zinc-100 dark:bg-zinc-800' : 'text-white bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200'} disabled:cursor-not-allowed`}
           >
-            <Send size={18} />
+            <Send size={16} className={(!text.trim() && !attachedFile) ? "" : "ml-0.5"} />
           </button>
         </form>
       </div>

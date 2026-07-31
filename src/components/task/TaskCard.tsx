@@ -17,9 +17,10 @@ interface TaskCardProps {
 }
 
 const priorityColors = {
-  low: 'bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 border-green-200/70 dark:border-green-800/60',
-  medium: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/70 dark:border-amber-800/60',
-  high: 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400 border-red-200/70 dark:border-red-800/60',
+  low: 'bg-green-100 text-green-700 dark:bg-green-900/80 dark:text-green-300 border-green-300 dark:border-green-700 font-bold shadow-sm',
+  medium: 'bg-blue-100 text-blue-700 dark:bg-blue-900/80 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold shadow-sm',
+  high: 'bg-amber-100 text-amber-700 dark:bg-amber-900/80 dark:text-amber-300 border-amber-300 dark:border-amber-700 font-bold shadow-sm',
+  urgent: 'bg-red-100 text-red-700 dark:bg-red-900/80 dark:text-red-300 border-red-300 dark:border-red-700 font-bold shadow-sm',
 };
 
 const statuses: Array<{ value: Task['status']; label: string }> = [
@@ -75,8 +76,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
           </div>
         </div>
 
-        <div className="flex items-center justify-between gap-2.5 flex-nowrap">
-          {onStatusChange && (
+        <div className="flex w-full items-center justify-between gap-3 pt-4">
+          {onStatusChange && (isAdmin || task.assignedTo === user?.id) && (
             <div className="relative min-w-0 flex-1">
               <button
                 type="button"
@@ -95,11 +96,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onDele
                       key={status.value}
                       type="button"
                       onClick={() => handleStatusChange(status.value)}
-                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-semibold transition-colors duration-200 ${
-                        task.status === status.value
+                      className={`flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-xs font-semibold transition-colors duration-200 ${task.status === status.value
                           ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
                           : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 dark:text-zinc-300 dark:hover:bg-zinc-900 dark:hover:text-zinc-50'
-                      }`}
+                        }`}
                     >
                       {status.label}
                     </button>

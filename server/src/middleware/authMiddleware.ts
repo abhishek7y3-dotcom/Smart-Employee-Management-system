@@ -51,10 +51,14 @@ export async function authenticate(req: AuthRequest, res: Response, next: NextFu
       });
     }
 
-    if (user.isArchived) {
+    if (user.isArchived || user.isBlocked) {
+      const message = user.isBlocked 
+        ? 'Your account has been blocked by an administrator.' 
+        : 'Your account has been deactivated by an administrator.';
+        
       return res.status(403).json({
         success: false,
-        message: 'Your account has been deactivated by an administrator.',
+        message,
         errors: [],
       });
     }

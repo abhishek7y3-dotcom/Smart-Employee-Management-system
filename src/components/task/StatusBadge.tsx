@@ -10,23 +10,23 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className = ''
   const statusConfig = {
     todo: {
       label: 'Pending',
-      classes: 'bg-zinc-100/70 text-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-300 border-zinc-200/60 dark:border-zinc-800/60 font-bold',
+      classes: 'bg-slate-100 text-slate-700 dark:bg-slate-900/80 dark:text-slate-300 border-slate-300 dark:border-slate-700 font-bold shadow-sm',
     },
     in_progress: {
       label: 'In Progress',
-      classes: 'bg-blue-50/70 text-blue-750 dark:bg-blue-950/30 dark:text-blue-400 border-blue-200/40 dark:border-blue-900/30 font-bold',
+      classes: 'bg-blue-100 text-blue-700 dark:bg-blue-900/80 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold shadow-sm',
     },
     'in-progress': {
       label: 'In Progress',
-      classes: 'bg-blue-50/70 text-blue-750 dark:bg-blue-950/30 dark:text-blue-450 border-blue-200/40 dark:border-blue-900/30 font-bold',
+      classes: 'bg-blue-100 text-blue-700 dark:bg-blue-900/80 dark:text-blue-300 border-blue-300 dark:border-blue-700 font-bold shadow-sm',
     },
     completed: {
       label: 'Completed',
-      classes: 'bg-green-50/70 text-green-700 dark:bg-green-950/30 dark:text-green-400 border-green-200/40 dark:border-green-900/30 font-bold',
+      classes: 'bg-green-100 text-green-700 dark:bg-green-900/80 dark:text-green-300 border-green-300 dark:border-green-700 font-bold shadow-sm',
     },
     overdue: {
       label: 'Overdue',
-      classes: 'bg-amber-50/70 text-amber-705 dark:bg-amber-950/30 dark:text-amber-400 border-amber-200/40 dark:border-amber-900/30 font-bold',
+      classes: 'bg-red-100 text-red-700 dark:bg-red-900/80 dark:text-red-300 border-red-300 dark:border-red-700 font-bold shadow-sm',
     },
   };
 

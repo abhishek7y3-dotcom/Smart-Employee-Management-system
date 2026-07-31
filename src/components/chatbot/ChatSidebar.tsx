@@ -10,7 +10,7 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
 
   return (
     <>
-    <div className="w-64 h-full bg-zinc-50 dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 flex flex-col shrink-0">
+    <div className="w-64 h-full bg-zinc-50/80 dark:bg-zinc-950 border-r border-zinc-200/50 dark:border-zinc-800/50 flex flex-col shrink-0">
       <div className="p-3 flex items-center justify-between">
         <button
           onClick={() => {
@@ -32,10 +32,10 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
             startNewChat();
             if (onOpenChat) onOpenChat();
           }}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-colors text-zinc-900 dark:text-zinc-100 font-medium text-sm ml-auto"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-zinc-300 dark:hover:border-zinc-700 transition-all text-zinc-900 dark:text-zinc-100 font-medium text-xs ml-auto"
           title="New chat"
         >
-          <MessageSquarePlus size={18} />
+          <MessageSquarePlus size={16} />
           <span className="hidden md:inline">New chat</span>
         </button>
       </div>
@@ -109,7 +109,7 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
 
 const SidebarLink = ({ icon, text, onClick }: { icon: React.ReactNode, text: string, onClick?: () => void }) => {
   return (
-    <button onClick={onClick} className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-colors text-zinc-700 dark:text-zinc-300 text-sm truncate">
+    <button onClick={onClick} className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-zinc-200/50 dark:hover:bg-zinc-800/50 transition-colors text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 text-sm font-medium truncate">
       <span className="shrink-0">{icon}</span>
       <span className="truncate">{text}</span>
     </button>

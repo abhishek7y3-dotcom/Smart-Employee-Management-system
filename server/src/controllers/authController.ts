@@ -63,10 +63,17 @@ export async function register(req: Request, res: Response) {
 
     // Check if the request is made by an Admin (who should automatically verify new users)
     let isCreatedByAdmin = false;
-    const authHeader = req.headers.authorization;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
+    let token = req.cookies?.token;
+    
+    if (!token) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith('Bearer ')) {
+        token = authHeader.split(' ')[1];
+      }
+    }
+
+    if (token) {
       try {
-        const token = authHeader.split(' ')[1];
         const decoded = verifyToken(token);
         const userId = decoded.id as string;
         if (userId) {
@@ -86,6 +93,18 @@ export async function register(req: Request, res: Response) {
 
     const role = email.toLowerCase().startsWith('superadmin') ? 'superadmin' : (email.toLowerCase().startsWith('admin') ? 'admin' : 'member');
     const designation = role === 'superadmin' ? 'CEO' : (role === 'admin' ? 'Admin' : 'Employee');
+
+    // Rule: There can only be ONE Super Admin (CEO) in the entire system.
+    if (role === 'superadmin') {
+      const existingCEO = await User.findOne({ role: 'superadmin' });
+      if (existingCEO && existingCEO.email !== email.toLowerCase()) {
+        return res.status(403).json({
+          success: false,
+          message: 'A Super Admin (CEO) already exists. There can only be one CEO in the system.',
+          errors: []
+        });
+      }
+    }
 
     const user = await User.create({
       name: computedName,
@@ -121,7 +140,7 @@ export async function register(req: Request, res: Response) {
       }
     } else {
       // Trigger Admin Account Creation Email
-      sendAdminAccountCreationEmail(user.email, user.name, password).catch((emailErr) => {
+      sendAdminAccountCreationEmail(user, password).catch((emailErr) => {
         console.error('authController.ts: Failed to send admin account creation email:', emailErr);
       });
     }
@@ -959,8 +978,8 @@ export async function updateUser(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
-    const isAdmin = authReq.user?.role === 'admin';
-    const isSuperAdmin = authReq.user?.role === 'superadmin';
+    const isAdmin = authReq.user?.role === 'admin' || authReq.user?.designation === 'Admin' || authReq.user?.designation === 'Project Manager';
+    const isSuperAdmin = authReq.user?.role === 'superadmin' || authReq.user?.designation === 'CEO';
     const isSelf = authReq.user?._id.toString() === id;
 
     if (!isAdmin && !isSuperAdmin && !isSelf) {
@@ -1523,5 +1542,116 @@ export async function refreshToken(req: Request, res: Response) {
       success: false,
       message: 'Refresh token expired or invalid.'
     });
+  }
+}
+
+export async function requestPhoneChangeOtp(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const userId = authReq.user?._id;
+  
+  const { mobileNumber, countryCode } = req.body as { mobileNumber: string; countryCode: string };
+
+  if (!mobileNumber) {
+    return res.status(400).json({ success: false, message: 'New mobile number is required.' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // Check if another user already has this number
+    const existing = await User.findOne({ mobileNumber, _id: { $ne: userId } });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'This mobile number is already in use by another account.' });
+    }
+
+    // Generate 6-digit OTP
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+
+    user.phoneChangeOtp = encrypt(otpPlain);
+    user.phoneChangeOtpExpires = otpExpires;
+    user.pendingMobileNumber = mobileNumber;
+    user.pendingCountryCode = countryCode || '+91';
+
+    await user.save();
+
+    console.log(`\n🔑 [PHONE CHANGE OTP] OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
+
+    // We can simulate sending an SMS (or send it via Twilio if active)
+    sendSmsOtp(user.pendingCountryCode, user.pendingMobileNumber, otpPlain, 'Phone Change Verification').catch((smsErr) => {
+      console.error('authController.ts: Failed to send SMS for phone change:', smsErr);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your new mobile number.',
+    });
+  } catch (error) {
+    console.error('authController.ts: requestPhoneChangeOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to request OTP.' });
+  }
+}
+
+export async function verifyPhoneChangeOtp(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const userId = authReq.user?._id;
+  
+  const { otp } = req.body as { otp: string };
+
+  if (!otp) {
+    return res.status(400).json({ success: false, message: 'OTP is required.' });
+  }
+
+  try {
+    const user = await User.findById(userId).select('+phoneChangeOtp +phoneChangeOtpExpires');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (!user.phoneChangeOtp) {
+      return res.status(400).json({ success: false, message: 'No pending phone number change found.' });
+    }
+
+    let storedOtp: string;
+    try {
+      storedOtp = decrypt(user.phoneChangeOtp);
+    } catch {
+      return res.status(400).json({ success: false, message: 'OTP is invalid or corrupted.' });
+    }
+
+    if (storedOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP code.' });
+    }
+
+    if (user.phoneChangeOtpExpires && user.phoneChangeOtpExpires.getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Apply the changes
+    user.mobileNumber = user.pendingMobileNumber!;
+    user.countryCode = user.pendingCountryCode || '+91';
+    
+    // Clear pending
+    user.pendingMobileNumber = undefined;
+    user.pendingCountryCode = undefined;
+    user.phoneChangeOtp = undefined;
+    user.phoneChangeOtpExpires = undefined;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Phone number updated successfully.',
+      data: {
+        mobileNumber: user.mobileNumber,
+        countryCode: user.countryCode,
+      }
+    });
+  } catch (error) {
+    console.error('authController.ts: verifyPhoneChangeOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to verify OTP.' });
   }
 }
