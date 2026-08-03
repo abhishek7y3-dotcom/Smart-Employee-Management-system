@@ -137,7 +137,7 @@ export async function forgotPassword(
 ): Promise<ForgotPasswordResponse> {
   const users = getStoredUsers();
   const existingUser = users.find(
-    (user) => user.email.toLowerCase() === payload.email.toLowerCase()
+    (user) => user.email.toLowerCase() === payload.email?.toLowerCase()
   );
 
   if (!existingUser) {

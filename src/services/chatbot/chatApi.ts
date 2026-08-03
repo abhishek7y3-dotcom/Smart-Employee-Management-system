@@ -20,11 +20,11 @@ export const sendChatMessageStream = async (
   message: string, 
   token: string, 
   conversationId: string | undefined, 
-  attachment: any, 
+  attachment: unknown, 
   callbacks: {
     onChunk: (text: string) => void;
-    onMetadata: (data: any) => void;
-    onDone: (message: any) => void;
+    onMetadata: (data: unknown) => void;
+    onDone: (message: unknown) => void;
     onError: (error: string) => void;
   }
 ) => {
@@ -80,14 +80,15 @@ export const sendChatMessageStream = async (
             } else if (data.type === 'error') {
               callbacks.onError(data.error);
             }
-          } catch (e) {
+          } catch {
             console.warn('Failed to parse SSE line:', dataStr);
           }
         }
       }
     }
-  } catch (error: any) {
-    callbacks.onError(error.message || 'Stream connection failed');
+  } catch (error) {
+    const err = error as Error;
+    callbacks.onError(err.message || 'Stream connection failed');
   }
 };
 

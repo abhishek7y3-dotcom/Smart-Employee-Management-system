@@ -5,6 +5,8 @@ import { toast } from 'sonner';
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
+let lastNetworkErrorToastTime = 0;
+
 if (!apiBaseUrl) {
   throw new Error('NEXT_PUBLIC_API_BASE_URL is not defined. Please set it in .env.local');
 }
@@ -41,7 +43,7 @@ axiosInstance.interceptors.response.use(
       
       if (data && Array.isArray(data.errors) && data.errors.length > 0) {
         const errorDetails = data.errors
-          .map((err: any) => err.message)
+          .map((err: { message?: string }) => err.message)
           .filter(Boolean)
           .join(', ');
         if (errorDetails) {
@@ -82,17 +84,29 @@ axiosInstance.interceptors.response.use(
 
       // Handle 403 Forbidden (e.g. Account deactivated by Admin)
       if (status === 403 && typeof window !== 'undefined') {
-        toast.error(message || 'Your account has been deactivated by an administrator.');
-        window.localStorage.removeItem('auth_user');
-        window.location.href = '/login';
+        const currentPath = window.location.pathname;
+        const isAuthRoute = ['/login', '/register', '/forgot-password', '/reset-password'].includes(currentPath);
+        
+        if (data?.requiresVerification) {
+          // Do not redirect to login, let the component handle it (e.g. redirect to /register)
+        } else if (!isAuthRoute) {
+          toast.error(message || 'Your account has been deactivated by an administrator.');
+          window.localStorage.removeItem('auth_user');
+          window.location.href = '/login';
+        }
       }
 
       const normalizedError = new Error(message);
-      Object.assign(normalizedError, { status });
+      Object.assign(normalizedError, { status, response: error.response });
       return Promise.reject(normalizedError);
     }
 
     if (error.request) {
+      const now = Date.now();
+      if (now - lastNetworkErrorToastTime > 5000) { // Throttle to 5 seconds
+        toast.error('Network error. Server might be down or unreachable.');
+        lastNetworkErrorToastTime = now;
+      }
       return Promise.reject(new Error('Network error. Please check your connection.'));
     }
 

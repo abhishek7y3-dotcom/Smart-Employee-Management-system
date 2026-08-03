@@ -1,4 +1,5 @@
-import { isValidPhoneNumber, parsePhoneNumber, CountryCode } from 'libphonenumber-js';
+import { isValidPhoneNumber } from 'libphonenumber-js/max';
+import { CountryCode } from 'libphonenumber-js/types';
 
 /**
  * Validates a mobile number dynamically against a specific country's rules.
@@ -7,7 +8,7 @@ import { isValidPhoneNumber, parsePhoneNumber, CountryCode } from 'libphonenumbe
  * @returns An error message if invalid, or null if valid.
  */
 export const validateMobileNumber = (phoneNumber: string, countryIso: string): string | null => {
-  const digitsOnly = phoneNumber.replace(/\\D/g, '');
+  const digitsOnly = phoneNumber.replace(/\D/g, '');
   
   if (!digitsOnly) {
     return 'Please enter your Mobile number.';
@@ -22,8 +23,8 @@ export const validateMobileNumber = (phoneNumber: string, countryIso: string): s
     if (!isValidPhoneNumber(digitsOnly, isoCode)) {
       return `Please enter the valid Phone number`;
     }
-  } catch (error) {
-    return `Please enter the valid Phone number`;
+  } catch {
+    return 'Invalid phone number format for the selected country.';
   }
 
   // Additional explicit rule for India (must start with 6, 7, 8, or 9 and be exactly 10 digits)

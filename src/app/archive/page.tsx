@@ -16,6 +16,8 @@ export default function ArchivePage() {
   
   const [viewedTask, setViewedTask] = useState<Task | null>(null);
   const [viewedUser, setViewedUser] = useState<Employee | null>(null);
+  const [deleteTaskConfirm, setDeleteTaskConfirm] = useState<string | null>(null);
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState<string | null>(null);
 
   const isAdmin = (user?.role === 'admin' || user?.role === 'superadmin') || user?.designation?.toLowerCase() === 'admin' || user?.designation?.toLowerCase() === 'ceo' || user?.designation?.toLowerCase() === 'project manager';
 
@@ -64,22 +66,22 @@ export default function ArchivePage() {
   };
 
   const handlePermanentDeleteTask = async (taskId: string) => {
-    if (!confirm('Are you sure you want to permanently delete this task? This action cannot be undone.')) return;
     try {
       await permanentDeleteTask(taskId);
       toast.success('Task permanently deleted');
       setTasks(tasks.filter((t) => t.id !== taskId));
+      setDeleteTaskConfirm(null);
     } catch (error) {
       toast.error('Failed to permanently delete task');
     }
   };
 
   const handlePermanentDeleteUser = async (userId: string) => {
-    if (!confirm('Are you sure you want to permanently delete this user? This action cannot be undone.')) return;
     try {
       await permanentDeleteUser(userId);
       toast.success('User permanently deleted');
       setUsers(users.filter((u) => u.id !== userId));
+      setDeleteUserConfirm(null);
     } catch (error) {
       toast.error('Failed to permanently delete user');
     }
@@ -177,7 +179,7 @@ export default function ArchivePage() {
                             Restore Task
                           </button>
                           <button
-                            onClick={() => handlePermanentDeleteTask(task.id)}
+                            onClick={() => setDeleteTaskConfirm(task.id)}
                             className="flex-1 rounded-lg bg-red-50 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40"
                           >
                             Delete
@@ -221,7 +223,7 @@ export default function ArchivePage() {
                             Restore
                           </button>
                           <button
-                            onClick={() => handlePermanentDeleteUser(u.id)}
+                            onClick={() => setDeleteUserConfirm(u.id)}
                             className="rounded-lg bg-red-50 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40"
                           >
                             Delete
@@ -308,6 +310,60 @@ export default function ArchivePage() {
               </div>
               <div className="mt-6 flex justify-end">
                 <button onClick={() => setViewedUser(null)} className="rounded-lg bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700">Close</button>
+              </div>
+            </div>
+          </div>
+        )}
+        {deleteTaskConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+              <div className="flex items-start justify-between mb-2">
+                <h2 className="text-xl font-bold text-red-600 dark:text-red-500">Delete Task?</h2>
+              </div>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+                Are you sure you want to permanently delete this task? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setDeleteTaskConfirm(null)} 
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => handlePermanentDeleteTask(deleteTaskConfirm)} 
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                  Delete Permanently
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete User Confirmation Modal */}
+        {deleteUserConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl dark:bg-zinc-900">
+              <div className="flex items-start justify-between mb-2">
+                <h2 className="text-xl font-bold text-red-600 dark:text-red-500">Delete User?</h2>
+              </div>
+              <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+                Are you sure you want to permanently delete this user? This action cannot be undone.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setDeleteUserConfirm(null)} 
+                  className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={() => handlePermanentDeleteUser(deleteUserConfirm)} 
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                  Delete Permanently
+                </button>
               </div>
             </div>
           </div>

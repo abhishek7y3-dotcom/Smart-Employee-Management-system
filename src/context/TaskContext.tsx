@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { handleError } from '../utils/errorHandler';
 import { formatDate } from '../utils/format';
 import { ActivityAction, ActivityLog, Employee, Task, TaskInput, TaskPriority, TaskStatus } from '../types';
 import { mockEmployees, mockTasks } from '../constants/mockData';
@@ -92,28 +94,27 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  const fetchTasks = async () => {
-    const isMock = typeof window === 'undefined' ? false : localStorage.getItem('use_mock_auth') === 'true';
-    if (isAuthenticated || isMock) {
-      try {
-        const { tasks: fetchedTasks, employees: fetchedEmployees } = await apiGetTasks();
-        setTasks(fetchedTasks);
-        setEmployees(fetchedEmployees);
-      } catch (err: any) {
-        console.error('[TaskContext] fetchTasks failed:', err?.message ?? err);
-        toast.error(`Failed to load data: ${err?.message ?? 'Unknown error'}`);
-      }
-    } else {
+  const isMock = typeof window !== 'undefined' && localStorage.getItem('use_mock_auth') === 'true';
+
+  const { data, refetch: refetchTasks } = useQuery({
+    queryKey: ['tasks_and_employees'],
+    queryFn: apiGetTasks,
+    enabled: isAuthenticated || isMock,
+  });
+
+  useEffect(() => {
+    if (data) {
+      setTasks(data.tasks);
+      setEmployees(data.employees);
+    } else if (!isAuthenticated && !isMock) {
       setTasks([]);
       setEmployees([]);
     }
-  };
+  }, [data, isAuthenticated, isMock]);
 
-  useEffect(() => {
-    if (!initializing) {
-      fetchTasks();
-    }
-  }, [isAuthenticated, initializing]);
+  const fetchTasks = async () => {
+    await refetchTasks();
+  };
 
   useEffect(() => {
     const handleTaskChange = () => {
@@ -157,7 +158,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       toast.success('Task created successfully');
     } catch (err) {
-      toast.error('Failed to create task in database');
+      handleError(err, 'Failed to create task in database');
     }
   };
 
@@ -174,7 +175,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', buildChangeDetails(task, updates, employees)));
       toast.success('Task updated successfully');
     } catch (err) {
-      toast.error('Failed to update task in database');
+      handleError(err, 'Failed to update task in database');
     }
   };
 
@@ -196,7 +197,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       recordActivity(buildActivity(updated, 'status_changed', user?.name || 'Employee', `changed status for "${task.title}" to ${statusLabels[status]}.`));
       toast.success('Status updated successfully');
     } catch (err) {
-      toast.error('Failed to update task status in database');
+      handleError(err, 'Failed to update task status in database');
     }
   };
 
@@ -218,7 +219,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', `changed priority for "${task.title}" to ${priority}.`));
       toast.success('Task updated successfully');
     } catch (err) {
-      toast.error('Failed to update task priority in database');
+      handleError(err, 'Failed to update task priority in database');
     }
   };
 
@@ -240,7 +241,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', `assigned "${task.title}" to ${getEmployeeName(employees, employeeId)}.`));
       toast.success('Task updated successfully');
     } catch (err) {
-      toast.error('Failed to assign task in database');
+      handleError(err, 'Failed to assign task in database');
     }
   };
 
@@ -254,7 +255,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       recordActivity(buildActivity(task, 'deleted', user?.name || 'Employee', `deleted task "${task.title}".`));
       toast.success('Task deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete task from database');
+      handleError(err, 'Failed to delete task from database');
     }
   };
 
@@ -315,7 +316,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setEmployees((prev) => [...prev, newEmp]);
         toast.success('Team member registered successfully');
       } catch (err: any) {
-        toast.error(err.message || 'Failed to register team member');
+        handleError(err, 'Failed to register team member');
         throw err;
       }
     }
@@ -329,7 +330,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       toast.success('Designation updated successfully');
     } catch (err) {
-      toast.error('Failed to update designation');
+      handleError(err, 'Failed to update designation');
     }
   };
 
@@ -341,7 +342,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       );
       toast.success('Role updated successfully');
     } catch (err) {
-      toast.error('Failed to update role');
+      handleError(err, 'Failed to update role');
     }
   };
 
@@ -351,7 +352,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEmployees((prev) => prev.filter((emp) => emp.id !== employeeId));
       toast.success('Team member removed successfully');
     } catch (err) {
-      toast.error('Failed to remove team member');
+      handleError(err, 'Failed to remove team member');
     }
   };
 
@@ -361,7 +362,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEmployees((prev) => prev.map((emp) => emp.id === employeeId ? { ...emp, isBlocked: true } : emp));
       toast.success('Team member blocked successfully');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to block team member');
+      handleError(err, 'Failed to block team member');
     }
   };
 
@@ -371,7 +372,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setEmployees((prev) => prev.map((emp) => emp.id === employeeId ? { ...emp, isBlocked: false } : emp));
       toast.success('Team member unblocked successfully');
     } catch (err: any) {
-      toast.error(err.message || 'Failed to unblock team member');
+      handleError(err, 'Failed to unblock team member');
     }
   };
 

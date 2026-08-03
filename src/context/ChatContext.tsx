@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { getChatHistory, sendChatMessage, sendChatMessageStream, getConversation, getLibraries, createLibrary, addChatToLibrary, createProject, getProjects, addChatToProject, deleteChatHistory, renameChatApi, pinChatApi, archiveChatApi, getArchivedChatsApi } from '../services/chatbot/chatApi';
 import { useAuth } from './AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 export interface ChatMessage {
   id: string;
@@ -75,63 +76,65 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const { token } = useAuth();
 
-  const refreshHistory = async () => {
-    if (!token) return;
-    try {
-      const response = await getChatHistory(token);
-      if (response.success) {
-        const sortedHistory = response.data.sort((a: ChatHistoryItem, b: ChatHistoryItem) => {
-          if (a.isPinned && !b.isPinned) return -1;
-          if (!a.isPinned && b.isPinned) return 1;
-          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
-        });
-        setChatHistory(sortedHistory);
-      }
-    } catch (error) {
-      console.error('Failed to fetch chat history:', error);
-    }
-  };
+  const { data: chatHistoryData, refetch: refetchChatHistory } = useQuery({
+    queryKey: ['chatHistory', token],
+    queryFn: async () => {
+      const res = await getChatHistory(token!);
+      if (!res.success) throw new Error('Failed');
+      return res.data.sort((a: ChatHistoryItem, b: ChatHistoryItem) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
+    },
+    enabled: !!token,
+  });
 
-  const refreshArchivedChats = async () => {
-    if (!token) return;
-    try {
-      const response = await getArchivedChatsApi(token);
-      if (response.success) {
-        setArchivedChats(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch archived history:', error);
-    }
-  };
+  const { data: archivedChatsData, refetch: refetchArchivedChats } = useQuery({
+    queryKey: ['archivedChats', token],
+    queryFn: async () => {
+      const res = await getArchivedChatsApi(token!);
+      if (!res.success) throw new Error('Failed');
+      return res.data;
+    },
+    enabled: !!token,
+  });
 
-  const refreshLibraries = async () => {
-    if (!token) return;
-    try {
-      const response = await getLibraries(token);
-      if (response.success) {
-        setLibraries(response.data);
-      }
-    } catch (error) {
-      console.error('Failed to fetch libraries:', error);
-    }
-  };
+  const { data: librariesData, refetch: refetchLibraries } = useQuery({
+    queryKey: ['libraries', token],
+    queryFn: async () => {
+      const res = await getLibraries(token!);
+      if (!res.success) throw new Error('Failed');
+      return res.data;
+    },
+    enabled: !!token,
+  });
 
-  const refreshProjects = async () => {
-    if (!token) return;
-    try {
-      const response = await getProjects(token);
-      if (response.success) {
-        const sortedProjects = response.data.sort((a: ProjectItem, b: ProjectItem) => {
-          if (a.isPinned && !b.isPinned) return -1;
-          if (!a.isPinned && b.isPinned) return 1;
-          return 0; // Maintain original order for unpinned
-        });
-        setProjects(sortedProjects);
-      }
-    } catch (error) {
-      console.error('Failed to fetch projects:', error);
-    }
-  };
+  const { data: projectsData, refetch: refetchProjects } = useQuery({
+    queryKey: ['projects', token],
+    queryFn: async () => {
+      const res = await getProjects(token!);
+      if (!res.success) throw new Error('Failed');
+      return res.data.sort((a: ProjectItem, b: ProjectItem) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return 0;
+      });
+    },
+    enabled: !!token,
+  });
+
+  useEffect(() => {
+    if (chatHistoryData) setChatHistory(chatHistoryData);
+    if (archivedChatsData) setArchivedChats(archivedChatsData);
+    if (librariesData) setLibraries(librariesData);
+    if (projectsData) setProjects(projectsData);
+  }, [chatHistoryData, archivedChatsData, librariesData, projectsData]);
+
+  const refreshHistory = async () => { await refetchChatHistory(); };
+  const refreshArchivedChats = async () => { await refetchArchivedChats(); };
+  const refreshLibraries = async () => { await refetchLibraries(); };
+  const refreshProjects = async () => { await refetchProjects(); };
 
   const createNewLibrary = async (name: string) => {
     if (!token) return;
@@ -344,7 +347,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       setTimeout(() => {
         const aiMessage: ChatMessage = {
           id: (Date.now() + 1).toString(),
-          role: 'model',
+          role: 'assistant',
           content: 'Hello! 👋 How can I help you manage your workspace today?',
           timestamp: new Date().toISOString(),
         };
@@ -364,7 +367,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       // Initialize an empty AI message to stream into
       const initialAiMessage: ChatMessage = {
         id: aiMessageId,
-        role: 'model',
+        role: 'assistant',
         content: '',
         timestamp: new Date().toISOString(),
       };

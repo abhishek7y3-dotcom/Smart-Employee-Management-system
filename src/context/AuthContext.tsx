@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     try {
       const response: RegisterResponse = await registerUser(data);
-      return response.message;
+      return response;
     } catch (apiError) {
       setError(getFriendlyErrorMessage(apiError));
       throw apiError;

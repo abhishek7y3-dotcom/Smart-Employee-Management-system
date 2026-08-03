@@ -26,6 +26,7 @@ import attendanceRoutes from './routes/attendanceRoutes';
 import leaveRoutes from './routes/leaveRoutes';
 import profileRoutes from './routes/profileRoutes';
 import ragRoutes from './routes/ragRoutes';
+import noteRoutes from './routes/noteRoutes';
 
 // 3. Error Handling Middleware Imports
 import { notFoundHandler } from './middleware/notFoundHandler'; // Agar user galat URL type kare, toh ye chalega.
@@ -44,11 +45,11 @@ const app = express();
 
 // Helmet: Adds 11 security headers.
 // Interview me bataiyega: "Maine Helmet use kiya hai taaki application XSS attacks aur MIME-type sniffing se safe rahe."
-app.use(helmet()); 
+app.use(helmet());
 
 // CORS: Frontend ko Backend se jodta hai.
 // origin: Sirf is URL (React/NextJS app) ko allow karega. credentials: true isliye rakha hai taaki Cookies frontend tak jaa sakein.
-app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000', credentials: true })); 
+app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000', credentials: true }));
 
 // Body Parsers: Frontend se jo data JSON ya URL form me aata hai, usko samajhne (parse) ke liye.
 app.use(json()); // Agar req.body me JSON data hai, toh usko object banata hai.
@@ -73,6 +74,7 @@ app.use('/api/attendance', attendanceRoutes);       // Employee Attendance recor
 app.use('/api/leaves', leaveRoutes);                // Leave Management (Apply, Approve, Reject)
 app.use('/api/profile', profileRoutes);             // User Profile updates
 app.use('/api/rag', ragRoutes);                     // RAG Document Upload & QnA
+app.use('/api/notes', noteRoutes);                  // Notepad routes
 
 // =========================================================================
 // 8. ERROR HANDLING (Global Safety Nets)

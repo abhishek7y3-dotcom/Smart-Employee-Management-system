@@ -33,7 +33,8 @@ export async function registerUser(
     const apiData = response.data;
     return {
       message: apiData.message || 'Registration successful.',
-      user: apiData.data?.user || apiData.user
+      user: apiData.data?.user || apiData.user,
+      token: apiData.data?.token
     };
   } catch (error) {
     throw normalizeApiError(error);
@@ -153,10 +154,12 @@ export async function resendResetOtp(payload: { email?: string; mobileNumber?: s
 
 export async function updateUserProfile(
   id: string,
-  payload: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string;
-  country?: string;
-  permanentAddress?: string;
-  currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }
+  payload: {
+    role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string;
+    country?: string;
+    permanentAddress?: string;
+    currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean
+  }
 ): Promise<any> {
   if (isMockAuthEnabled()) {
     return { id, ...payload };
@@ -284,4 +287,56 @@ function normalizeApiError(error: unknown): Error {
   }
 
   return new Error('Unable to process request. Please try again later.');
+}
+
+export async function requestRegistrationOtpApi(payload: { mobileNumber: string; countryCode: string }): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP sent to mobile number.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/request-registration-otp', payload);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function verifyRegistrationOtpApi(payload: { mobileNumber: string; countryCode: string; otp: string }): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP verified.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/verify-registration-otp', payload);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function requestRegistrationEmailOtpApi(payload: { email: string }): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP sent to email.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/request-registration-email-otp', payload);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function verifyRegistrationEmailOtpApi(payload: { email: string; otp: string }): Promise<{ message: string }> {
+  if (isMockAuthEnabled()) {
+    return { message: 'Mock OTP verified.' };
+  }
+
+  try {
+    const response = await axiosInstance.post<any>('/auth/verify-registration-email-otp', payload);
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
 }

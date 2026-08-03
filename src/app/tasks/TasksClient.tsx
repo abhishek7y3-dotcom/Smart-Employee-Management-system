@@ -60,6 +60,15 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const [newAssignee, setNewAssignee] = useState(defaultTaskForm.assignedTo);
   const [newDueDate, setNewDueDate] = useState(defaultTaskForm.dueDate);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, priorityFilter, dateFilter]);
+
   // Field validation errors
   const [titleError, setTitleError] = useState<string | null>(null);
   const [descriptionError, setDescriptionError] = useState<string | null>(null);
@@ -95,6 +104,14 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
         return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       });
   }, [employees, priorityFilter, searchTerm, statusFilter, tasks, dateFilter]);
+
+
+
+  const totalPages = Math.ceil(filteredTasks.length / itemsPerPage);
+  const paginatedTasks = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTasks.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTasks, currentPage, itemsPerPage]);
 
   const resetCreateForm = () => {
     setNewTitle(defaultTaskForm.title);
@@ -419,16 +436,43 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
       </div>
 
       {filteredTasks.length > 0 ? (
-        <TaskTable
-          tasks={filteredTasks}
-          employees={employees}
-          onDeleteTask={setTaskToDelete}
-          onEditTask={setTaskToEdit}
-          onViewTask={setViewingTask}
-          onStatusChange={updateTaskStatus}
-          priorityFilter={priorityFilter}
-          onPriorityFilterChange={setPriorityFilter}
-        />
+        <div className="space-y-4">
+          <TaskTable
+            tasks={paginatedTasks}
+            employees={employees}
+            onDeleteTask={setTaskToDelete}
+            onEditTask={setTaskToEdit}
+            onViewTask={setViewingTask}
+            onStatusChange={updateTaskStatus}
+            priorityFilter={priorityFilter}
+            onPriorityFilterChange={setPriorityFilter}
+          />
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredTasks.length)} of {filteredTasks.length} tasks
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="rounded-xl border border-zinc-200 px-4 py-2 text-xs font-bold text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed dark:border-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-900 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       ) : (
         <EmptyState title="No tasks found" message="Try adjusting your filters or search terms." />
       )}

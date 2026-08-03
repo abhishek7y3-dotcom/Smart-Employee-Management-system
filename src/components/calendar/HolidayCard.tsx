@@ -53,7 +53,7 @@ export const HolidayCard: React.FC<Props> = ({ holidays, loading }) => {
           <Calendar size={20} className="text-blue-500" /> Upcoming Holidays
         </h3>
       </div>
-      
+
       <div className="p-6 flex-1 overflow-y-auto">
         {nextHoliday && (
           <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/50">
@@ -62,7 +62,7 @@ export const HolidayCard: React.FC<Props> = ({ holidays, loading }) => {
               <div>
                 <h4 className="font-bold text-lg text-blue-950 dark:text-blue-100 mb-1">{nextHoliday.holidayName}</h4>
                 <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-300">
-                  <Clock size={14} /> 
+                  <Clock size={14} />
                   {new Date(nextHoliday.holidayDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
                 </div>
               </div>
@@ -84,7 +84,7 @@ export const HolidayCard: React.FC<Props> = ({ holidays, loading }) => {
               <p>No upcoming holidays found.</p>
             </div>
           )}
-          
+
           {upcomingHolidays.slice(1).map(holiday => (
             <div key={holiday._id} className="flex items-center justify-between p-3 border border-zinc-100 dark:border-zinc-800 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors rounded-xl">
               <div>

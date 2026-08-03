@@ -12,7 +12,9 @@ import {
   verifyOtp, resendVerificationOtp, resendResetOtp, getAllUsers,
   updateUser, deleteUser, getArchivedUsers, restoreUser, requestLoginOtp,
   loginWithOtp, verifyResetOtp, permanentDeleteUser, refreshToken,
-  blockUser, unblockUser, requestPhoneChangeOtp, verifyPhoneChangeOtp
+  blockUser, unblockUser, requestPhoneChangeOtp, verifyPhoneChangeOtp,
+  requestRegistrationOtp, verifyRegistrationOtp,
+  requestRegistrationEmailOtp, verifyRegistrationEmailOtp
 } from '../controllers/authController';
 
 // Ye Middlewares hain (Checkers). Controller me jaane se pehle data check hoga.
@@ -53,6 +55,13 @@ router.post('/reset-password', resetPasswordValidation, validateRequest, resetPa
 router.post('/request-login-otp', requestLoginOtp);
 router.post('/login-with-otp', loginWithOtp);
 router.post('/verify-reset-otp', verifyResetOtp);
+// Registration inline mobile verification
+router.post('/request-registration-otp', requestRegistrationOtp);
+router.post('/verify-registration-otp', verifyRegistrationOtp);
+
+// Registration inline email verification
+router.post('/request-registration-email-otp', requestRegistrationEmailOtp);
+router.post('/verify-registration-email-otp', verifyRegistrationEmailOtp);
 
 // Profile fetch karna (Iske liye 'authenticate' middleware zaroori hai, matlab login hona lazmi hai)
 router.get('/profile', authenticate, profile);

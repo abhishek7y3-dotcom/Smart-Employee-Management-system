@@ -4,10 +4,24 @@ import React, { useState, FormEvent } from 'react';
 import { useTasks } from '../../context/TaskContext';
 import { useAuth } from '../../context/AuthContext';
 import { EmployeeCard } from '../../components/employee/EmployeeCard';
-import { Search, Plus, X, User, Mail, Lock, Briefcase, Shield, Image, Loader2, ClipboardCheck, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Search, Plus, X, User, Mail, Lock, CheckCircle, Eye, EyeOff, Loader2, ClipboardCheck } from 'lucide-react';
 import ProtectedRoute from '../../components/ProtectedRoute';
 import { isValidEmail } from '../../utils/emailValidator';
-import { checkRequirements, isPasswordValid, calculatePasswordStrength, getPasswordValidationError } from '../../utils/passwordValidator';
+import { getPasswordValidationError } from '../../utils/passwordValidator';
+
+const inputBase =
+  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-600 dark:focus:placeholder-zinc-600';
+
+const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: string = 'left-9') =>
+  `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
+  `${!value ? `top-3 ${leftInset} text-sm text-zinc-600` : '-top-2.5 left-3 text-xs font-semibold text-zinc-700 dark:text-zinc-500'} ` +
+  `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
+  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-teal-700 dark:peer-focus:text-teal-500'}`;
+
+const inputNormal =
+  'border-zinc-500 dark:border-zinc-700 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-700 dark:hover:border-zinc-600';
+const inputError =
+  'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
 const validateNameField = (value: string, fieldName: string, allowSpace: boolean = true): string | null => {
   const trimmed = value.trim();
@@ -235,11 +249,8 @@ export default function EmployeesPage() {
                 )}
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="firstName">
-                      First Name
-                    </label>
-                    <div className="relative">
+                  <div className="space-y-1">
+                    <div className="relative mt-2">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                       <input
                         id="firstName"
@@ -253,19 +264,17 @@ export default function EmployeesPage() {
                           setErrors({ ...errors, firstName: '' });
                         }}
                         placeholder="Jane"
-                        className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.firstName
-                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
-                          }`}
+                        className={`${inputBase} pl-10 pr-4 py-3 ${errors.firstName ? inputError : inputNormal}`}
                       />
+                      <label htmlFor="firstName" className={getFloatingLabelClass(formData.firstName, !!errors.firstName, 'left-9')}>
+                        First Name
+                      </label>
                     </div>
                     {errors.firstName && <p className="text-xs text-red-500 font-medium">{errors.firstName}</p>}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="lastName">
-                      Last Name
-                    </label>
-                    <div className="relative">
+
+                  <div className="space-y-1">
+                    <div className="relative mt-2">
                       <input
                         id="lastName"
                         type="text"
@@ -279,21 +288,18 @@ export default function EmployeesPage() {
                           setErrors({ ...errors, lastName: '' });
                         }}
                         placeholder="Doe"
-                        className={`w-full px-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.lastName
-                          ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                          : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
-                          }`}
+                        className={`${inputBase} px-4 py-3 ${errors.lastName ? inputError : inputNormal}`}
                       />
+                      <label htmlFor="lastName" className={getFloatingLabelClass(formData.lastName, !!errors.lastName, 'left-3')}>
+                        Last Name
+                      </label>
                     </div>
                     {errors.lastName && <p className="text-xs text-red-500 font-medium">{errors.lastName}</p>}
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="email">
-                    Email
-                  </label>
-                  <div className="relative">
+                <div className="space-y-1">
+                  <div className="relative mt-2">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                     <input
                       id="email"
@@ -302,20 +308,17 @@ export default function EmployeesPage() {
                       value={formData.email}
                       onChange={(e) => { setFormData({ ...formData, email: e.target.value.toLowerCase().replace(/\s/g, '') }); setErrors({ ...errors, email: '' }); }}
                       placeholder="jane@company.com"
-                      className={`w-full pl-10 pr-4 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.email
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
-                        }`}
+                      className={`${inputBase} pl-10 pr-4 py-3 ${errors.email ? inputError : inputNormal}`}
                     />
+                    <label htmlFor="email" className={getFloatingLabelClass(formData.email, !!errors.email, 'left-9')}>
+                      Email
+                    </label>
                   </div>
                   {errors.email && <p className="text-xs text-red-500 font-medium">{errors.email}</p>}
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="password">
-                    Password
-                  </label>
-                  <div className="relative">
+                <div className="space-y-1">
+                  <div className="relative mt-2">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                     <input
                       id="password"
@@ -324,11 +327,11 @@ export default function EmployeesPage() {
                       value={formData.password}
                       onChange={(e) => { setFormData({ ...formData, password: e.target.value }); setErrors({ ...errors, password: '' }); }}
                       placeholder="Enter credentials"
-                      className={`w-full pl-10 pr-28 py-2.5 rounded-lg border text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder:text-zinc-500 dark:placeholder:text-zinc-600 ${errors.password
-                        ? 'border-red-400 focus:border-red-400 focus:ring-red-400/10'
-                        : 'border-zinc-200 dark:border-zinc-800 focus:border-zinc-500 dark:focus:border-zinc-600 focus:ring-zinc-500/10'
-                        }`}
+                      className={`${inputBase} pl-10 pr-28 py-3 ${errors.password ? inputError : inputNormal}`}
                     />
+                    <label htmlFor="password" className={getFloatingLabelClass(formData.password, !!errors.password, 'left-9')}>
+                      Password
+                    </label>
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
@@ -347,80 +350,14 @@ export default function EmployeesPage() {
                   {errors.password && <p className="text-xs text-red-500 font-medium">{errors.password}</p>}
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="designation">
-                      Designation
-                    </label>
-                    <div className="relative">
-                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                      <select
-                        id="designation"
-                        value={formData.designation}
-                        onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-500 focus:ring-zinc-500/10 appearance-none cursor-pointer"
-                      >
-                        <option value="Employee">Employee</option>
-                        <option value="Admin">Admin</option>
-                        <option value="Developer">Developer</option>
-                        <option value="Designer">Designer</option>
-                        <option value="QA Engineer">QA Engineer</option>
-                        <option value="Project Manager">Project Manager</option>
-                        <option value="Specialist">Specialist</option>
-                        <option value="HR Specialist">HR Specialist</option>
-                        <option value="Analyst">Analyst</option>
-                      </select>
-                    </div>
-                  </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="role">
-                      Role
-                    </label>
-                    <div className="relative">
-                      <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                      <select
-                        id="role"
-                        value={formData.role}
-                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="w-full pl-10 pr-3 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-sm text-zinc-900 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition focus:ring-2 focus:border-zinc-500 focus:ring-zinc-500/10 appearance-none cursor-pointer"
-                      >
-                        <option value="user">Employee</option>
-                        <option value="admin">Admin</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-700 dark:text-zinc-300" htmlFor="avatarUrl">
-                    Profile Picture <span className="text-zinc-500 dark:text-zinc-500">(optional)</span>
-                  </label>
-                  <div className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 bg-white dark:bg-zinc-900 transition duration-150 ${errors.image ? 'border-red-400' : 'border-zinc-200 dark:border-zinc-800'}`}>
-                    {formData.avatarUrl ? (
-                      <img src={formData.avatarUrl} alt="Preview" className="h-8 w-8 shrink-0 rounded-full object-cover" />
-                    ) : (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500">
-                        <Image className="h-3.5 w-3.5" />
-                      </div>
-                    )}
-                    <input
-                      id="avatarUrl"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="text-xs text-zinc-550 file:mr-3 file:rounded-md file:border-0 file:bg-zinc-100 file:px-2.5 file:py-1 file:text-xs file:font-semibold file:text-zinc-700 hover:file:bg-zinc-200 dark:file:bg-zinc-800 dark:file:text-zinc-300 dark:hover:file:bg-zinc-700 cursor-pointer"
-                    />
-                  </div>
-                  {errors.image && <p className="text-xs text-red-500 font-medium">{errors.image}</p>}
-                </div>
 
                 <div className="border-t border-zinc-150 dark:border-zinc-800/60 pt-4 mt-6 flex justify-end gap-2">
                   <button
                     type="button"
                     disabled={loading}
                     onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2.5 rounded-lg border border-zinc-200 dark:border-zinc-800 text-xs font-semibold text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900 transition hover:bg-zinc-50 dark:hover:bg-zinc-800/50 disabled:opacity-50 cursor-pointer"
+                    className="px-4 py-2.5 rounded-lg bg-blue-600 text-xs font-semibold text-white transition hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 disabled:opacity-50 cursor-pointer"
                   >
                     Cancel
                   </button>

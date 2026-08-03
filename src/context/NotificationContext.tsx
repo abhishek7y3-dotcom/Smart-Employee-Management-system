@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axiosInstance from '../services/axios';
 import { useAuth } from './AuthContext';
+import { useQuery } from '@tanstack/react-query';
 
 // Notification object ka structure (TypeScript interface) - backend se kis tarah ka data aayega
 export interface Notification {
@@ -31,19 +32,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Backend se notifications lakar state (UI) me set karne ka function
-  const fetchNotifications = useCallback(async () => {
-    if (!user) return;
-    try {
+  const { data, refetch: refetchNotifications } = useQuery({
+    queryKey: ['notifications', user?._id],
+    queryFn: async () => {
       const res = await axiosInstance.get('/notifications');
-      if (res.data) {
-        setNotifications(res.data.notifications);
-        setUnreadCount(res.data.unreadCount);
-      }
-    } catch (error) {
-      console.error('Error fetching notifications:', error);
+      return res.data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (data) {
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unreadCount || 0);
     }
-  }, [user]);
+  }, [data]);
+
+  const fetchNotifications = useCallback(async () => {
+    await refetchNotifications();
+  }, [refetchNotifications]);
 
   // Jab user kisi ek notification par click kare toh use 'read' mark karna
   const markAsRead = async (id: string) => {

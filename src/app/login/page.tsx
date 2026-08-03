@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, FormEvent, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
 import { requestLoginOtp, loginWithOtp } from '../../api/auth';
@@ -48,6 +48,10 @@ export default function LoginPage() {
   const [countryCode, setCountryCode] = useState('+91');
   const [mobileError, setMobileError] = useState<string | null>(null);
 
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+
   // OTP specific states (Used for both email OTP and phone OTP)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [isOtpSent, setIsOtpSent] = useState(false);
@@ -59,14 +63,26 @@ export default function LoginPage() {
 
   const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
 
-  // ── OTP Timer ─────────────────────────────────────────────────────────────
+  // ── OTP Timer & Click Outside ───────────────────────────────────────────────
   useEffect(() => {
-    if (otpTimer <= 0) return;
-    const interval = setInterval(() => {
-      setOtpTimer((prev) => prev - 1);
-    }, 1000);
-    return () => clearInterval(interval);
+    if (otpTimer > 0) {
+      const interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
   }, [otpTimer]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setIsCountryDropdownOpen(false);
+        setCountrySearchQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -101,8 +117,11 @@ export default function LoginPage() {
       else if (!emailRegex.test(email)) { setEmailError('Please enter a valid email address.'); hasError = true; }
     } else {
       if (!mobileNumber.trim()) { setMobileError('Please enter a mobile number.'); hasError = true; }
-      else if (mobileNumber.length !== 10) { setMobileError('Mobile number must be exactly 10 digits.'); hasError = true; }
-      else if (mobileNumber.startsWith('0')) { setMobileError('Mobile number should never start with 0.'); hasError = true; }
+      else {
+        const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
+        const validationError = validateMobileNumber(mobileNumber, selectedCountry.iso);
+        if (validationError) { setMobileError(validationError); hasError = true; }
+      }
     }
 
     if (!password.trim()) { setPasswordError('Please enter your password.'); hasError = true; }
@@ -117,6 +136,14 @@ export default function LoginPage() {
         await login({ mobileNumber, countryCode, password });
       }
     } catch (err: any) {
+      const requiresVerification = err.response?.data?.requiresVerification;
+      const returnedEmail = err.response?.data?.email || email;
+
+      if (requiresVerification) {
+        router.push(`/register`);
+        return;
+      }
+
       const msg = err.response?.data?.message || err.message || 'Invalid login credentials.';
       if (msg.toLowerCase().includes('email')) setEmailError(msg);
       else if (msg.toLowerCase().includes('password')) setPasswordError(msg);
@@ -127,7 +154,19 @@ export default function LoginPage() {
 
   // ── OTP Change & Autotab ──────────────────────────────────────────────────
   const handleMobileChange = (val: string) => {
-    const digitsOnly = val.replace(/\D/g, '').slice(0, 10);
+    const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
+    const digitsOnly = val.replace(/\D/g, '').slice(0, selectedCountry.maxLength);
+
+    if (!digitsOnly) {
+      setMobileNumber('');
+      setMobileError(null);
+      return;
+    }
+
+    if (countryCode === '+91' && !/^[6-9]/.test(digitsOnly)) {
+      return;
+    }
+
     setMobileNumber(digitsOnly);
     setMobileError(null);
   };
@@ -174,8 +213,9 @@ export default function LoginPage() {
       payload.email = email;
     } else {
       if (!mobileNumber.trim()) { setMobileError('Please enter a mobile number.'); return; }
-      if (mobileNumber.length !== 10) { setMobileError('Mobile number must be exactly 10 digits.'); return; }
-      if (mobileNumber.startsWith('0')) { setMobileError('Mobile number should never start with 0.'); return; }
+      const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
+      const validationError = validateMobileNumber(mobileNumber, selectedCountry.iso);
+      if (validationError) { setMobileError(validationError); return; }
       payload.mobileNumber = mobileNumber;
       payload.countryCode = countryCode;
     }
@@ -230,11 +270,11 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex font-sans transition-colors duration-500 overflow-hidden relative">
-      
+
       {/* ── LEFT COLUMN (45%) ── */}
       <div className="w-full lg:w-[45%] flex flex-col justify-center px-8 sm:px-16 xl:px-24 py-12 relative z-10 bg-white dark:bg-zinc-950 min-h-screen shadow-2xl lg:shadow-none">
         <div className="w-full max-w-[440px] mx-auto">
-          
+
           {/* Logo & Heading */}
           <div className="flex flex-col mb-10">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0e372e] text-white shadow-lg shadow-teal-900/20 mb-6 ring-2 ring-[#0e372e]/20">
@@ -274,7 +314,7 @@ export default function LoginPage() {
           {/* ── 2. SUB-OPTIONS SCREEN (Email or Phone) ── */}
           {mode !== 'initial' && (
             <div className="space-y-6 animate-in fade-in duration-200">
-              
+
               <button
                 type="button"
                 onClick={() => { setMode('initial'); resetErrors(); }}
@@ -289,7 +329,7 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => { setSubTab('password'); resetErrors(); }}
                   style={{
-                    flex: '1', borderRadius: '0.5rem', padding: '0.5rem 0', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.3s', cursor: 'pointer', 
+                    flex: '1', borderRadius: '0.5rem', padding: '0.5rem 0', fontSize: '0.75rem', fontWeight: 700, transition: 'all 0.3s', cursor: 'pointer',
                     ...(subTab === 'password'
                       ? { backgroundColor: '#ffffff', color: '#18181b', boxShadow: '0 1px 2px 0 rgba(0,0,0,0.05)', border: '1px solid #e4e4e7' }
                       : { backgroundColor: 'transparent', color: '#71717a', border: '1px solid transparent' })
@@ -343,15 +383,74 @@ export default function LoginPage() {
                   ) : (
                     <div className="space-y-1">
                       <div className="flex gap-2 mt-2">
-                        <select
-                          value={countryCode}
-                          onChange={(e) => setCountryCode(e.target.value)}
-                          className="rounded-xl border-2 border-zinc-500 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                        <div
+                          ref={countryDropdownRef}
+                          className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-700 shadow-sm hover:border-zinc-500 dark:hover:border-zinc-600 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
+                          onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                         >
-                          {countries.map((c) => (
-                            <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
-                          ))}
-                        </select>
+                          <div className="flex items-center gap-2 pointer-events-none w-full">
+                            {(() => {
+                              const selected = countries.find(c => c.code === countryCode);
+                              return selected ? (
+                                <img
+                                  src={`https://flagcdn.com/w20/${selected.iso}.png`}
+                                  srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
+                                  width="20"
+                                  alt={selected.name}
+                                  className="rounded-[2px] shadow-sm shrink-0"
+                                />
+                              ) : null;
+                            })()}
+                            <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                          </div>
+
+                          {isCountryDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden">
+                              <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  placeholder="Search country..."
+                                  value={countrySearchQuery}
+                                  onChange={(e) => setCountrySearchQuery(e.target.value)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                                />
+                              </div>
+                              <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
+                                {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
+                                  <li
+                                    key={`${c.name}-${idx}`}
+                                    className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCountryCode(c.code);
+                                      if (mobileNumber.length > c.maxLength) {
+                                        setMobileNumber(mobileNumber.slice(0, c.maxLength));
+                                      }
+                                      setIsCountryDropdownOpen(false);
+                                      setCountrySearchQuery('');
+                                    }}
+                                  >
+                                    <img
+                                      src={`https://flagcdn.com/w20/${c.iso}.png`}
+                                      srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
+                                      width="20"
+                                      alt={c.name}
+                                      className="rounded-[2px] shadow-sm shrink-0"
+                                    />
+                                    <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
+                                    <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                                  </li>
+                                ))}
+                                {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
+                                  <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
+                                )}
+                              </ul>
+                            </div>
+                          )}
+                        </div>
+
                         <div className="relative flex-1">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                           <input
@@ -442,15 +541,74 @@ export default function LoginPage() {
                       ) : (
                         <div className="space-y-1">
                           <div className="flex gap-2 mt-2">
-                            <select
-                              value={countryCode}
-                              onChange={(e) => setCountryCode(e.target.value)}
-                              className="rounded-xl border-2 border-zinc-500 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-2 py-3 text-sm text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 outline-none shrink-0 cursor-pointer font-semibold"
+                            <div
+                              ref={countryDropdownRef}
+                              className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-700 shadow-sm hover:border-zinc-500 dark:hover:border-zinc-600 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
+                              onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
                             >
-                              {countries.map((c) => (
-                                <option key={c.name} value={c.code}>{c.flag} {c.code}</option>
-                              ))}
-                            </select>
+                              <div className="flex items-center gap-2 pointer-events-none w-full">
+                                {(() => {
+                                  const selected = countries.find(c => c.code === countryCode);
+                                  return selected ? (
+                                    <img
+                                      src={`https://flagcdn.com/w20/${selected.iso}.png`}
+                                      srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
+                                      width="20"
+                                      alt={selected.name}
+                                      className="rounded-[2px] shadow-sm shrink-0"
+                                    />
+                                  ) : null;
+                                })()}
+                                <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                              </div>
+
+                              {isCountryDropdownOpen && (
+                                <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden">
+                                  <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                                    <input
+                                      type="text"
+                                      autoFocus
+                                      placeholder="Search country..."
+                                      value={countrySearchQuery}
+                                      onChange={(e) => setCountrySearchQuery(e.target.value)}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                                    />
+                                  </div>
+                                  <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
+                                    {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
+                                      <li
+                                        key={`${c.name}-${idx}`}
+                                        className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setCountryCode(c.code);
+                                          if (mobileNumber.length > c.maxLength) {
+                                            setMobileNumber(mobileNumber.slice(0, c.maxLength));
+                                          }
+                                          setIsCountryDropdownOpen(false);
+                                          setCountrySearchQuery('');
+                                        }}
+                                      >
+                                        <img
+                                          src={`https://flagcdn.com/w20/${c.iso}.png`}
+                                          srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
+                                          width="20"
+                                          alt={c.name}
+                                          className="rounded-[2px] shadow-sm shrink-0"
+                                        />
+                                        <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
+                                        <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                                      </li>
+                                    ))}
+                                    {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
+                                      <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
+                                    )}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+
                             <div className="relative flex-1">
                               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                               <input
@@ -590,7 +748,7 @@ export default function LoginPage() {
         {/* Central Animated Solar System */}
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center w-full min-h-[400px] overflow-hidden my-4">
           <div className="relative flex items-center justify-center w-[400px] h-[400px] scale-75 md:scale-90 lg:scale-100">
-            
+
             {/* Center Core */}
             <div className="absolute w-20 h-20 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-full shadow-[0_0_60px_rgba(45,212,191,0.6)] z-20 flex items-center justify-center animate-[pulse_4s_ease-in-out_infinite]">
               <Network className="w-8 h-8 text-white" />
@@ -599,27 +757,27 @@ export default function LoginPage() {
             {/* Orbit 1 (Inner) */}
             <div className="absolute w-[180px] h-[180px] rounded-full border border-teal-500/30 animate-[spin_10s_linear_infinite]">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#0a2b20] border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_10s_linear_infinite_reverse]">
-                  <User className="w-4 h-4 text-teal-400" />
+                <User className="w-4 h-4 text-teal-400" />
               </div>
             </div>
 
             {/* Orbit 2 (Middle) */}
             <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-teal-500/20 animate-[spin_15s_linear_infinite_reverse]">
               <div className="absolute top-1/2 -right-5 -translate-y-1/2 w-10 h-10 bg-teal-900 border border-teal-400/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
-                  <Briefcase className="w-4 h-4 text-teal-300" />
+                <Briefcase className="w-4 h-4 text-teal-300" />
               </div>
               <div className="absolute top-1/2 -left-4 -translate-y-1/2 w-8 h-8 bg-teal-800 border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
-                  <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4 text-white" />
               </div>
             </div>
 
             {/* Orbit 3 (Outer) */}
             <div className="absolute w-[380px] h-[380px] rounded-full border border-teal-500/10 animate-[spin_25s_linear_infinite]">
               <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#0e372e] border border-teal-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
-                  <CheckCircle className="w-4 h-4 text-teal-400" />
+                <CheckCircle className="w-4 h-4 text-teal-400" />
               </div>
               <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-emerald-900 border border-emerald-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
-                  <User className="w-4 h-4 text-emerald-300" />
+                <User className="w-4 h-4 text-emerald-300" />
               </div>
             </div>
           </div>

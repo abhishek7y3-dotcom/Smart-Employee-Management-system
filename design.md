@@ -126,3 +126,6 @@ All primary dashboard surfaces utilize the `.enterprise-card` global CSS utility
 **Scrollbars & Ambience**
 - Global Webkit scrollbars are customized to be minimal (5-6px width) with transparent tracks and rounded, semi-transparent gray thumbs that darken on hover.
 - Backgrounds utilize `.ambient-glow` spheres (`blur(80px)`) to inject subtle color bleeds into the UI without distracting from content.
+
+### 5.4 Global Button Styling Rules
+- Whenever you are going to make a delete button, it should be in blue colour.

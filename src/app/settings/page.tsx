@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { Country, State, City } from 'country-state-city';
+import { countries } from '@/constants/countries';
 import Select from 'react-select';
 import { sanitizePhoneNumber, validatePhoneNumber } from '../../utils/phoneValidation';
 
@@ -21,6 +22,22 @@ const reactSelectClassNames = {
   placeholder: () => '!text-zinc-600',
   menuList: () => '!p-1',
 };
+
+const inputBase =
+  'peer w-full rounded-xl border-2 shadow-sm text-sm text-zinc-950 dark:text-zinc-50 bg-white dark:bg-zinc-900 outline-none transition duration-150 focus:ring-2 placeholder-transparent focus:placeholder-zinc-600 dark:focus:placeholder-zinc-600';
+
+const inputNormal = 'border-zinc-600 dark:border-zinc-600 focus:border-blue-500 focus:ring-blue-500/20 hover:border-zinc-700 dark:hover:border-zinc-500';
+const inputDisabled = 'border-zinc-600 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/50 cursor-not-allowed';
+
+const floatingLabelNormal = "absolute left-3 px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 " +
+  "-top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 " +
+  "peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-zinc-600 " +
+  "peer-focus:-top-2.5 peer-focus:text-xs peer-focus:font-semibold peer-focus:text-blue-600 dark:peer-focus:text-blue-500";
+
+const floatingLabelDisabled = "absolute left-3 px-1 transition-all duration-200 pointer-events-none bg-zinc-50 dark:bg-zinc-900/50 " +
+  "-top-2.5 text-xs font-semibold text-zinc-500 dark:text-zinc-500 " +
+  "peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-sm peer-placeholder-shown:font-normal peer-placeholder-shown:text-zinc-500 " +
+  "peer-focus:-top-2.5 peer-focus:text-xs peer-focus:font-semibold";
 
 export default function SettingsPage() {
   const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp, updateUser } = useAuth();
@@ -69,6 +86,34 @@ export default function SettingsPage() {
   const [mobilePhoneValue, setMobilePhoneValue] = useState('');
   const [alternatePhoneValue, setAlternatePhoneValue] = useState('');
 
+  const [countryCode, setCountryCode] = useState('+91');
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const [countrySearchQuery, setCountrySearchQuery] = useState('');
+  const countryDropdownRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setIsCountryDropdownOpen(false);
+        setCountrySearchQuery('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleMobileChange = (val: string, code: string) => {
+    let numericValue = val.replace(/\D/g, '');
+    const maxLen = countries.find(c => c.code === code)?.maxLength || 15;
+    if (numericValue.length > maxLen) {
+      numericValue = numericValue.slice(0, maxLen);
+    }
+    setMobilePhoneValue(numericValue);
+    if (typeof window !== 'undefined') {
+      (window as any)._tempEditMobile = `${code}${numericValue}`;
+    }
+  };
+
   // Initialize selected country and state code
   useEffect(() => {
     let currentCountryCode = '';
@@ -95,7 +140,15 @@ export default function SettingsPage() {
       setSelectedDistrictName(user.district);
     }
     
-    if (user?.mobileNumber) setMobilePhoneValue(user.mobileNumber);
+    if (user?.mobileNumber) {
+      const match = countries.find(c => user.mobileNumber.startsWith(c.code));
+      if (match) {
+        setCountryCode(match.code);
+        setMobilePhoneValue(user.mobileNumber.slice(match.code.length));
+      } else {
+        setMobilePhoneValue(user.mobileNumber);
+      }
+    }
     if (user?.alternateNumber) setAlternatePhoneValue(user.alternateNumber);
   }, [user]);
 
@@ -428,11 +481,11 @@ export default function SettingsPage() {
 
             <div className="w-full space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-first-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">First Name</label>
+                <div className="relative mt-2">
                   <input
                     id="settings-first-name"
                     type="text"
+                    placeholder=" "
                     maxLength={50}
                     defaultValue={user?.firstName}
                     onChange={(e) => {
@@ -445,14 +498,15 @@ export default function SettingsPage() {
                         (window as any)._tempEditFirstName = val;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
                   />
+                  <label htmlFor="settings-first-name" className={floatingLabelNormal}>First Name <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-last-name" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Last Name</label>
+                <div className="relative mt-2">
                   <input
                     id="settings-last-name"
                     type="text"
+                    placeholder=" "
                     maxLength={50}
                     defaultValue={user?.lastName}
                     onChange={(e) => {
@@ -468,11 +522,11 @@ export default function SettingsPage() {
                         (window as any)._tempEditLastName = val;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
                   />
+                  <label htmlFor="settings-last-name" className={floatingLabelNormal}>Last Name <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-country" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Country</label>
+                <div className="relative mt-2">
                   <Select
                     instanceId="country-select"
                     options={Country.getAllCountries().map(c => ({
@@ -516,66 +570,124 @@ export default function SettingsPage() {
                     }}
                     placeholder="Select Country"
                     classNames={reactSelectClassNames}
-                    className="text-sm"
+                    className="text-sm peer"
+                    onInputChange={(inputValue, { action }) => {
+                      if (action === 'input-change') {
+                        let val = inputValue.replace(/[^a-zA-Z]/g, '');
+                        if (val.length > 0) {
+                          val = val.charAt(0).toUpperCase() + val.slice(1);
+                        }
+                        return val;
+                      }
+                      return inputValue;
+                    }}
                   />
+                  <label htmlFor="settings-country" className="absolute left-3 px-1 pointer-events-none bg-white dark:bg-zinc-900 -top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 z-10 transition-all peer-focus:text-blue-600 dark:peer-focus:text-blue-500">Country <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-email" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Email Address (Read-only)</label>
+                <div className="relative mt-2">
                   <input
                     id="settings-email"
                     type="email"
+                    placeholder=" "
                     defaultValue={user?.email}
                     readOnly
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none cursor-not-allowed"
+                    className={`${inputBase} ${inputDisabled} px-3.5 py-3`}
                   />
+                  <label htmlFor="settings-email" className={floatingLabelDisabled}>Email Address (Read-only) <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-mobile" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Mobile Number</label>
-                  <PhoneInput
-                    country={selectedCountryCode ? selectedCountryCode.toLowerCase() : 'in'}
-                    value={mobilePhoneValue}
-                    onChange={(phone, data: any) => {
-                      if (data?.dialCode) {
-                        const localPart = phone.slice(data.dialCode.length);
-                        
-                        // Dynamic country-based length restriction
-                        if (data.format) {
-                          const maxLen = (data.format.match(/\./g) || []).length;
-                          if (phone.length > maxLen) {
-                            setMobilePhoneValue('');
-                            setTimeout(() => setMobilePhoneValue(mobilePhoneValue), 0);
-                            return;
-                          }
-                        } else {
-                          if (localPart.length > 15) {
-                            setMobilePhoneValue('');
-                            setTimeout(() => setMobilePhoneValue(mobilePhoneValue), 0);
-                            return;
-                          }
-                        }
+                <div className="flex gap-2 mt-2">
+                  <div
+                    ref={countryDropdownRef}
+                    className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-600 shadow-sm hover:border-zinc-700 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 shrink-0 w-[105px] cursor-pointer transition-colors"
+                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                  >
+                    <div className="flex items-center gap-2 pointer-events-none w-full">
+                      {(() => {
+                        const selected = countries.find(c => c.code === countryCode);
+                        return selected ? (
+                          <img
+                            src={`https://flagcdn.com/w20/${selected.iso}.png`}
+                            srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
+                            width="20"
+                            alt={selected.name}
+                            className="rounded-[2px] shadow-sm shrink-0"
+                          />
+                        ) : null;
+                      })()}
+                      <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                    </div>
 
-                        // Specific valid starting digits for India
-                        if (data.dialCode === '91') {
-                          if (/^[0-5]/.test(localPart)) {
-                            setMobilePhoneValue('');
-                            setTimeout(() => setMobilePhoneValue(data.dialCode), 0);
-                            return;
-                          }
-                        }
-                      }
-                      setMobilePhoneValue(phone);
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditMobile = phone;
-                      }
-                    }}
-                    inputStyle={{ width: '100%', height: '42px', borderRadius: '0.75rem', background: 'transparent' }}
-                    inputClass="!border-2 !border-zinc-600 dark:!border-zinc-600 !text-zinc-950 dark:!text-zinc-50"
-                    buttonClass="!bg-transparent !border-2 !border-zinc-600 dark:!border-zinc-600 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
-                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-2 !border-zinc-600 dark:!border-zinc-600"
-                  />
+                    {isCountryDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2">
+                        <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                          <input
+                            type="text"
+                            autoFocus
+                            placeholder="Search country..."
+                            value={countrySearchQuery}
+                            onChange={(e) => {
+                              let val = e.target.value.replace(/[^a-zA-Z]/g, '');
+                              if (val.length > 0) {
+                                val = val.charAt(0).toUpperCase() + val.slice(1);
+                              }
+                              setCountrySearchQuery(val);
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                          />
+                        </div>
+                        <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
+                          {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
+                            <li
+                              key={`${c.name}-${idx}`}
+                              className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setCountryCode(c.code);
+                                if (mobilePhoneValue.length > c.maxLength) {
+                                  handleMobileChange(mobilePhoneValue.slice(0, c.maxLength), c.code);
+                                } else {
+                                  handleMobileChange(mobilePhoneValue, c.code);
+                                }
+                                setIsCountryDropdownOpen(false);
+                                setCountrySearchQuery('');
+                              }}
+                            >
+                              <img
+                                src={`https://flagcdn.com/w20/${c.iso}.png`}
+                                srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
+                                width="20"
+                                alt={c.name}
+                                className="rounded-[2px] shadow-sm shrink-0"
+                              />
+                              <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
+                              <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                            </li>
+                          ))}
+                          {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
+                            <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative flex-1">
+                    <input
+                      id="settings-mobile"
+                      type="text"
+                      inputMode="numeric"
+                      value={mobilePhoneValue}
+                      onChange={(e) => handleMobileChange(e.target.value, countryCode)}
+                      placeholder=" "
+                      className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                    />
+                    <label htmlFor="settings-mobile" className={floatingLabelNormal}>
+                      Mobile Number <span className="text-red-500">*</span>
+                    </label>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-gender" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Gender</label>
+                <div className="relative mt-2">
                   <select
                     id="settings-gender"
                     defaultValue={user?.gender || ''}
@@ -584,186 +696,85 @@ export default function SettingsPage() {
                         (window as any)._tempEditGender = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className={`${inputBase} ${inputNormal} px-3.5 py-3 appearance-none`}
                   >
-                    <option value="">Select Gender</option>
+                    <option value="" disabled hidden>Select Gender</option>
                     <option value="Male">Male</option>
                     <option value="Female">Female</option>
                     <option value="Other">Other</option>
                   </select>
+                  <label htmlFor="settings-gender" className="absolute left-3 px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 -top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 peer-focus:text-blue-600 dark:peer-focus:text-blue-500">Gender <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-qualification" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Qualification</label>
+                <div className="relative mt-2">
                   <input
                     id="settings-qualification"
                     type="text"
+                    placeholder=" "
                     defaultValue={user?.qualification}
                     onChange={(e) => {
                       if (typeof window !== 'undefined') {
                         (window as any)._tempEditQualification = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
                   />
+                  <label htmlFor="settings-qualification" className={floatingLabelNormal}>Qualification <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-role" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Role (Read-only)</label>
+                <div className="relative mt-2">
                   <input
                     id="settings-role"
                     type="text"
+                    placeholder=" "
                     defaultValue={user?.role}
                     readOnly
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-zinc-50 dark:bg-zinc-900/50 text-sm text-zinc-600 dark:text-zinc-400 outline-none capitalize cursor-not-allowed"
+                    className={`${inputBase} ${inputDisabled} px-3.5 py-3 capitalize`}
                   />
+                  <label htmlFor="settings-role" className={floatingLabelDisabled}>Role (Read-only) <span className="text-red-500">*</span></label>
                 </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-permanent-address" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Permanent Address</label>
+                <div className="relative mt-2 sm:col-span-2">
                   <input
-                    id="settings-permanent-address"
+                    id="settings-address"
                     type="text"
+                    placeholder=" "
                     defaultValue={user?.permanentAddress}
                     onChange={(e) => {
                       if (typeof window !== 'undefined') {
                         (window as any)._tempEditPermanentAddress = e.target.value;
                       }
                     }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
                   />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-current-address" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Current Address</label>
-                  <input
-                    id="settings-current-address"
-                    type="text"
-                    defaultValue={user?.currentAddress}
-                    onChange={(e) => {
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditCurrentAddress = e.target.value;
-                      }
-                    }}
-                    className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-alternate-number" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Alternate Number</label>
-                  <PhoneInput
-                    country={selectedCountryCode ? selectedCountryCode.toLowerCase() : 'in'}
-                    value={alternatePhoneValue}
-                    onChange={(phone, data: any) => {
-                      if (data?.dialCode) {
-                        const localPart = phone.slice(data.dialCode.length);
-                        
-                        // Dynamic country-based length restriction
-                        if (data.format) {
-                          const maxLen = (data.format.match(/\./g) || []).length;
-                          if (phone.length > maxLen) {
-                            setAlternatePhoneValue('');
-                            setTimeout(() => setAlternatePhoneValue(alternatePhoneValue), 0);
-                            return;
-                          }
-                        } else {
-                          if (localPart.length > 15) {
-                            setAlternatePhoneValue('');
-                            setTimeout(() => setAlternatePhoneValue(alternatePhoneValue), 0);
-                            return;
-                          }
-                        }
-
-                        // Specific valid starting digits for India
-                        if (data.dialCode === '91') {
-                          if (/^[0-5]/.test(localPart)) {
-                            setAlternatePhoneValue('');
-                            setTimeout(() => setAlternatePhoneValue(data.dialCode), 0);
-                            return;
-                          }
-                        }
-                      }
-                      setAlternatePhoneValue(phone);
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditAlternateNumber = phone;
-                      }
-                    }}
-                    inputStyle={{ width: '100%', height: '42px', borderRadius: '0.75rem', background: 'transparent' }}
-                    inputClass="!border-2 !border-zinc-600 dark:!border-zinc-600 !text-zinc-950 dark:!text-zinc-50"
-                    buttonClass="!bg-transparent !border-2 !border-zinc-600 dark:!border-zinc-600 hover:!bg-zinc-100 dark:hover:!bg-zinc-800"
-                    dropdownClass="!bg-white dark:!bg-zinc-900 !text-zinc-950 dark:!text-zinc-50 !border-2 !border-zinc-600 dark:!border-zinc-600"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-state" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">State</label>
-                  <Select
-                    instanceId="state-select"
-                    isDisabled={!selectedCountryCode}
-                    options={selectedCountryCode ? State.getStatesOfCountry(selectedCountryCode).map(s => ({
-                      value: s.name,
-                      label: s.name,
-                      state: s
-                    })) : []}
-                    value={
-                      selectedStateCode ? {
-                        value: selectedStateName,
-                        label: selectedStateName
-                      } : null
-                    }
-                    onChange={(selectedOption: any) => {
-                      if (!selectedOption) return;
-                      const newCode = selectedOption.state.isoCode;
-                      const newName = selectedOption.state.name;
-                      setSelectedStateCode(newCode);
-                      setSelectedStateName(newName);
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditState = newName;
-                        (window as any)._tempEditDistrict = ''; // Reset district on state change
-                      }
-                      setSelectedDistrictName('');
-                    }}
-                    placeholder="Select State"
-                    classNames={reactSelectClassNames}
-                    className="text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label htmlFor="settings-district" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">District / City</label>
-                  <Select
-                    instanceId="district-select"
-                    isDisabled={!selectedStateCode}
-                    options={selectedStateCode && selectedCountryCode ? City.getCitiesOfState(selectedCountryCode, selectedStateCode).map(c => ({
-                      value: c.name,
-                      label: c.name
-                    })) : []}
-                    value={
-                      selectedDistrictName ? {
-                        value: selectedDistrictName,
-                        label: selectedDistrictName
-                      } : null
-                    }
-                    onChange={(selectedOption: any) => {
-                      if (!selectedOption) return;
-                      setSelectedDistrictName(selectedOption.value);
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditDistrict = selectedOption.value;
-                      }
-                    }}
-                    placeholder="Select District"
-                    classNames={reactSelectClassNames}
-                    className="text-sm"
-                  />
+                  <label htmlFor="settings-address" className={floatingLabelNormal}>Address <span className="text-red-500">*</span></label>
                 </div>
 
-                <div className="space-y-1.5 sm:col-span-2 flex items-center gap-2 mt-2">
-                  <input
-                    id="settings-terms"
-                    type="checkbox"
-                    defaultChecked={user?.termsAndConditions}
-                    onChange={(e) => {
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditTerms = e.target.checked;
-                      }
-                    }}
-                    className="w-4 h-4 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <label htmlFor="settings-terms" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">
-                    I agree to the <button type="button" onClick={() => setIsTermsModalOpen(true)} className="text-blue-600 hover:underline">Terms and Conditions</button>
+
+                <div className="sm:col-span-2 mt-4">
+                  <label htmlFor="settings-terms" className="flex items-start gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 transition-colors hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer">
+                    <div className="flex items-center h-5 mt-0.5">
+                      <input
+                        id="settings-terms"
+                        type="checkbox"
+                        defaultChecked={user?.termsAndConditions}
+                        onChange={(e) => {
+                          if (typeof window !== 'undefined') {
+                            (window as any)._tempEditTerms = e.target.checked;
+                          }
+                        }}
+                        className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 focus:ring-offset-zinc-50 dark:focus:ring-offset-zinc-900 transition-colors cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                        Terms of Service & Privacy Policy <span className="text-red-500">*</span>
+                      </span>
+                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                        By checking this box, you acknowledge that you have read, understood, and agree to our{' '}
+                        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsTermsModalOpen(true); }} className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-sm">
+                          Terms and Conditions
+                        </button>
+                        {' '}and consent to our data processing practices. This action is required to maintain your workspace access.
+                      </p>
+                    </div>
                   </label>
                 </div>
               </div>

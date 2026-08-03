@@ -3,7 +3,7 @@
 import { useState, FormEvent, type ChangeEvent, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
-import { verifyOtp, resendVerificationOtp } from '../../api/auth';
+import { verifyOtp, resendVerificationOtp, requestRegistrationOtpApi, verifyRegistrationOtpApi, requestRegistrationEmailOtpApi, verifyRegistrationEmailOtpApi } from '../../api/auth';
 import { countries } from '@/constants/countries';
 import { Eye, EyeOff, Lock, Mail, User, Image as ImageIcon, ClipboardCheck, ArrowRight, Phone, Check, Plus, Briefcase, Network, CheckCircle } from 'lucide-react';
 import { checkRequirements, isPasswordValid, calculatePasswordStrength, getPasswordValidationError } from '../../utils/passwordValidator';
@@ -39,7 +39,7 @@ const validateNameField = (value: string, fieldName: string, allowSpace: boolean
 };
 
 export default function RegisterPage() {
-  const { register, loading, error } = useAuth();
+  const { register, loading, error, persistAuth } = useAuth() as any;
   const router = useRouter();
 
   // Registration states
@@ -73,6 +73,111 @@ export default function RegisterPage() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Phone OTP States
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [showPhoneOtpInput, setShowPhoneOtpInput] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [phoneOtpTimer, setPhoneOtpTimer] = useState(0);
+  const [phoneOtpSending, setPhoneOtpSending] = useState(false);
+  const [phoneOtpVerifying, setPhoneOtpVerifying] = useState(false);
+
+  useEffect(() => {
+    if (phoneOtpTimer > 0) {
+      const interval = setInterval(() => {
+        setPhoneOtpTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [phoneOtpTimer]);
+
+  const handleSendPhoneOtp = async () => {
+    setMobileError(null);
+    if (!mobileNumber || mobileNumber.length < 5) return;
+    setPhoneOtpSending(true);
+    try {
+      await requestRegistrationOtpApi({ mobileNumber, countryCode });
+      setShowPhoneOtpInput(true);
+      setPhoneOtpTimer(60);
+      setPhoneOtp('');
+    } catch (err: any) {
+      setMobileError(err.message || 'Failed to send OTP.');
+    } finally {
+      setPhoneOtpSending(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    setMobileError(null);
+    if (!phoneOtp || phoneOtp.length !== 6) {
+      setMobileError('Please enter the 6-digit OTP.');
+      return;
+    }
+    setPhoneOtpVerifying(true);
+    try {
+      await verifyRegistrationOtpApi({ mobileNumber, countryCode, otp: phoneOtp });
+      setIsPhoneVerified(true);
+      setShowPhoneOtpInput(false);
+    } catch (err: any) {
+      setMobileError(err.message || 'Invalid OTP.');
+    } finally {
+      setPhoneOtpVerifying(false);
+    }
+  };
+
+  // Email OTP States
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
+  const [showEmailOtpInput, setShowEmailOtpInput] = useState(false);
+  const [emailOtp, setEmailOtp] = useState('');
+  const [emailOtpTimer, setEmailOtpTimer] = useState(0);
+  const [emailOtpSending, setEmailOtpSending] = useState(false);
+  const [emailOtpVerifying, setEmailOtpVerifying] = useState(false);
+
+  useEffect(() => {
+    if (emailOtpTimer > 0) {
+      const interval = setInterval(() => {
+        setEmailOtpTimer((prev) => prev - 1);
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [emailOtpTimer]);
+
+  const handleSendEmailOtp = async () => {
+    setEmailError(null);
+    if (!email || !isValidEmail(email)) {
+      setEmailError('Please enter a valid email.');
+      return;
+    }
+    setEmailOtpSending(true);
+    try {
+      await requestRegistrationEmailOtpApi({ email });
+      setShowEmailOtpInput(true);
+      setEmailOtpTimer(60);
+      setEmailOtp('');
+    } catch (err: any) {
+      setEmailError(err.message || 'Failed to send OTP.');
+    } finally {
+      setEmailOtpSending(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    setEmailError(null);
+    if (!emailOtp || emailOtp.length !== 6) {
+      setEmailError('Please enter the 6-digit OTP.');
+      return;
+    }
+    setEmailOtpVerifying(true);
+    try {
+      await verifyRegistrationEmailOtpApi({ email, otp: emailOtp });
+      setIsEmailVerified(true);
+      setShowEmailOtpInput(false);
+    } catch (err: any) {
+      setEmailError(err.message || 'Invalid OTP.');
+    } finally {
+      setEmailOtpVerifying(false);
+    }
+  };
 
   // OTP Verification digits (6 separate boxes)
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
@@ -143,24 +248,26 @@ export default function RegisterPage() {
 
 
   const handleMobileChange = (val: string) => {
+    if (isPhoneVerified) return; // Lock if verified
+
     const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
-    
+
     // Automatically remove non-numeric chars and slice to max length
     const digitsOnly = val.replace(/\D/g, '').slice(0, selectedCountry.maxLength);
-    
+
     if (!digitsOnly) {
       setMobileNumber('');
       setMobileError(null);
       return;
     }
-    
+
     // Indian mobile numbers must start with 6, 7, 8, or 9
     if (countryCode === '+91' && !/^[6-9]/.test(digitsOnly)) {
       return; // block typing
     }
-    
+
     setMobileNumber(digitsOnly);
-    
+
     // Real-time robust validation using libphonenumber-js
     const errorMsg = validateMobileNumber(digitsOnly, selectedCountry.iso);
     setMobileError(errorMsg);
@@ -199,16 +306,16 @@ export default function RegisterPage() {
       hasError = true;
     }
 
-    if (!qualification) {
-      setQualificationError('Please select your qualification.');
-      hasError = true;
-    }
+    // Qualification is now optional, so no validation error here
 
     const selectedCountry = countries.find(c => c.code === countryCode) || countries[0];
 
     const mobileValidationErr = validateMobileNumber(mobileNumber, selectedCountry.iso);
     if (mobileValidationErr) {
       setMobileError(mobileValidationErr);
+      hasError = true;
+    } else if (!isPhoneVerified) {
+      setMobileError('Please verify your mobile number before continuing.');
       hasError = true;
     }
 
@@ -218,6 +325,9 @@ export default function RegisterPage() {
       hasError = true;
     } else if (!isValidEmail(trimmedEmail)) {
       setEmailError('Please enter a valid email address (e.g., user@example.com).');
+      hasError = true;
+    } else if (!isEmailVerified) {
+      setEmailError('Please verify your email address before continuing.');
       hasError = true;
     }
 
@@ -238,7 +348,7 @@ export default function RegisterPage() {
     if (hasError) return;
 
     try {
-      const message = await register({
+      const data = await register({
         firstName: firstName.trim(),
         lastName: lastName.trim(),
         gender,
@@ -249,7 +359,19 @@ export default function RegisterPage() {
         password,
         profilePicture
       });
-      setSuccessMessage(message || 'Registration successful! Please verify using the 6-digit code.');
+      
+      setSuccessMessage(data.message || 'Registration successful! Redirecting to dashboard...');
+      
+      if (data.token) {
+        persistAuth(data.user, data.token);
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+      } else {
+        setTimeout(() => {
+          router.push('/login');
+        }, 2000);
+      }
     } catch (err: any) {
       const msg = err.response?.data?.message || err.message || 'Registration failed.';
       if (msg.toLowerCase().includes('email')) {
@@ -336,465 +458,524 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex font-sans transition-colors duration-500 overflow-hidden relative">
+    <div className="h-screen flex font-sans transition-colors duration-500 overflow-hidden relative">
       {/* ── LEFT COLUMN (45%) ── */}
-      <div className="w-full lg:w-[45%] flex flex-col justify-center px-8 sm:px-16 xl:px-24 py-12 relative z-10 bg-white dark:bg-zinc-950 min-h-screen shadow-2xl lg:shadow-none overflow-y-auto">
+      <div className="w-full lg:w-[45%] flex flex-col justify-center px-8 sm:px-16 xl:px-24 py-12 relative z-10 bg-white dark:bg-zinc-950 h-full shadow-2xl lg:shadow-none overflow-y-auto">
         <div className="w-full max-w-[440px] mx-auto">
-        {/* Profile Picture Upload & Title */}
-        <div className="flex flex-col items-center mb-10">
-          <div className="relative mb-2">
-            <label htmlFor="profile-pic" className={`cursor-pointer group relative flex h-24 w-24 items-center justify-center rounded-full bg-[#9ca3af] dark:bg-zinc-700 transition-all duration-200 overflow-hidden ${formError?.includes('Image') ? 'ring-2 ring-red-400' : 'hover:bg-zinc-600 dark:hover:bg-zinc-600'}`}>
-              {profilePicture ? (
-                <img src={profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
-              ) : (
-                <div className="absolute inset-0 flex flex-col items-center justify-end pt-3">
-                  <div className="w-9 h-9 bg-[#e5e7eb] dark:bg-zinc-900 rounded-full mb-1 shrink-0" />
-                  <div className="w-[85%] h-10 bg-[#e5e7eb] dark:bg-zinc-900 rounded-t-full shrink-0 translate-y-1" />
+          {/* Profile Picture Upload & Title */}
+          <div className="flex flex-col items-center mb-10">
+            <div className="relative mb-2">
+              <label htmlFor="profile-pic" className={`cursor-pointer group relative flex h-24 w-24 items-center justify-center rounded-full bg-[#9ca3af] dark:bg-zinc-700 transition-all duration-200 overflow-hidden ${formError?.includes('Image') ? 'ring-2 ring-red-400' : 'hover:bg-zinc-600 dark:hover:bg-zinc-600'}`}>
+                {profilePicture ? (
+                  <img src={profilePicture} alt="Profile preview" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-end pt-3">
+                    <div className="w-9 h-9 bg-[#e5e7eb] dark:bg-zinc-900 rounded-full mb-1 shrink-0" />
+                    <div className="w-[85%] h-10 bg-[#e5e7eb] dark:bg-zinc-900 rounded-t-full shrink-0 translate-y-1" />
+                  </div>
+                )}
+                {profilePicture && (
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-semibold uppercase tracking-wider">
+                    Change
+                  </div>
+                )}
+                <input
+                  id="profile-pic"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+              {!profilePicture && (
+                <div className="absolute bottom-0 right-0 h-8 w-8 bg-[#9ca3af] dark:bg-zinc-700 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950 pointer-events-none shadow-sm">
+                  <Plus className="h-5 w-5 text-white" strokeWidth={3} />
                 </div>
               )}
-              {profilePicture && (
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[10px] font-semibold uppercase tracking-wider">
-                  Change
-                </div>
-              )}
-              <input
-                id="profile-pic"
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
-            {!profilePicture && (
-              <div className="absolute bottom-0 right-0 h-8 w-8 bg-[#9ca3af] dark:bg-zinc-700 rounded-full flex items-center justify-center border-2 border-white dark:border-zinc-950 pointer-events-none shadow-sm">
-                <Plus className="h-5 w-5 text-white" strokeWidth={3} />
-              </div>
-            )}
-          </div>
-          <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-6">Upload Profile Picture</span>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
-            Employee Task Manager
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
-            {successMessage ? 'Verify your email to continue' : 'Create your workspace account'}
-          </p>
-        </div>
-
-        {successMessage ? (
-          otpSuccess ? (
-            <div className="space-y-4 text-center">
-              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-4 py-6 text-sm text-emerald-700 dark:text-emerald-400 animate-in zoom-in-95">
-                <p className="font-semibold text-base mb-1">Email verified</p>
-                <p>Your account is verified. Redirecting to loginâ€¦</p>
-              </div>
             </div>
-          ) : (
-            <form onSubmit={handleOtpSubmit} className="space-y-5">
-              {successMessage && (
-                <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-3 text-sm text-emerald-700 dark:text-emerald-400 font-medium">
-                  {successMessage}
-                </div>
-              )}
+            <span className="text-xs font-semibold text-zinc-600 dark:text-zinc-400 mb-6">Upload Profile Picture</span>
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 font-outfit">
+              Employee Task Manager
+            </h1>
+            <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-500">
+              {successMessage ? 'Verify your email to continue' : 'Create your workspace account'}
+            </p>
+          </div>
 
-              <div className="space-y-3">
-                <label className="text-sm font-semibold text-zinc-700 dark:text-zinc-300 text-center block">
-                  Enter the 6-digit code sent to{' '}
-                  <span className="font-bold text-zinc-900 dark:text-zinc-100">{email}</span>
-                </label>
+          {successMessage && (
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 px-3.5 py-3 mb-6 text-sm text-emerald-700 dark:text-emerald-400 font-medium text-center">
+              {successMessage}
+            </div>
+          )}
 
-                <div className="flex justify-center gap-2">
-                  {otpDigits.map((digit, idx) => (
+          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+              {/* First Name & Last Name */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <div className="relative mt-2">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
                     <input
-                      key={idx}
-                      id={`otp-digit-${idx}`}
+                      id="firstName"
+                      type="text"
+                      maxLength={50}
+                      value={firstName}
+                      onChange={(e) => handleFirstNameChange(e.target.value)}
+                      placeholder="John"
+                      className={`${inputBase} pl-10 pr-3.5 py-3 ${firstNameError ? inputError : inputNormal}`}
+                    />
+                    <label htmlFor="firstName" className={getFloatingLabelClass(firstName, !!firstNameError)}>
+                      First name <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  {firstNameError && <p className="text-sm text-red-500 font-semibold">{firstNameError}</p>}
+                </div>
+
+                <div className="space-y-1">
+                  <div className="relative mt-2">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                    <input
+                      id="lastName"
+                      type="text"
+                      maxLength={50}
+                      value={lastName}
+                      onChange={(e) => handleLastNameChange(e.target.value)}
+                      placeholder="Doe"
+                      className={`${inputBase} pl-10 pr-3.5 py-3 ${lastNameError ? inputError : inputNormal}`}
+                    />
+                    <label htmlFor="lastName" className={getFloatingLabelClass(lastName, !!lastNameError)}>
+                      Last name <span className="text-red-500">*</span>
+                    </label>
+                  </div>
+                  {lastNameError && <p className="text-sm text-red-500 font-semibold">{lastNameError}</p>}
+                </div>
+              </div>
+
+              {/* Gender and Qualification Grid */}
+              <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
+                {/* Gender Radio Buttons */}
+                <div className="space-y-2">
+                  <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
+                    Gender <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex flex-wrap gap-4 px-1">
+                    {['Male', 'Female', 'Other'].map((g) => (
+                      <label key={g} className="flex items-center gap-2 cursor-pointer group">
+                        <input
+                          type="radio"
+                          name="gender"
+                          value={g}
+                          checked={gender === g}
+                          onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
+                          className="peer sr-only"
+                        />
+                        <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-500 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-700/50 peer-checked:border-teal-700 peer-checked:[&>div]:scale-100 bg-white dark:bg-zinc-900 flex items-center justify-center transition-all">
+                          <div className="w-[10px] h-[10px] rounded-full bg-teal-700 scale-0 transition-transform duration-200" />
+                        </div>
+                        <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
+                          {g}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                  {genderError && <p className="text-sm text-red-500 font-semibold px-1">{genderError}</p>}
+                </div>
+
+                {/* Qualification Select */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1 opacity-0 pointer-events-none hidden sm:block">
+                    Qualification
+                  </label>
+                  <div className="relative" ref={qualDropdownRef}>
+                    <div
+                      onClick={() => setIsQualDropdownOpen(!isQualDropdownOpen)}
+                      className={`${inputBase} px-3 py-3 flex items-center justify-between cursor-pointer select-none ${qualificationError ? inputError : inputNormal}`}
+                    >
+                      <span className={qualification ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-600'}>
+                        {qualification || 'Select Qualification'}
+                      </span>
+                      <svg className={`h-4 w-4 text-zinc-600 transition-transform duration-200 ${isQualDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+
+                    {isQualDropdownOpen && (
+                      <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800 text-xs font-bold text-black dark:text-white uppercase tracking-wider">
+                          Highest Qualification
+                        </div>
+                        <ul className="max-h-56 overflow-y-auto py-1">
+                          {['10th', '12th', 'Bachelor\'s', 'Master\'s', 'PhD', 'Other'].map(q => (
+                            <li
+                              key={q}
+                              onClick={() => {
+                                setQualification(q);
+                                setQualificationError(null);
+                                setIsQualDropdownOpen(false);
+                              }}
+                              className={`px-3 py-2.5 cursor-pointer text-sm font-medium transition-colors flex items-center justify-between ${qualification === q ? 'bg-blue-50 dark:bg-blue-900/20 text-teal-800 dark:text-teal-400' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
+                            >
+                              <span>{q}</span>
+                              {qualification === q && <Check className="h-4 w-4" />}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  {qualificationError && <p className="text-sm text-red-500 font-semibold px-1">{qualificationError}</p>}
+                </div>
+              </div>
+
+              {/* Country Selector Dropdown & Mobile Number */}
+              <div className="space-y-1">
+                <div className="flex gap-2 mt-2">
+                  <div
+                    ref={countryDropdownRef}
+                    className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-600 shadow-sm hover:border-zinc-500 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
+                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                  >
+                    <div className="flex items-center gap-2 pointer-events-none w-full">
+                      {(() => {
+                        const selected = countries.find(c => c.code === countryCode);
+                        return selected ? (
+                          <img
+                            src={`https://flagcdn.com/w20/${selected.iso}.png`}
+                            srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
+                            width="20"
+                            alt={selected.name}
+                            className="rounded-[2px] shadow-sm shrink-0"
+                          />
+                        ) : null;
+                      })()}
+                      <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                    </div>
+
+                    {isCountryDropdownOpen && (
+                      <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden">
+                        <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                          <input
+                            type="text"
+                            autoFocus
+                            placeholder="Search country..."
+                            value={countrySearchQuery}
+                            onChange={(e) => setCountrySearchQuery(e.target.value)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                          />
+                        </div>
+                        <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
+                          {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
+                            <li
+                              key={`${c.name}-${idx}`}
+                              className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
+                              onClick={(e) => {
+                                if (isPhoneVerified) return;
+                                e.stopPropagation();
+                                setCountryCode(c.code);
+                                if (mobileNumber.length > c.maxLength) {
+                                  setMobileNumber(mobileNumber.slice(0, c.maxLength));
+                                }
+                                setIsCountryDropdownOpen(false);
+                                setCountrySearchQuery('');
+                              }}
+                            >
+                              <img
+                                src={`https://flagcdn.com/w20/${c.iso}.png`}
+                                srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
+                                width="20"
+                                alt={c.name}
+                                className="rounded-[2px] shadow-sm shrink-0"
+                              />
+                              <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
+                              <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                            </li>
+                          ))}
+                          {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
+                            <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
+                          )}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative flex-1">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                    <input
+                      id="mobile"
                       type="text"
                       inputMode="numeric"
-                      maxLength={1}
-                      value={digit}
-                      onChange={(e) => handleOtpDigitChange(idx, e.target.value)}
-                      onKeyDown={(e) => handleOtpDigitKeyDown(idx, e)}
-                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl outline-none focus:ring-2 focus:ring-teal-700/30 focus:border-teal-700 text-zinc-950 dark:text-zinc-50"
+                      value={mobileNumber}
+                      disabled={isPhoneVerified}
+                      onChange={(e) => handleMobileChange(e.target.value)}
+                      placeholder="10-digit number"
+                      className={`${inputBase} pl-10 pr-10 py-3 ${mobileError ? inputError : inputNormal} ${isPhoneVerified ? 'bg-emerald-50/50 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-100 disabled:opacity-100' : ''}`}
                     />
-                  ))}
-                </div>
-
-                {otpError && <p className="text-sm text-red-500 font-semibold text-center">{otpError}</p>}
-              </div>
-
-              <button
-                type="submit"
-                disabled={otpDigits.some((d) => !d) || otpLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] px-4 py-3 text-base font-semibold text-white transition-all duration-150 hover:bg-[#0c3128] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {otpLoading ? 'Verifyingâ€¦' : 'Verify email'} <ArrowRight className="h-4 w-4" />
-              </button>
-
-              <div className="flex items-center justify-center text-sm">
-                <button
-                  type="button"
-                  onClick={handleResendOtp}
-                  disabled={resendCooldown > 0 || resendLoading}
-                  className="text-zinc-500 hover:text-zinc-650 transition-colors disabled:opacity-40 cursor-pointer text-sm font-semibold"
-                >
-                  {resendLoading ? 'Sendingâ€¦' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code'}
-                </button>
-              </div>
-
-              {resendMessage && (
-                <p className="text-center text-sm text-zinc-550 dark:text-zinc-400 font-medium">{resendMessage}</p>
-              )}
-            </form>
-          )
-        ) : (
-          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
-            {/* First Name & Last Name */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <div className="relative mt-2">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                  <input
-                    id="firstName"
-                    type="text"
-                    maxLength={50}
-                    value={firstName}
-                    onChange={(e) => handleFirstNameChange(e.target.value)}
-                    placeholder="John"
-                    className={`${inputBase} pl-10 pr-3.5 py-3 ${firstNameError ? inputError : inputNormal}`}
-                  />
-                  <label htmlFor="firstName" className={getFloatingLabelClass(firstName, !!firstNameError)}>
-                    First name
-                  </label>
-                </div>
-                {firstNameError && <p className="text-sm text-red-500 font-semibold">{firstNameError}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <div className="relative mt-2">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                  <input
-                    id="lastName"
-                    type="text"
-                    maxLength={50}
-                    value={lastName}
-                    onChange={(e) => handleLastNameChange(e.target.value)}
-                    placeholder="Doe"
-                    className={`${inputBase} pl-10 pr-3.5 py-3 ${lastNameError ? inputError : inputNormal}`}
-                  />
-                  <label htmlFor="lastName" className={getFloatingLabelClass(lastName, !!lastNameError)}>
-                    Last name
-                  </label>
-                </div>
-                {lastNameError && <p className="text-sm text-red-500 font-semibold">{lastNameError}</p>}
-              </div>
-            </div>
-
-            {/* Gender and Qualification Grid */}
-            <div className="grid grid-cols-2 gap-4 pt-1 pb-2">
-              {/* Gender Radio Buttons */}
-              <div className="space-y-2">
-                <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1">
-                  Gender
-                </label>
-                <div className="flex flex-wrap gap-4 px-1">
-                  {['Male', 'Female', 'Other'].map((g) => (
-                    <label key={g} className="flex items-center gap-2 cursor-pointer group">
-                      <input
-                        type="radio"
-                        name="gender"
-                        value={g}
-                        checked={gender === g}
-                        onChange={(e) => { setGender(e.target.value); setGenderError(null); }}
-                        className="peer sr-only"
-                      />
-                      <div className="w-[18px] h-[18px] rounded-full border-2 border-zinc-500 dark:border-zinc-600 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-700/50 peer-checked:border-teal-700 peer-checked:[&>div]:scale-100 bg-white dark:bg-zinc-900 flex items-center justify-center transition-all">
-                        <div className="w-[10px] h-[10px] rounded-full bg-teal-700 scale-0 transition-transform duration-200" />
-                      </div>
-                      <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300 group-hover:text-zinc-900 dark:group-hover:text-zinc-100 transition-colors">
-                        {g}
-                      </span>
+                    <label htmlFor="mobile" className={getFloatingLabelClass(mobileNumber, !!mobileError)}>
+                      Mobile Number <span className="text-red-500">*</span>
                     </label>
-                  ))}
+                    {isPhoneVerified && (
+                      <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-emerald-500" />
+                    )}
+                  </div>
                 </div>
-                {genderError && <p className="text-sm text-red-500 font-semibold px-1">{genderError}</p>}
+
+                {/* Phone OTP Actions */}
+                {!isPhoneVerified && !showPhoneOtpInput && mobileNumber && !mobileError && (
+                  <div className="flex justify-end mt-1 animate-in fade-in zoom-in-95">
+                    <button
+                      type="button"
+                      onClick={handleSendPhoneOtp}
+                      disabled={phoneOtpSending}
+                      className="text-xs font-bold text-teal-700 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300 disabled:opacity-50"
+                    >
+                      {phoneOtpSending ? 'Sending...' : 'Verify Phone Number'}
+                    </button>
+                  </div>
+                )}
+
+                {showPhoneOtpInput && !isPhoneVerified && (
+                  <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700/50 animate-in fade-in slide-in-from-top-2">
+                    <div className="flex items-center justify-between mb-2 text-xs font-semibold">
+                      <span className="text-zinc-700 dark:text-zinc-300">Enter SMS Code</span>
+                      {phoneOtpTimer > 0 ? (
+                        <span className="text-teal-700 dark:text-teal-400">{phoneOtpTimer}s</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleSendPhoneOtp}
+                          disabled={phoneOtpSending}
+                          className="text-teal-700 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300 underline disabled:opacity-50"
+                        >
+                          {phoneOtpSending ? 'Sending...' : 'Resend OTP'}
+                        </button>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        maxLength={6}
+                        value={phoneOtp}
+                        onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, ''))}
+                        className={`${inputBase} px-3 py-2 text-center tracking-[0.2em] font-bold`}
+                        placeholder="••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleVerifyPhoneOtp}
+                        disabled={phoneOtp.length !== 6 || phoneOtpVerifying}
+                        className="px-4 bg-teal-700 text-white rounded-xl text-xs font-bold hover:bg-teal-800 disabled:opacity-50 transition-colors"
+                      >
+                        {phoneOtpVerifying ? '...' : 'Verify'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
               </div>
 
-              {/* Qualification Select */}
-              <div className="space-y-1">
-                <label className="block text-xs font-semibold text-zinc-600 dark:text-zinc-400 px-1 opacity-0 pointer-events-none hidden sm:block">
-                  Qualification
-                </label>
-                <div className="relative" ref={qualDropdownRef}>
-                  <div
-                    onClick={() => setIsQualDropdownOpen(!isQualDropdownOpen)}
-                    className={`${inputBase} px-3 py-3 flex items-center justify-between cursor-pointer select-none ${qualificationError ? inputError : inputNormal}`}
-                  >
-                    <span className={qualification ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-600'}>
-                      {qualification || 'Select Qualification'}
-                    </span>
-                    <svg className={`h-4 w-4 text-zinc-600 transition-transform duration-200 ${isQualDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+              {/* Email - Always visible, but disabled until Phone is verified */}
+              <div className="space-y-4">
+                  <div className="space-y-1">
+                    <div className="relative mt-2">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                      <input
+                        id="email"
+                        type="text"
+                        autoComplete="new-email"
+                        maxLength={254}
+                        value={email}
+                        disabled={isEmailVerified || !isPhoneVerified}
+                        onChange={(event) => {
+                          const val = event.target.value;
+                          setEmail(val);
+                          setFormError(null);
+                          
+                          const trimmed = val.trim();
+                          if (!trimmed) {
+                            setEmailError('Please enter your email.');
+                          } else if (!isValidEmail(trimmed)) {
+                            setEmailError('Please enter the valid email address.');
+                          } else {
+                            setEmailError(null);
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!e.target.value.trim()) {
+                            setEmailError('Please enter your email.');
+                          }
+                        }}
+                        placeholder="name@company.com"
+                        className={`${inputBase} pl-10 pr-3.5 py-3 ${emailError ? inputError : inputNormal} ${isEmailVerified ? 'opacity-70 bg-zinc-100 dark:bg-zinc-800' : ''}`}
+                      />
+                      {isEmailVerified && (
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                          <div className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/50">
+                            <Check className="h-3 w-3" strokeWidth={3} />
+                            <span className="text-[10px] font-bold tracking-wide uppercase">Verified</span>
+                          </div>
+                        </div>
+                      )}
+                      <label htmlFor="email" className={getFloatingLabelClass(email, !!emailError)}>
+                        Email <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
                   </div>
 
-                  {isQualDropdownOpen && (
-                    <div className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-                      <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-800/50 border-b border-zinc-100 dark:border-zinc-800 text-xs font-bold text-black dark:text-white uppercase tracking-wider">
-                        Highest Qualification
-                      </div>
-                      <ul className="max-h-56 overflow-y-auto py-1">
-                        {['10th', '12th', 'Bachelor\'s', 'Master\'s', 'PhD', 'Other'].map(q => (
-                          <li
-                            key={q}
-                            onClick={() => {
-                              setQualification(q);
-                              setQualificationError(null);
-                              setIsQualDropdownOpen(false);
-                            }}
-                            className={`px-3 py-2.5 cursor-pointer text-sm font-medium transition-colors flex items-center justify-between ${qualification === q ? 'bg-blue-50 dark:bg-blue-900/20 text-teal-800 dark:text-teal-400' : 'text-zinc-700 dark:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'}`}
-                          >
-                            <span>{q}</span>
-                            {qualification === q && <Check className="h-4 w-4" />}
-                          </li>
-                        ))}
-                      </ul>
+                  {/* Email OTP Actions */}
+                  {!isEmailVerified && !showEmailOtpInput && email && !emailError && (
+                    <div className="flex justify-end mt-1 animate-in fade-in zoom-in-95">
+                      <button
+                        type="button"
+                        onClick={handleSendEmailOtp}
+                        disabled={emailOtpSending}
+                        className="text-xs font-bold text-teal-700 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300 disabled:opacity-50"
+                      >
+                        {emailOtpSending ? 'Sending...' : 'Verify Email Address'}
+                      </button>
                     </div>
                   )}
-                </div>
-                {qualificationError && <p className="text-sm text-red-500 font-semibold px-1">{qualificationError}</p>}
-              </div>
-            </div>
 
-            {/* Country Selector Dropdown & Mobile Number */}
-            <div className="space-y-1">
-              <div className="flex gap-2 mt-2">
-                <div 
-                  ref={countryDropdownRef}
-                  className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-600 shadow-sm hover:border-zinc-500 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-teal-700/20 focus-within:border-teal-700 shrink-0 w-[105px] cursor-pointer"
-                  onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                >
-                  <div className="flex items-center gap-2 pointer-events-none w-full">
-                    {(() => {
-                      const selected = countries.find(c => c.code === countryCode);
-                      return selected ? (
-                        <img 
-                          src={`https://flagcdn.com/w20/${selected.iso}.png`}
-                          srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
-                          width="20"
-                          alt={selected.name}
-                          className="rounded-[2px] shadow-sm shrink-0"
-                        />
-                      ) : null;
-                    })()}
-                    <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
-                  </div>
-                  
-                  {isCountryDropdownOpen && (
-                    <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden">
-                      <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                  {showEmailOtpInput && !isEmailVerified && (
+                    <div className="mt-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-200 dark:border-zinc-700/50 animate-in fade-in slide-in-from-top-2">
+                      <div className="flex items-center justify-between mb-2 text-xs font-semibold">
+                        <span className="text-zinc-700 dark:text-zinc-300">Enter Email Code</span>
+                        {emailOtpTimer > 0 ? (
+                          <span className="text-teal-700 dark:text-teal-400">{emailOtpTimer}s</span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleSendEmailOtp}
+                            disabled={emailOtpSending}
+                            className="text-teal-700 hover:text-teal-800 dark:text-teal-400 dark:hover:text-teal-300 underline disabled:opacity-50"
+                          >
+                            {emailOtpSending ? 'Sending...' : 'Resend OTP'}
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
                         <input
                           type="text"
-                          autoFocus
-                          placeholder="Search country..."
-                          value={countrySearchQuery}
-                          onChange={(e) => setCountrySearchQuery(e.target.value)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-teal-700/20 focus:border-teal-700 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                          maxLength={6}
+                          value={emailOtp}
+                          onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, ''))}
+                          className={`${inputBase} px-3 py-2 text-center tracking-[0.2em] font-bold`}
+                          placeholder="••••••"
                         />
+                        <button
+                          type="button"
+                          onClick={handleVerifyEmailOtp}
+                          disabled={emailOtp.length !== 6 || emailOtpVerifying}
+                          className="px-4 bg-teal-700 text-white rounded-xl text-xs font-bold hover:bg-teal-800 disabled:opacity-50 transition-colors"
+                        >
+                          {emailOtpVerifying ? '...' : 'Verify'}
+                        </button>
                       </div>
-                      <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
-                        {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
-                          <li 
-                            key={`${c.name}-${idx}`}
-                            className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCountryCode(c.code);
-                              if (mobileNumber.length > c.maxLength) {
-                                setMobileNumber(mobileNumber.slice(0, c.maxLength));
-                              }
-                              setIsCountryDropdownOpen(false);
-                              setCountrySearchQuery('');
-                            }}
-                          >
-                            <img 
-                              src={`https://flagcdn.com/w20/${c.iso}.png`}
-                              srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
-                              width="20"
-                              alt={c.name}
-                              className="rounded-[2px] shadow-sm shrink-0"
-                            />
-                            <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
-                            <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
-                          </li>
-                        ))}
-                        {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
-                          <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
-                        )}
-                      </ul>
                     </div>
                   )}
                 </div>
+              {/* Password and Submit - Always visible */}
+              <div className="space-y-4">
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <div className="relative mt-2">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                      <input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        maxLength={128}
+                        value={password}
+                        disabled={!isPhoneVerified}
+                        onChange={(event) => {
+                          const val = event.target.value;
+                          setPassword(val);
+                          setFormError(null);
+                          if (!val) {
+                            setPasswordError(null);
+                          } else if (getPasswordValidationError(val)) {
+                            setPasswordError('Please enter the valid password.');
+                          } else {
+                            setPasswordError(null);
+                          }
+                        }}
+                        placeholder="••••••••"
+                        className={`${inputBase} pl-10 pr-10 py-3 ${passwordError ? inputError : inputNormal}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-teal-700 dark:text-teal-500"
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                      </button>
+                      <label htmlFor="password" className={getFloatingLabelClass(password, !!passwordError)}>
+                        Password <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
+                  </div>
 
-                <div className="relative flex-1">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                  <input
-                    id="mobile"
-                    type="text"
-                    inputMode="numeric"
-                    value={mobileNumber}
-                    onChange={(e) => handleMobileChange(e.target.value)}
-                    placeholder="10-digit number"
-                    className={`${inputBase} pl-10 pr-3.5 py-3 ${mobileError ? inputError : inputNormal}`}
-                  />
-                  <label htmlFor="mobile" className={getFloatingLabelClass(mobileNumber, !!mobileError)}>
-                    Mobile Number
-                  </label>
+                  {/* Confirm Password */}
+                  <div className="space-y-1">
+                    <div className="relative mt-2">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
+                      <input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        autoComplete="new-password"
+                        maxLength={128}
+                        value={confirmPassword}
+                        disabled={!isPhoneVerified}
+                        onChange={(event) => { setConfirmPassword(event.target.value); setConfirmPasswordError(null); setFormError(null); }}
+                        placeholder="••••••••"
+                        className={`${inputBase} pl-10 pr-10 py-3 ${confirmPasswordError ? inputError : inputNormal}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                      <label htmlFor="confirmPassword" className={getFloatingLabelClass(confirmPassword, !!confirmPasswordError)}>
+                        Confirm password <span className="text-red-500">*</span>
+                      </label>
+                    </div>
+                    {confirmPasswordError && <p className="text-sm text-red-500 font-semibold">{confirmPasswordError}</p>}
+                  </div>
+
+                  {formError && (
+                    <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
+                      {formError}
+                    </div>
+                  )}
+                  {error && !formError && (
+                    <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={loading || !firstName.trim() || !lastName.trim() || !gender || !mobileNumber.trim() || !isPhoneVerified || !email.trim() || !isEmailVerified || !password.trim() || !confirmPassword.trim()}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] px-4 py-2.5 text-xs font-bold text-white transition-all duration-150 hover:bg-[#0c3128] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {loading ? 'Creating account…' : 'Create account'}
+                  </button>
                 </div>
-              </div>
-              {mobileError && <p className="text-sm text-red-500 font-semibold">{mobileError}</p>}
-            </div>
+            </form>
 
-            {/* Email */}
-            <div className="space-y-1">
-              <div className="relative mt-2">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                <input
-                  id="email"
-                  type="text"
-                  autoComplete="new-email"
-                  maxLength={254}
-                  value={email}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setEmail(val);
-                    setFormError(null);
-                    
-                    const trimmed = val.trim();
-                    if (!trimmed) {
-                      setEmailError('Please enter your email.');
-                    } else if (!isValidEmail(trimmed)) {
-                      setEmailError('Please enter the valid email address.');
-                    } else {
-                      setEmailError(null);
-                    }
-                  }}
-                  onBlur={(e) => {
-                    if (!e.target.value.trim()) {
-                      setEmailError('Please enter your email.');
-                    }
-                  }}
-                  placeholder="name@company.com"
-                  className={`${inputBase} pl-10 pr-3.5 py-3 ${emailError ? inputError : inputNormal}`}
-                />
-                <label htmlFor="email" className={getFloatingLabelClass(email, !!emailError)}>
-                  Email
-                </label>
-              </div>
-              {emailError && <p className="text-sm text-red-500 font-semibold">{emailError}</p>}
-            </div>
-
-            {/* Password */}
-            <div className="space-y-1">
-              <div className="relative mt-2">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  maxLength={128}
-                  value={password}
-                  onChange={(event) => {
-                    const val = event.target.value;
-                    setPassword(val);
-                    setFormError(null);
-                    if (!val) {
-                      setPasswordError(null);
-                    } else if (getPasswordValidationError(val)) {
-                      setPasswordError('Please enter the valid password.');
-                    } else {
-                      setPasswordError(null);
-                    }
-                  }}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                  className={`${inputBase} pl-10 pr-10 py-3 ${passwordError ? inputError : inputNormal}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer focus:outline-none focus:text-teal-700 dark:text-teal-500"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
-                </button>
-                <label htmlFor="password" className={getFloatingLabelClass(password, !!passwordError)}>
-                  Password
-                </label>
-              </div>
-
-
-
-              {passwordError && <p className="text-sm text-red-500 font-semibold">{passwordError}</p>}
-            </div>
-
-            {/* Confirm Password */}
-            <div className="space-y-1">
-              <div className="relative mt-2">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500 pointer-events-none" />
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  autoComplete="new-password"
-                  maxLength={128}
-                  value={confirmPassword}
-                  onChange={(event) => { setConfirmPassword(event.target.value); setConfirmPasswordError(null); setFormError(null); }}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                  className={`${inputBase} pl-10 pr-10 py-3 ${confirmPasswordError ? inputError : inputNormal}`}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
-                >
-                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-                <label htmlFor="confirmPassword" className={getFloatingLabelClass(confirmPassword, !!confirmPasswordError)}>
-                  Confirm password
-                </label>
-              </div>
-              {confirmPasswordError && <p className="text-sm text-red-500 font-semibold">{confirmPasswordError}</p>}
-            </div>
-
-
-
-            {formError && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
-                {formError}
-              </div>
-            )}
-            {error && !formError && (
-              <div className="rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 px-3.5 py-2.5 text-sm text-red-600 dark:text-red-400 font-semibold">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#0f3f33] px-4 py-2.5 text-xs font-bold text-white transition-all duration-150 hover:bg-[#0c3128] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            >
-              {loading ? 'Creating accountâ€¦' : 'Create account'}
-            </button>
-          </form>
-        )}
-
-        {/* Footer */}
-        <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
-          Already have an account?{' '}
-          <a href="/login" className="font-semibold text-teal-800 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline transition-colors">
-            Sign in
-          </a>
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm text-zinc-550 dark:text-zinc-400">
+            Already have an account?{' '}
+            <a href="/login" className="font-semibold text-teal-800 dark:text-teal-400 hover:text-teal-900 dark:hover:text-teal-300 hover:underline transition-colors">
+              Sign in
+            </a>
+          </div>
         </div>
-      </div>
       </div>
       {/* ── RIGHT COLUMN (55%) ── */}
       <div className="hidden lg:flex lg:w-[55%] bg-[#061f17] relative flex-col justify-between px-16 xl:px-24 py-16 overflow-hidden">
@@ -815,7 +996,7 @@ export default function RegisterPage() {
         {/* Central Animated Solar System */}
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center w-full min-h-[400px] overflow-hidden my-4">
           <div className="relative flex items-center justify-center w-[400px] h-[400px] scale-75 md:scale-90 lg:scale-100">
-            
+
             {/* Center Core */}
             <div className="absolute w-20 h-20 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-full shadow-[0_0_60px_rgba(45,212,191,0.6)] z-20 flex items-center justify-center animate-[pulse_4s_ease-in-out_infinite]">
               <Network className="w-8 h-8 text-white" />
@@ -824,27 +1005,27 @@ export default function RegisterPage() {
             {/* Orbit 1 (Inner) */}
             <div className="absolute w-[180px] h-[180px] rounded-full border border-teal-500/30 animate-[spin_10s_linear_infinite]">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#0a2b20] border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_10s_linear_infinite_reverse]">
-                  <User className="w-4 h-4 text-teal-400" />
+                <User className="w-4 h-4 text-teal-400" />
               </div>
             </div>
 
             {/* Orbit 2 (Middle) */}
             <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-teal-500/20 animate-[spin_15s_linear_infinite_reverse]">
               <div className="absolute top-1/2 -right-5 -translate-y-1/2 w-10 h-10 bg-teal-900 border border-teal-400/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
-                  <Briefcase className="w-4 h-4 text-teal-300" />
+                <Briefcase className="w-4 h-4 text-teal-300" />
               </div>
               <div className="absolute top-1/2 -left-4 -translate-y-1/2 w-8 h-8 bg-teal-800 border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
-                  <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4 text-white" />
               </div>
             </div>
 
             {/* Orbit 3 (Outer) */}
             <div className="absolute w-[380px] h-[380px] rounded-full border border-teal-500/10 animate-[spin_25s_linear_infinite]">
               <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#0e372e] border border-teal-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
-                  <CheckCircle className="w-4 h-4 text-teal-400" />
+                <CheckCircle className="w-4 h-4 text-teal-400" />
               </div>
               <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-emerald-900 border border-emerald-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
-                  <User className="w-4 h-4 text-emerald-300" />
+                <User className="w-4 h-4 text-emerald-300" />
               </div>
             </div>
           </div>

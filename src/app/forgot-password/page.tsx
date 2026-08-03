@@ -27,7 +27,7 @@ type ResetMode = 'initial' | 'email' | 'phone';
 export default function ForgotPasswordPage() {
   const { forgotPassword, loading, error } = useAuth();
   const router = useRouter();
-  
+
   const [mode, setMode] = useState<ResetMode>('initial');
   const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
@@ -96,11 +96,11 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen flex font-sans transition-colors duration-500 overflow-hidden relative">
-      
+
       {/* ── LEFT COLUMN (45%) ── */}
       <div className="w-full lg:w-[45%] flex flex-col justify-center px-8 sm:px-16 xl:px-24 py-12 relative z-10 bg-white dark:bg-zinc-950 min-h-screen shadow-2xl lg:shadow-none">
         <div className="w-full max-w-[440px] mx-auto">
-          
+
           {/* Logo & Heading */}
           <div className="flex flex-col mb-10">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#0e372e] text-white shadow-lg shadow-teal-900/20 mb-6 ring-2 ring-[#0e372e]/20">
@@ -261,7 +261,7 @@ export default function ForgotPasswordPage() {
         {/* Central Animated Solar System */}
         <div className="relative z-10 flex-1 flex flex-col justify-center items-center w-full min-h-[400px] overflow-hidden my-4">
           <div className="relative flex items-center justify-center w-[400px] h-[400px] scale-75 md:scale-90 lg:scale-100">
-            
+
             {/* Center Core */}
             <div className="absolute w-20 h-20 bg-gradient-to-br from-teal-400 to-emerald-600 rounded-full shadow-[0_0_60px_rgba(45,212,191,0.6)] z-20 flex items-center justify-center animate-[pulse_4s_ease-in-out_infinite]">
               <Network className="w-8 h-8 text-white" />
@@ -270,27 +270,27 @@ export default function ForgotPasswordPage() {
             {/* Orbit 1 (Inner) */}
             <div className="absolute w-[180px] h-[180px] rounded-full border border-teal-500/30 animate-[spin_10s_linear_infinite]">
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-[#0a2b20] border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_10s_linear_infinite_reverse]">
-                  <User className="w-4 h-4 text-teal-400" />
+                <User className="w-4 h-4 text-teal-400" />
               </div>
             </div>
 
             {/* Orbit 2 (Middle) */}
             <div className="absolute w-[280px] h-[280px] rounded-full border border-dashed border-teal-500/20 animate-[spin_15s_linear_infinite_reverse]">
               <div className="absolute top-1/2 -right-5 -translate-y-1/2 w-10 h-10 bg-teal-900 border border-teal-400/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
-                  <Briefcase className="w-4 h-4 text-teal-300" />
+                <Briefcase className="w-4 h-4 text-teal-300" />
               </div>
               <div className="absolute top-1/2 -left-4 -translate-y-1/2 w-8 h-8 bg-teal-800 border border-teal-500/50 rounded-full flex items-center justify-center shadow-lg animate-[spin_15s_linear_infinite]">
-                  <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4 text-white" />
               </div>
             </div>
 
             {/* Orbit 3 (Outer) */}
             <div className="absolute w-[380px] h-[380px] rounded-full border border-teal-500/10 animate-[spin_25s_linear_infinite]">
               <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-[#0e372e] border border-teal-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
-                  <CheckCircle className="w-4 h-4 text-teal-400" />
+                <CheckCircle className="w-4 h-4 text-teal-400" />
               </div>
               <div className="absolute -top-5 left-1/2 -translate-x-1/2 w-10 h-10 bg-emerald-900 border border-emerald-400/40 rounded-full flex items-center justify-center shadow-lg animate-[spin_25s_linear_infinite_reverse]">
-                  <User className="w-4 h-4 text-emerald-300" />
+                <User className="w-4 h-4 text-emerald-300" />
               </div>
             </div>
           </div>

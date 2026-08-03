@@ -48,6 +48,7 @@ export interface RegisterRequest {
 export interface RegisterResponse {
   message: string;
   user: AuthUser;
+  token?: string;
 }
 
 export interface LoginRequest {

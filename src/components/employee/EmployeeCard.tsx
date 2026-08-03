@@ -82,7 +82,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
   };
 
   return (
-    <div className="enterprise-card flex flex-col gap-3 p-3.5 rounded-xl transition-all duration-300 sm:flex-row sm:items-center sm:justify-between hover:-translate-y-0.5 hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700">
+    <>
+      <div className="enterprise-card flex flex-col gap-3 p-3.5 rounded-xl transition-all duration-300 sm:flex-row sm:items-center sm:justify-between hover:-translate-y-0.5 hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700">
       <div className="flex items-center space-x-3">
         {employee.avatarUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
@@ -205,100 +206,102 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
           </button>
         )}
       </div>
-
-      {/* Custom Confirmation Modal */}
-      {confirmState.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-2xl dark:border-zinc-800/80 dark:bg-zinc-950 relative z-10">
-            <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50 mb-2">Confirm Action</h3>
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">{confirmState.message}</p>
-            <div className="flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setConfirmState({ isOpen: false, action: null, message: '' })}
-                className="rounded-lg px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmAction}
-                className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Profile Details Modal */}
-      {isProfileOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-2xl dark:border-zinc-800/80 dark:bg-zinc-950 relative z-10">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Employee Profile</h3>
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen(false)}
-                className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="flex flex-col gap-4">
-              <div className="flex justify-center mb-2">
-                {employee.avatarUrl ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={employee.avatarUrl} alt={employee.name} className="w-24 h-24 rounded-full object-cover ring-4 ring-zinc-100 dark:ring-zinc-800" />
-                ) : (
-                  <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-3xl font-bold shadow-md">
-                    {employee.name.charAt(0)}
-                  </div>
-                )}
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Employee ID</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2 truncate" title={employee.id}>{employee.id}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Name</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2">{employee.name}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Email</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2 truncate" title={employee.email}>{employee.email}</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Contact Number</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2">Not Available</span>
-              </div>
-              
-              <div className="grid grid-cols-3 gap-2 pb-1">
-                <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Employee Type</span>
-                <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2 capitalize">
-                  {employee.designation || (employee.role === 'superadmin' ? 'CEO' : (employee.role === 'admin' ? 'Admin' : 'Employee'))} 
-                  <span className="text-xs text-zinc-500 ml-1">({employee.role === 'user' || employee.role === 'member' ? 'Employee' : employee.role})</span>
-                </span>
-              </div>
-            </div>
-            
-            <div className="mt-6 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setIsProfileOpen(false)}
-                className="rounded-lg bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+
+    {/* Custom Confirmation Modal */}
+    {confirmState.isOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="w-full max-w-sm rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-2xl dark:border-zinc-800/80 dark:bg-zinc-950 relative z-10">
+          <h3 className="text-base font-bold text-zinc-900 dark:text-zinc-50 mb-2">Confirm Action</h3>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-6">{confirmState.message}</p>
+          <div className="flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={() => setConfirmState({ isOpen: false, action: null, message: '' })}
+              className="rounded-lg px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-500/10 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleConfirmAction}
+              className="rounded-lg bg-red-600 px-4 py-2 text-xs font-semibold text-white hover:bg-red-700 transition-colors shadow-sm cursor-pointer"
+            >
+              Confirm
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* Profile Details Modal */}
+    {isProfileOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-zinc-950/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-2xl dark:border-zinc-800/80 dark:bg-zinc-950 relative z-10">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-zinc-900 dark:text-zinc-50">Employee Profile</h3>
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(false)}
+              className="text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+          </div>
+          
+          <div className="flex flex-col gap-4">
+            <div className="flex justify-center mb-2">
+              {employee.avatarUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img src={employee.avatarUrl} alt={employee.name} className="w-24 h-24 rounded-full object-cover ring-4 ring-zinc-100 dark:ring-zinc-800" />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 text-white flex items-center justify-center text-3xl font-bold shadow-md">
+                  {employee.name.charAt(0)}
+                </div>
+              )}
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Employee ID</span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2 truncate" title={employee.id}>{employee.id}</span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Name</span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2">{employee.name}</span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Email</span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2 truncate" title={employee.email}>{employee.email}</span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 border-b border-zinc-100 dark:border-zinc-800 pb-3">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Contact Number</span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2">Not Available</span>
+            </div>
+            
+            <div className="grid grid-cols-3 gap-2 pb-1">
+              <span className="text-xs font-semibold text-zinc-500 dark:text-zinc-400">Employee Type</span>
+              <span className="text-sm font-medium text-zinc-900 dark:text-zinc-200 col-span-2 capitalize">
+                {employee.designation || (employee.role === 'superadmin' ? 'CEO' : (employee.role === 'admin' ? 'Admin' : 'Employee'))} 
+                <span className="text-xs text-zinc-500 ml-1">({employee.role === 'user' || employee.role === 'member' ? 'Employee' : employee.role})</span>
+              </span>
+            </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <button
+              type="button"
+              onClick={() => setIsProfileOpen(false)}
+              className="rounded-lg bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 transition-colors cursor-pointer"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };

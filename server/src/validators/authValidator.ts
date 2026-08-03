@@ -88,8 +88,7 @@ export const registerValidation = [
     .withMessage(VALIDATION_MESSAGES.AUTH.GENDER_REQUIRED),
   body('qualification')
     .trim()
-    .notEmpty()
-    .withMessage('Qualification is required'),
+    .optional(),
 ];
 
 export const loginValidation = [

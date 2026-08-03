@@ -10,6 +10,7 @@ import { ChatProvider } from "../context/ChatContext";
 import { NotificationProvider } from "../context/NotificationContext";
 import { LayoutGuard } from "../components/LayoutGuard";
 import MockAuthBanner from "../components/MockAuthBanner";
+import QueryProvider from "../providers/QueryProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,23 +39,25 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body suppressHydrationWarning className="min-h-full bg-zinc-50 text-zinc-900 transition-colors duration-300 dark:bg-zinc-950 dark:text-zinc-100">
-        <AuthProvider>
-          <TaskProvider>
-            <ThemeProvider>
-              <CommunicationProvider>
-                <ChatProvider>
-                  <NotificationProvider>
-                    <LayoutGuard>
-                      {children}
-                    </LayoutGuard>
-                    <Toaster richColors position="top-right" closeButton />
-                    <MockAuthBanner />
-                  </NotificationProvider>
-                </ChatProvider>
-              </CommunicationProvider>
-            </ThemeProvider>
-          </TaskProvider>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <TaskProvider>
+              <ThemeProvider>
+                <CommunicationProvider>
+                  <ChatProvider>
+                    <NotificationProvider>
+                      <LayoutGuard>
+                        {children}
+                      </LayoutGuard>
+                      <Toaster richColors position="top-right" closeButton />
+                      <MockAuthBanner />
+                    </NotificationProvider>
+                  </ChatProvider>
+                </CommunicationProvider>
+              </ThemeProvider>
+            </TaskProvider>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

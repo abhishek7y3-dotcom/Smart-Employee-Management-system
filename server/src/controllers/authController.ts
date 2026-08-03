@@ -7,7 +7,8 @@ import { uploadToCloudinary, uploadDocumentToCloudinary } from '../utils/cloudin
 import { AuthRequest } from '../middleware/authMiddleware';
 import { encrypt, decrypt } from '../utils/crypto';
 import { sanitizePhoneNumber, validatePhoneNumber } from '../utils/phoneValidation';
-
+import PhoneVerification from '../models/PhoneVerification';
+import EmailVerification from '../models/EmailVerification';
 /**
  * @description Registers a new user in the system.
  * @logic
@@ -57,14 +58,10 @@ export async function register(req: Request, res: Response) {
       }
     }
 
-    // Upload image to Cloudinary (falls back to placeholder if Cloudinary not config'd)
-    const computedName = `${firstName || ''} ${lastName || ''}`.trim() || name;
-    const profilePicUrl = await uploadToCloudinary(profilePicture || '', computedName);
-
-    // Check if the request is made by an Admin (who should automatically verify new users)
+    // Verify that the mobile number was verified inline (admins bypass this)
     let isCreatedByAdmin = false;
     let token = req.cookies?.token;
-    
+
     if (!token) {
       const authHeader = req.headers.authorization;
       if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -78,7 +75,7 @@ export async function register(req: Request, res: Response) {
         const userId = decoded.id as string;
         if (userId) {
           const reqUser = await User.findById(userId);
-          if (reqUser && (reqUser.role === 'admin' || reqUser.designation === 'Admin' || reqUser.designation === 'Project Manager')) {
+          if (reqUser && (reqUser.role === 'admin' || reqUser.role === 'superadmin' || reqUser.designation === 'Admin' || reqUser.designation === 'Project Manager')) {
             isCreatedByAdmin = true;
           }
         }
@@ -86,6 +83,32 @@ export async function register(req: Request, res: Response) {
         // ignore decoding errors, treat as standard user signup
       }
     }
+
+    let verificationRecord = null;
+    let emailVerificationRecord = null;
+    if (!isCreatedByAdmin) {
+      verificationRecord = await PhoneVerification.findOne({ mobileNumber, countryCode, verified: true });
+      if (!verificationRecord) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mobile number not verified. Please verify your mobile number first.',
+          errors: [],
+        });
+      }
+
+      emailVerificationRecord = await EmailVerification.findOne({ email: email.toLowerCase(), verified: true });
+      if (!emailVerificationRecord) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email address not verified. Please verify your email first.',
+          errors: [],
+        });
+      }
+    }
+
+    // Upload image to Cloudinary (falls back to placeholder if Cloudinary not config'd)
+    const computedName = `${firstName || ''} ${lastName || ''}`.trim() || name;
+    const profilePicUrl = await uploadToCloudinary(profilePicture || '', computedName);
 
     // Generate 6-Digit OTP Code
     const verificationOtpPlain = Math.floor(100000 + Math.random() * 900000).toString();
@@ -117,31 +140,50 @@ export async function register(req: Request, res: Response) {
       email: email.toLowerCase(),
       password,
       profilePicture: profilePicUrl,
-      isVerified: isCreatedByAdmin, // verified automatically if created by admin
-      verificationOtp: isCreatedByAdmin ? undefined : encrypt(verificationOtpPlain),
-      verificationOtpExpires: isCreatedByAdmin ? undefined : verificationOtpExpires,
+      isVerified: !isCreatedByAdmin, // Self-registered users are verified via OTP inline, Admin-created must verify on first login
       role,
       designation,
     });
 
-    if (!isCreatedByAdmin) {
-      // Log OTP to terminal for development/testing
-      console.log(`\n🔑 [REGISTER] Verification OTP for ${user.email}: ${verificationOtpPlain} (expires in 2 min)\n`);
-
-      // Trigger Verification OTP Email (fire-and-forget; don't block registration on email failure)
-      sendVerificationOtp(user.email, user.name, verificationOtpPlain).catch((emailErr) => {
-        console.error('authController.ts: Failed to send verification OTP email:', emailErr);
-      });
-      // Trigger Verification SMS (fire-and-forget)
-      if (user.mobileNumber) {
-        sendSmsOtp(user.countryCode || '', user.mobileNumber, verificationOtpPlain, 'Registration').catch((smsErr) => {
-          console.error('authController.ts: Failed to send SMS:', smsErr);
-        });
-      }
-    } else {
+    if (isCreatedByAdmin) {
       // Trigger Admin Account Creation Email
       sendAdminAccountCreationEmail(user, password).catch((emailErr) => {
         console.error('authController.ts: Failed to send admin account creation email:', emailErr);
+      });
+    }
+
+    if (verificationRecord) {
+      await PhoneVerification.findByIdAndDelete(verificationRecord._id);
+    }
+    if (emailVerificationRecord) {
+      await EmailVerification.findByIdAndDelete(emailVerificationRecord._id);
+    }
+
+    let authToken = null;
+    let refreshTokenStr = null;
+
+    if (!isCreatedByAdmin) {
+      // Token Generation (JWT) to log the user in immediately
+      authToken = signToken({ id: user._id, email: user.email });
+      refreshTokenStr = signRefreshToken({ id: user._id, email: user.email });
+
+      user.lastLogin = new Date();
+      user.refreshTokens = [refreshTokenStr];
+      await user.save({ validateBeforeSave: false });
+
+      // HttpOnly Cookie Set Karna
+      res.cookie('token', authToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 15 * 60 * 1000 // 15 minutes
+      });
+
+      res.cookie('refreshToken', refreshTokenStr, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
     }
 
@@ -149,8 +191,9 @@ export async function register(req: Request, res: Response) {
       success: true,
       message: isCreatedByAdmin
         ? 'Employee registered successfully!'
-        : 'Registration successful! Please verify using the 6-digit code sent to your email.',
+        : 'Registration successful! Redirecting to dashboard...',
       data: {
+        token: authToken,
         user: {
           id: user._id,
           name: user.name,
@@ -222,9 +265,11 @@ export async function login(req: Request, res: Response) {
 
     // Check email verification status
     if (!user.isVerified) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
-        message: 'Your account is not verified yet. Please check your inbox for the verification code.',
+        message: 'Your account is not verified yet. Please verify your account to continue.',
+        requiresVerification: true,
+        email: user.email,
         errors: [],
       });
     }
@@ -247,7 +292,7 @@ export async function login(req: Request, res: Response) {
 
     // 5. Update Record
     user.lastLogin = new Date();
-    
+
     // Save refresh token to user
     if (!user.refreshTokens) {
       user.refreshTokens = [];
@@ -723,7 +768,7 @@ export async function requestLoginOtp(req: Request, res: Response) {
     if (!user) {
       return res.status(404).json({ success: false, message: 'No account found with these credentials.' });
     }
-    
+
     if (user.isArchived) {
       return res.status(403).json({ success: false, message: 'Your account has been deactivated by an administrator.' });
     }
@@ -804,7 +849,7 @@ export async function loginWithOtp(req: Request, res: Response) {
 
     const token = signToken({ id: user._id, email: user.email });
     const refreshToken = signRefreshToken({ id: user._id, email: user.email });
-    
+
     if (!user.refreshTokens) {
       user.refreshTokens = [];
     }
@@ -939,14 +984,14 @@ export async function logout(req: Request, res: Response) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
   });
-  
+
   res.clearCookie('refreshToken', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
   });
-  
+
   return res.status(200).json({
     success: true,
     message: 'Logged out successfully.'
@@ -1506,10 +1551,10 @@ export async function refreshToken(req: Request, res: Response) {
 
   try {
     const decoded = verifyRefreshToken(refreshToken) as { id: string };
-    
+
     // Check if user exists and token is in their active sessions
     const user = await User.findById(decoded.id).select('+refreshTokens');
-    
+
     if (!user || !user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
       return res.status(401).json({
         success: false,
@@ -1548,7 +1593,7 @@ export async function refreshToken(req: Request, res: Response) {
 export async function requestPhoneChangeOtp(req: Request, res: Response) {
   const authReq = req as AuthRequest;
   const userId = authReq.user?._id;
-  
+
   const { mobileNumber, countryCode } = req.body as { mobileNumber: string; countryCode: string };
 
   if (!mobileNumber) {
@@ -1598,7 +1643,7 @@ export async function requestPhoneChangeOtp(req: Request, res: Response) {
 export async function verifyPhoneChangeOtp(req: Request, res: Response) {
   const authReq = req as AuthRequest;
   const userId = authReq.user?._id;
-  
+
   const { otp } = req.body as { otp: string };
 
   if (!otp) {
@@ -1633,7 +1678,7 @@ export async function verifyPhoneChangeOtp(req: Request, res: Response) {
     // Apply the changes
     user.mobileNumber = user.pendingMobileNumber!;
     user.countryCode = user.pendingCountryCode || '+91';
-    
+
     // Clear pending
     user.pendingMobileNumber = undefined;
     user.pendingCountryCode = undefined;
@@ -1655,3 +1700,190 @@ export async function verifyPhoneChangeOtp(req: Request, res: Response) {
     return res.status(500).json({ success: false, message: 'Failed to verify OTP.' });
   }
 }
+
+export async function requestRegistrationOtp(req: Request, res: Response) {
+  const { mobileNumber, countryCode } = req.body as { mobileNumber: string; countryCode: string };
+
+  if (!mobileNumber || !countryCode) {
+    return res.status(400).json({ success: false, message: 'Mobile number and country code are required.' });
+  }
+
+  try {
+    // Check if the mobile number is already taken by a registered user
+    const existingUser = await User.findOne({ mobileNumber });
+    if (existingUser && existingUser.isVerified) {
+      return res.status(409).json({ success: false, message: 'This mobile number is already registered.' });
+    }
+
+    // Generate 6-digit OTP
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+
+    // Upsert the PhoneVerification record
+    await PhoneVerification.findOneAndUpdate(
+      { mobileNumber, countryCode },
+      {
+        otp: encrypt(otpPlain),
+        expiresAt,
+        verified: false,
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`\n🔑 [REGISTRATION OTP] OTP for ${mobileNumber}: ${otpPlain} (expires in 2 min)\n`);
+
+    // Send SMS (fire-and-forget)
+    sendSmsOtp(countryCode, mobileNumber, otpPlain, 'Registration').catch((smsErr) => {
+      console.error('authController.ts: Failed to send registration SMS:', smsErr);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your mobile number.',
+    });
+  } catch (error) {
+    console.error('authController.ts: requestRegistrationOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to request OTP.' });
+  }
+}
+
+export async function verifyRegistrationOtp(req: Request, res: Response) {
+  const { mobileNumber, countryCode, otp } = req.body as { mobileNumber: string; countryCode: string; otp: string };
+
+  if (!mobileNumber || !countryCode || !otp) {
+    return res.status(400).json({ success: false, message: 'Mobile number, country code, and OTP are required.' });
+  }
+
+  try {
+    const record = await PhoneVerification.findOne({ mobileNumber, countryCode }).select('+otp');
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'No pending verification found for this number.' });
+    }
+
+    let storedOtp: string;
+    try {
+      storedOtp = decrypt(record.otp);
+    } catch {
+      return res.status(400).json({ success: false, message: 'OTP is invalid or corrupted.' });
+    }
+
+    if (storedOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP code.' });
+    }
+
+    if (record.expiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Mark as verified
+    record.verified = true;
+    record.otp = 'VERIFIED'; // Clear OTP with placeholder to pass validation
+    // Give them 15 minutes to complete registration
+    record.expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await record.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Mobile number verified successfully.',
+    });
+  } catch (error) {
+    console.error('authController.ts: verifyRegistrationOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to verify OTP.' });
+  }
+}
+
+export async function requestRegistrationEmailOtp(req: Request, res: Response) {
+  const { email } = req.body as { email: string };
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email is required.' });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  try {
+    // Check if the email is already taken by a registered user
+    const existingUser = await User.findOne({ email: normalizedEmail });
+    if (existingUser && existingUser.isVerified) {
+      return res.status(409).json({ success: false, message: 'This email is already registered.' });
+    }
+
+    // Generate 6-digit OTP
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+
+    // Upsert the EmailVerification record
+    await EmailVerification.findOneAndUpdate(
+      { email: normalizedEmail },
+      {
+        otp: encrypt(otpPlain),
+        expiresAt,
+        verified: false,
+      },
+      { upsert: true, new: true }
+    );
+
+    console.log(`\n🔑 [REGISTRATION EMAIL OTP] OTP for ${normalizedEmail}: ${otpPlain} (expires in 2 min)\n`);
+
+    // Send Email (fire-and-forget)
+    sendVerificationOtp(normalizedEmail, otpPlain).catch((emailErr) => {
+      console.error('authController.ts: Failed to send registration email OTP:', emailErr);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your email address.',
+    });
+  } catch (error) {
+    console.error('authController.ts: requestRegistrationEmailOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to request OTP.' });
+  }
+}
+
+export async function verifyRegistrationEmailOtp(req: Request, res: Response) {
+  const { email, otp } = req.body as { email: string; otp: string };
+
+  if (!email || !otp) {
+    return res.status(400).json({ success: false, message: 'Email and OTP are required.' });
+  }
+
+  const normalizedEmail = email.toLowerCase().trim();
+
+  try {
+    const record = await EmailVerification.findOne({ email: normalizedEmail }).select('+otp');
+    if (!record) {
+      return res.status(404).json({ success: false, message: 'No pending verification found for this email.' });
+    }
+
+    let storedOtp: string;
+    try {
+      storedOtp = decrypt(record.otp);
+    } catch {
+      return res.status(400).json({ success: false, message: 'OTP is invalid or corrupted.' });
+    }
+
+    if (storedOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP code.' });
+    }
+
+    if (record.expiresAt.getTime() < Date.now()) {
+      return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+    }
+
+    // Mark as verified
+    record.verified = true;
+    record.otp = 'VERIFIED'; // Clear OTP with placeholder to pass validation
+    // Give them 15 minutes to complete registration
+    record.expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    await record.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified successfully.',
+    });
+  } catch (error) {
+    console.error('authController.ts: verifyRegistrationEmailOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to verify OTP.' });
+  }
+}
+
