@@ -47,7 +47,7 @@ interface AuthContextType extends AuthState {
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<string>;
   resetPassword: (payload: ResetPasswordRequest) => Promise<string>;
   persistAuth: (authUser: AuthUser, authToken: string) => void;
-  updateUser: (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string; permanentAddress?: string; currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }) => Promise<void>;
+  updateUser: (updates: Partial<AuthUser>) => Promise<void>;
   deleteAccount: () => Promise<void>;
   verifyResetOtp: (otp: string) => Promise<void>;
   requestPhoneChangeOtp: (mobileNumber: string, countryCode: string) => Promise<string>;
@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [clearAuth, router]);
 
   const updateUser = useCallback(
-    async (updates: { role?: string; designation?: string; name?: string; profilePicture?: string; firstName?: string; lastName?: string; gender?: string; mobileNumber?: string; countryCode?: string; qualification?: string; permanentAddress?: string; currentAddress?: string; alternateNumber?: string; state?: string; district?: string; documents?: string[]; termsAndConditions?: boolean }) => {
+    async (updates: Partial<AuthUser>) => {
       if (!user) return;
       setLoading(true);
       setError(null);
@@ -262,6 +262,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [user]);
 
+
+  const requestEmailChangeOtp = useCallback(async (email: string) => {
+    if (!user) return '';
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await requestEmailChangeOtpApi(email);
+      return response.message;
+    } catch (apiError) {
+      setError(apiError?.message || 'Failed to request email change OTP');
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const verifyEmailChangeOtp = useCallback(async (otp: string) => {
+    if (!user) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await verifyEmailChangeOtpApi(otp);
+      // We can also trigger a profile fetch here if we had one, but typically updateUser handles state sync if we manually update it
+    } catch (apiError) {
+      setError(apiError?.message || 'Failed to verify email change OTP');
+      throw apiError;
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
   const isAuthenticated = Boolean(user && token);
 
   return (
@@ -284,6 +315,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         verifyResetOtp,
         requestPhoneChangeOtp,
         verifyPhoneChangeOtp,
+    requestEmailChangeOtp,
+    verifyEmailChangeOtp,
       }}
     >
       {children}</AuthContext.Provider>

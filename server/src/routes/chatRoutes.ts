@@ -1,6 +1,9 @@
 import { Router } from 'express';
 import { handleChatMessage, getChatHistory, getArchivedChats, getConversation, createLibrary, getLibraries, addChatToLibrary, createProject, getProjects, addChatToProject, deleteChat, renameChat, pinChat, archiveChat, renameProject, deleteProject, pinProject, archiveProject, getGreeting } from '../controllers/chatController';
+import { syncAnnouncements, syncUserLeaves, syncUserAttendance } from '../services/chatbot/fastTrackSyncService';
+import User from '../models/User';
 import { authenticate } from '../middleware/authMiddleware';
+import { hydrateChatSession } from '../controllers/chatController';
 
 /**
  * @swagger

@@ -537,3 +537,34 @@ On behalf of HR & Administration Team
     throw err;
   }
 }
+
+export async function sendPhoneChangeOtp(email: string, name: string, otp: string): Promise<void> {
+  const transporter = await getTransporter();
+
+  const mailOptions = {
+    from: '"Employee Task Manager" <noreply@employeetaskmanager.com>',
+    to: email,
+    subject: 'Phone Number Change Request - Verification Code',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <h2 style="color: #333; text-align: center;">Phone Number Change Verification</h2>
+        <p style="color: #555; font-size: 16px;">Hello ${name},</p>
+        <p style="color: #555; font-size: 16px;">We received a request to change the phone number associated with your account. To proceed, please use the following One-Time Password (OTP):</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <span style="font-size: 32px; font-weight: bold; color: #4CAF50; letter-spacing: 5px; padding: 10px 20px; border: 2px dashed #4CAF50; border-radius: 5px; display: inline-block;">${otp}</span>
+        </div>
+        <p style="color: #555; font-size: 16px;">This OTP is valid for <strong>2 minutes</strong>.</p>
+        <p style="color: #777; font-size: 14px; margin-top: 20px;">If you did not request a phone number change, please ignore this email or contact your administrator immediately.</p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+        <p style="color: #aaa; font-size: 12px; text-align: center;">&copy; ${new Date().getFullYear()} Employee Task Manager. All rights reserved.</p>
+      </div>
+    `,
+  };
+
+  const info = await transporter.sendMail(mailOptions);
+  console.log(`mailer.ts: Phone change OTP email sent to ${email}. MessageId: ${info.messageId}`);
+  if (process.env.SMTP_HOST === 'smtp.ethereal.email' || !process.env.SMTP_HOST) {
+    const nodemailer = require('nodemailer');
+    console.log(`Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+  }
+}

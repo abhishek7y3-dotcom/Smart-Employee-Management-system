@@ -83,8 +83,8 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
 
   return (
     <>
-      <div className="enterprise-card flex flex-col gap-3 p-3.5 rounded-xl transition-all duration-300 sm:flex-row sm:items-center sm:justify-between hover:-translate-y-0.5 hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700">
-      <div className="flex items-center space-x-3">
+      <div className="enterprise-card flex flex-col gap-3 p-3.5 rounded-xl transition-all duration-300 sm:grid sm:grid-cols-[2fr_1fr_1fr_auto] sm:items-center sm:gap-4 hover:-translate-y-0.5 hover:shadow-sm hover:border-zinc-300 dark:hover:border-zinc-700">
+      <div className="flex items-center space-x-3 min-w-0">
         {employee.avatarUrl ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img
@@ -100,17 +100,13 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <h4 className="font-bold text-zinc-900 dark:text-zinc-200 text-sm truncate">{employee.name}</h4>
-            {(employee.role === 'admin' || employee.role === 'superadmin') && (
-              <span className="flex items-center gap-1 text-[9px] bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-200/40 dark:border-amber-900/40 shadow-sm shrink-0">
-                👑 {employee.role === 'superadmin' ? 'Super Admin' : 'Admin'}
-              </span>
-            )}
           </div>
           <p className="text-zinc-600 dark:text-zinc-500 text-[10px] truncate">{employee.email}</p>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:contents">
+        <div className="flex items-center">
         {isEditing && canEditDesignation ? (
           <div className="relative">
             <select
@@ -126,17 +122,19 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
             </select>
           </div>
         ) : (
-          <span className="text-zinc-600 dark:text-zinc-400 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-800/40">
+          <span className="w-[130px] inline-flex items-center justify-start text-left text-zinc-600 dark:text-zinc-400 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-800/40 truncate">
             {employee.designation || (employee.role === 'superadmin' ? 'CEO' : (employee.role === 'admin' ? 'Admin' : 'Employee'))}
           </span>
         )}
+        </div>
 
+        <div className="flex items-center">
         {isEditing && canEditRole ? (
           <div className="relative">
             <select
               value={employee.role === 'user' || employee.role === 'employee' ? 'member' : employee.role}
               onChange={(e) => updateEmployeeRole(employee.id, e.target.value)}
-              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer"
+              className="text-xs bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 text-zinc-700 dark:text-zinc-300 rounded-lg px-2.5 py-1.5 outline-none transition focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer w-[90px]"
             >
               <option value="member">Employee</option>
               <option value="admin">Admin</option>
@@ -144,13 +142,15 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
           </div>
         ) : (
           !isEditing && canEditRole && (
-             <span className="text-zinc-600 dark:text-zinc-400 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-800/40 capitalize">
+             <span className="w-[90px] inline-flex items-center justify-start text-left text-zinc-600 dark:text-zinc-400 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-zinc-100 dark:bg-zinc-800/50 border border-zinc-200/40 dark:border-zinc-800/40 capitalize truncate">
                {employee.role === 'user' || employee.role === 'member' ? 'Employee' : employee.role}
              </span>
           )
         )}
+        </div>
 
-        <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 ml-1">
+        <div className="flex items-center gap-1 sm:justify-end ml-auto sm:ml-0">
+          <div className="flex items-center gap-1 border-l border-zinc-200 dark:border-zinc-700 pl-2 sm:border-0 sm:pl-0">
           <button
             type="button"
             onClick={() => setIsProfileOpen(true)}
@@ -205,6 +205,7 @@ export const EmployeeCard: React.FC<EmployeeCardProps> = ({ employee }) => {
             <Trash2 className="w-4 h-4" />
           </button>
         )}
+        </div>
       </div>
     </div>
 

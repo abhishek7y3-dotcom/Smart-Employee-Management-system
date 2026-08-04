@@ -1,3 +1,15 @@
+/**
+ * CHANGELOG:
+ * - [2026-08-04]: Upgraded RAG Document Chunking Strategy.
+ *    - Replaced hardcoded (800/150) char splitting with semantic-aware paragraph/sentence chunking.
+ *    - Extracted CHUNK_SIZE and CHUNK_OVERLAP into ENV variables.
+ *    - Attached extensive metadata (fileName, uploaderId, uploaderRole, pageNumber) to DocumentChunk for better traceability.
+ *    - Implemented batch embedding calls (batchEmbedContents) and batch DB inserts (insertMany) to drastically reduce Gemini API round trips.
+ *    - Upgraded RAG Retrieval: Configurable top-k (RAG_TOP_K) and minimum similarity score cutoff (RAG_MIN_SCORE). Added metadata citations to LLM prompt.
+ *    - Implemented RAG Access Control (RBAC): Admin can query all chunks; User can only query their own chunks.
+ *    - Implemented Re-Indexing / Lifecycle: Cascade-delete hooks for DocumentChunk on Document deletion; auto-purge old chunks on re-upload.
+ *    - Implemented Failure Handling: Graceful fallbacks for corrupt PDFs, embedding API timeouts, and zero-match retrieval scenarios.
+ */
 import { IUser } from '../../models/User';
 import ChatHistory from '../../models/ChatHistory';
 import ConversationMemory from '../../models/ConversationMemory';
@@ -11,6 +23,7 @@ import { searchCompanyDocumentsDeclaration, handleSearchCompanyDocuments, search
 import { getSystemPrompt } from '../../constants/prompts';
 import { isGibberish } from '../../utils/gibberishDetector';
 import { matchFastTrack } from '../../utils/fastTrackMatcher';
+import { generateGreeting } from './greetingService';
 
 // Ye main function hai jo user ki chat ko handle karta hai (New chat banana, message AI ko bhejna, aur tool call karna)
 export async function processChat(user: IUser, message: string = "", conversationId?: string, attachment?: { name: string, content: string, mimeType: string }) {
@@ -45,7 +58,7 @@ export async function processChat(user: IUser, message: string = "", conversatio
         console.warn('Failed to generate chat title asynchronously.', err);
       }
     };
-    
+
     // Call the function WITHOUT `await` so it doesn't block the thread
     if (chatHistoryId) {
       generateAndSetTitle(chatHistoryId);
@@ -56,7 +69,7 @@ export async function processChat(user: IUser, message: string = "", conversatio
   await ConversationMemory.create({ chatHistoryId, role: 'user', content: savedContent });
 
   if (!attachment && isGibberish(message)) {
-    const fallbackMessage = "I'm sorry, I couldn't understand your message. Could you please rephrase it?";
+    const fallbackMessage = "Hmm, I didn't quite catch that. 🤔 Could you please rephrase or type your question again?";
     const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fallbackMessage });
     return {
       conversationId: chatHistoryId,
@@ -67,7 +80,24 @@ export async function processChat(user: IUser, message: string = "", conversatio
 
   // FAST TRACK: Instant responses for common EMS queries (Bypass LLM)
   if (!attachment) {
-    const fastTrackResult = matchFastTrack(message, user.role);
+    // 1. Check for standard greetings
+    const lowerText = message.toLowerCase().trim();
+    const simpleGreetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'hola', 'namaste'];
+    if (simpleGreetings.includes(lowerText)) {
+      const historyCount = await ChatHistory.countDocuments({ userId: user._id });
+      const hasHistory = historyCount > 1; // Since we just created one, > 1 means previous history exists
+      const greetingResponse = generateGreeting(user, hasHistory);
+      
+      const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: greetingResponse });
+      return {
+        conversationId: chatHistoryId,
+        message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt },
+        systemEvents: []
+      };
+    }
+
+    // 2. Check for dynamic Fast Track data
+    const fastTrackResult = await matchFastTrack(message, user.role, user._id.toString());
     if (fastTrackResult && fastTrackResult.hit) {
       const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fastTrackResult.answer });
       console.log(`[ANALYTICS] FAST_TRACK_CACHE_HIT | Intent: ${fastTrackResult.matchedIntentId} | User: ${user._id}`);
@@ -219,7 +249,7 @@ export async function* processChatStream(user: IUser, message: string = "", conv
         console.warn('Failed to generate chat title asynchronously.', err);
       }
     };
-    
+
     generateAndSetTitle(chatHistoryId);
   }
 
@@ -230,7 +260,7 @@ export async function* processChatStream(user: IUser, message: string = "", conv
   await ConversationMemory.create({ chatHistoryId, role: 'user', content: savedContent });
 
   if (!attachment && isGibberish(message)) {
-    const fallbackMessage = "I'm sorry, I couldn't understand your message. Could you please rephrase it?";
+    const fallbackMessage = "Hmm, I didn't quite catch that. 🤔 Could you please rephrase or type your question again?";
     const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fallbackMessage });
     yield { type: 'chunk', text: fallbackMessage };
     yield { type: 'done', message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt } };
@@ -238,7 +268,21 @@ export async function* processChatStream(user: IUser, message: string = "", conv
   }
 
   if (!attachment) {
-    const fastTrackResult = matchFastTrack(message, user.role);
+    const lowerText = message.toLowerCase().trim();
+    const simpleGreetings = ['hi', 'hello', 'hey', 'good morning', 'good afternoon', 'good evening', 'hola', 'namaste'];
+    if (simpleGreetings.includes(lowerText)) {
+      const historyCount = await ChatHistory.countDocuments({ userId: user._id });
+      const hasHistory = historyCount > 1; 
+      const greetingResponse = generateGreeting(user, hasHistory);
+      
+      const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: greetingResponse });
+      yield { type: 'metadata', data: { conversationId: chatHistoryId, systemEvents: [] } };
+      yield { type: 'chunk', text: greetingResponse };
+      yield { type: 'done', message: { role: aiMemory.role, content: aiMemory.content, timestamp: aiMemory.createdAt } };
+      return;
+    }
+
+    const fastTrackResult = await matchFastTrack(message, user.role, user._id.toString());
     if (fastTrackResult && fastTrackResult.hit) {
       const aiMemory = await ConversationMemory.create({ chatHistoryId, role: 'assistant', content: fastTrackResult.answer });
       yield { type: 'metadata', data: { conversationId: chatHistoryId, systemEvents: [fastTrackResult.source] } };
@@ -287,7 +331,7 @@ export async function* processChatStream(user: IUser, message: string = "", conv
 
   // Instead of a blocking call, we start a stream immediately
   const streamResult = await sendPromptWithToolsStream(getSystemPrompt(user), history, promptParts, tools);
-  
+
   let functionCall: any = null;
   let fullText = '';
   let systemEvents: string[] = [];
@@ -329,7 +373,7 @@ export async function* processChatStream(user: IUser, message: string = "", conv
 Please synthesize this data into a highly conversational, friendly, and human-like response. 
 DO NOT just spit out raw data or JSON-like lists. 
 Use rich Markdown formatting (bullet points, bold text for emphasis, spacing) and relevant emojis to make it look premium and easy to read.`;
-    
+
     // NOW we stream the synthesis response
     const followUpStream = await sendPromptWithToolsStream(getSystemPrompt(user), history, followUpPrompt, []);
     for await (const chunk of followUpStream.stream) {

@@ -122,7 +122,7 @@ export const TaskTable: React.FC<TaskTableProps> = ({
             {tasks.map((task) => (
               <tr key={task.id} className="hover:bg-zinc-50/40 dark:hover:bg-zinc-900/10 transition-colors duration-300">
                 <td className="pl-6 pr-2 py-4 max-w-xs">
-                  <div className="font-extrabold text-zinc-950 dark:text-zinc-50 text-base break-words">{task.title}</div>
+                  <div className="font-extrabold text-zinc-950 dark:text-zinc-50 text-sm break-words">{task.title}</div>
                   <div className="text-sm text-zinc-600 dark:text-zinc-400 mt-1.5 leading-relaxed break-words">{truncateDescription(task.description)}</div>
                 </td>
                 <td className="pl-2 pr-6 py-4 text-sm font-bold text-zinc-900 dark:text-zinc-100">{getEmployeeDisplayName(employees, task.assignedTo)}</td>

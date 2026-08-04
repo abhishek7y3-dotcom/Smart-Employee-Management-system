@@ -169,7 +169,7 @@ export default function EmployeesPage() {
 
   return (
     <ProtectedRoute>
-      <div className="mx-auto max-w-5xl space-y-6 pb-12 transition-colors duration-300 relative">
+      <div className="w-full space-y-6 pb-12 transition-colors duration-300 relative">
         {/* Decorative background glows */}
         <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-blue-500/5 blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>
@@ -205,7 +205,15 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        <div className="space-y-3.5 relative z-10">
+        <div className="space-y-0 relative z-10">
+          {filteredEmployees.length > 0 && (
+            <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_auto] gap-4 px-4 py-3 text-[10px] font-extrabold uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl mb-3 shadow-sm">
+              <div className="pl-14">Employee Profile</div>
+              <div>Designation</div>
+              <div>Role Type</div>
+              <div className="text-right pr-6">Actions</div>
+            </div>
+          )}
           {filteredEmployees.length > 0 ? (
             filteredEmployees.map((employee) => (
               <EmployeeCard key={employee.id} employee={employee} />

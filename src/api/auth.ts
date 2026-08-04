@@ -340,3 +340,22 @@ export async function verifyRegistrationEmailOtpApi(payload: { email: string; ot
     throw normalizeApiError(error);
   }
 }
+
+
+export async function requestEmailChangeOtpApi(email: string): Promise<{ message: string }> {
+  try {
+    const response = await axiosInstance.post<{ message: string }>('/auth/request-email-change-otp', { email });
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}
+
+export async function verifyEmailChangeOtpApi(otp: string): Promise<{ message: string }> {
+  try {
+    const response = await axiosInstance.post<{ message: string }>('/auth/verify-email-change-otp', { otp });
+    return response.data;
+  } catch (error) {
+    throw normalizeApiError(error);
+  }
+}

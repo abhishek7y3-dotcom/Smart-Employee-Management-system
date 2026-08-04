@@ -37,7 +37,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="mx-auto max-w-7xl space-y-8 pb-12 transition-colors duration-300 relative">
+      <div className="w-full space-y-8 pb-12 transition-colors duration-300 relative">
         {/* Decorative background glows */}
         <div className="absolute top-10 left-10 w-72 h-72 rounded-full bg-blue-500/5 blur-3xl pointer-events-none"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full bg-indigo-500/5 blur-3xl pointer-events-none"></div>

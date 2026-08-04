@@ -15,12 +15,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [isMock, setIsMock] = React.useState(false);
+  const [isCollapsed, setIsCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsMock(window.localStorage.getItem('use_mock_auth') === 'true');
+      const savedCollapse = window.localStorage.getItem('sidebar_collapsed');
+      if (savedCollapse === 'true') {
+        setIsCollapsed(true);
+      }
     }
   }, []);
+
+  const toggleCollapse = () => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      window.localStorage.setItem('sidebar_collapsed', String(next));
+      return next;
+    });
+  };
 
   const navigation = [
     {
@@ -142,16 +155,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
         />
       )}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-64 flex-col justify-between
-        border-r border-zinc-200/40 bg-white/60 px-4 py-6 
+        fixed inset-y-0 left-0 z-50 flex-col justify-between
+        border-r border-zinc-200/40 bg-white/60 py-6 
         dark:border-zinc-800/50 dark:bg-zinc-900/60 
-        backdrop-blur-xl transition-transform duration-300 ease-in-out
-        md:static md:flex md:translate-x-0 shadow-lg shadow-zinc-200/20 dark:shadow-black/20
+        backdrop-blur-xl transition-all duration-300 ease-in-out
+        md:relative md:flex md:translate-x-0 shadow-lg shadow-zinc-200/20 dark:shadow-black/20
         ${isOpen ? 'flex translate-x-0' : '-translate-x-full md:translate-x-0 hidden'}
+        ${isCollapsed ? 'w-20 px-3' : 'w-64 px-4'}
       `}>
+        {/* Floating Toggle Button */}
+        <button 
+          onClick={toggleCollapse} 
+          className="absolute -right-3 top-7 hidden md:flex h-6 w-6 items-center justify-center rounded-full border border-zinc-200 bg-white text-zinc-500 shadow-sm transition-all hover:scale-110 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-50 z-50 ring-4 ring-zinc-50/50 dark:ring-zinc-950/50"
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          <svg className={`h-3.5 w-3.5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
         <div className="space-y-6">
-          <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-zinc-600 dark:text-zinc-500">
-            Workspace Navigation
+          <div className="px-3.5 text-[11px] font-bold uppercase tracking-[0.15em] text-black dark:text-white whitespace-nowrap overflow-hidden h-6 flex items-center">
+            {!isCollapsed && "Workspace"}
           </div>
         <nav className="space-y-1">
           {navigation.map((item) => {
@@ -169,15 +194,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center gap-3.5 rounded-lg px-3.5 py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 ${isActive
-                    ? 'bg-zinc-100/80 text-zinc-950 border-blue-600 dark:bg-zinc-900/60 dark:text-zinc-50 dark:border-blue-500 font-bold shadow-sm'
-                    : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-950 border-transparent dark:text-zinc-400 dark:hover:bg-zinc-900/30 dark:hover:text-zinc-100'
+                title={isCollapsed ? item.name : undefined}
+                className={`group flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'} rounded-lg py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 ${isActive
+                    ? 'bg-zinc-100/80 text-black border-blue-600 dark:bg-zinc-900/60 dark:text-white dark:border-blue-500 font-bold shadow-sm'
+                    : 'text-black hover:bg-zinc-50 hover:text-black border-transparent dark:text-white dark:hover:bg-zinc-900/30 dark:hover:text-white'
                   }`}
               >
-                <span className={isActive ? 'text-blue-600 dark:text-blue-400' : 'text-zinc-600 group-hover:text-zinc-700 dark:group-hover:text-zinc-200'}>
+                <span className={isActive ? 'text-blue-600 dark:text-blue-400 shrink-0' : 'text-black group-hover:text-black dark:text-white dark:group-hover:text-white shrink-0'}>
                   {item.icon}
                 </span>
-                {item.name}
+                {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">{item.name}</span>}
               </Link>
             );
           })}
@@ -185,16 +211,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </div>
 
       <div className="border-t border-zinc-200/60 pt-4 dark:border-zinc-800/65">
-        <div className="rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-4 text-[11px] text-zinc-600 dark:border-zinc-800/40 dark:bg-zinc-900/20 dark:text-zinc-400">
-          <p className="font-bold text-zinc-800 dark:text-zinc-300">
-            Mode: <span className="text-blue-600 dark:text-blue-400">{isMock ? 'Local Mock' : 'Server API'}</span>
-          </p>
-          <p className="mt-1 leading-relaxed">
-            {isMock
-              ? 'Changes are saved to browser local storage.'
-              : 'Connected to MongoDB backend database.'}
-          </p>
-        </div>
+        {isCollapsed ? (
+          <div className="flex justify-center" title={`Mode: ${isMock ? 'Local Mock' : 'Server API'}`}>
+            <div className="p-2 rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20 text-zinc-500 border border-zinc-200/60 dark:border-zinc-800/40">
+               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" /></svg>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-zinc-200/60 bg-zinc-50/50 p-4 text-[11px] text-zinc-600 dark:border-zinc-800/40 dark:bg-zinc-900/20 dark:text-zinc-400 overflow-hidden whitespace-nowrap">
+            <p className="font-bold text-zinc-800 dark:text-zinc-300">
+              Mode: <span className="text-blue-600 dark:text-blue-400">{isMock ? 'Local Mock' : 'Server API'}</span>
+            </p>
+            <p className="mt-1 leading-relaxed truncate whitespace-normal">
+              {isMock
+                ? 'Changes are saved locally.'
+                : 'Connected to MongoDB backend.'}
+            </p>
+          </div>
+        )}
         </div>
       </aside>
     </>

@@ -209,6 +209,7 @@ export const TaskEditorModal: React.FC<TaskEditorModalProps> = ({
                 type="date"
                 min={today}
                 value={dueDate}
+                onClick={(e) => 'showPicker' in HTMLInputElement.prototype && (e.target as HTMLInputElement).showPicker()}
                 onChange={(event) => setDueDate(event.target.value)}
                 className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${
                   dueDateError

@@ -7,6 +7,7 @@
 import bcrypt from 'bcrypt'; // Password ko secure (hash) karne ke liye.
 import { Schema, model, Document } from 'mongoose';
 
+
 // 1. TypeScript Interface (IUser):
 // Yeh TypeScript ko batata hai ki ek User object me kya-kya fields honge. 
 // Interviewer: "Aapne Interface aur Schema dono kyun banaye?"
@@ -35,6 +36,9 @@ export interface IUser extends Document {
   phoneChangeOtpExpires?: Date;
   pendingMobileNumber?: string;
   pendingCountryCode?: string;
+  emailChangeOtp?: string;
+  emailChangeOtpExpires?: Date;
+  pendingEmail?: string;
   designation?: string;
   department?: string;
   permanentAddress?: string;
@@ -225,6 +229,18 @@ const userSchema = new Schema<IUser>(
       trim: true,
     },
     pendingCountryCode: {
+      type: String,
+      trim: true,
+    },
+    emailChangeOtp: {
+      type: String,
+      select: false,
+    },
+    emailChangeOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    pendingEmail: {
       type: String,
       trim: true,
     },

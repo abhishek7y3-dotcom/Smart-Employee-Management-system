@@ -5,6 +5,10 @@ export interface IDocumentChunk extends MongooseDocument {
   text: string;
   embedding: number[];
   chunkIndex: number;
+  fileName: string;
+  pageNumber?: number;
+  uploaderId: mongoose.Types.ObjectId;
+  uploaderRole: string;
   createdAt: Date;
 }
 
@@ -23,13 +27,29 @@ const DocumentChunkSchema: Schema = new Schema(
     embedding: {
       type: [Number],
       required: true,
-      // NOTE: For MongoDB Atlas Vector Search, you generally do not define a traditional index on the embedding array here.
-      // You create a specialized Atlas Vector Search Index on the collection via the Atlas UI or Atlas Search API.
     },
     chunkIndex: {
       type: Number,
       required: true,
     },
+    fileName: {
+      type: String,
+      required: true,
+    },
+    pageNumber: {
+      type: Number,
+      required: false,
+      default: null,
+    },
+    uploaderId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    uploaderRole: {
+      type: String,
+      required: true,
+    }
   },
   {
     timestamps: { createdAt: true, updatedAt: false },

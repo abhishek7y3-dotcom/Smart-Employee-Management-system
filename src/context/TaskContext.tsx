@@ -157,6 +157,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ),
       );
       toast.success('Task created successfully');
+      fetchTasks();
     } catch (err) {
       handleError(err, 'Failed to create task in database');
     }
@@ -174,6 +175,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       recordActivity(buildActivity(updated, 'updated', user?.name || 'Employee', buildChangeDetails(task, updates, employees)));
       toast.success('Task updated successfully');
+      fetchTasks();
     } catch (err) {
       handleError(err, 'Failed to update task in database');
     }
@@ -196,6 +198,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setTasks((prev) => prev.map((item) => (item.id === taskId ? updated : item)));
       recordActivity(buildActivity(updated, 'status_changed', user?.name || 'Employee', `changed status for "${task.title}" to ${statusLabels[status]}.`));
       toast.success('Status updated successfully');
+      fetchTasks();
     } catch (err) {
       handleError(err, 'Failed to update task status in database');
     }

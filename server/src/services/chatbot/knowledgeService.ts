@@ -23,7 +23,7 @@ export const searchCompanyDocumentsDeclaration: FunctionDeclaration = {
 
 export const handleSearchCompanyDocuments = async (user: IUser, args: { query: string }) => {
   try {
-    const answer = await searchUserDocuments(args.query, user._id.toString());
+    const answer = await searchUserDocuments(args.query, user._id.toString(), user.role);
     return { success: true, query: args.query, answer };
   } catch (error: any) {
     console.error('Error in searchCompanyDocuments:', error);

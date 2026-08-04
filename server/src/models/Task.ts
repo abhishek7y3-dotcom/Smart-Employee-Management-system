@@ -1,5 +1,6 @@
 import { Schema, model, Document, Types } from 'mongoose';
 
+
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'overdue' | 'cancelled';
 export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 
@@ -83,6 +84,8 @@ taskSchema.index({ assignedBy: 1 });
 taskSchema.index({ status: 1 });
 taskSchema.index({ dueDate: 1 });
 taskSchema.index({ assignedTo: 1, status: 1 }); // Compound index for common queries
+
+
 
 const Task = model<ITask>('Task', taskSchema);
 

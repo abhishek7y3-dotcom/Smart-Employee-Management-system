@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import User from '../models/User';
 import { signToken, verifyToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
-import { sendVerificationOtp, sendResetPasswordOtp, sendAdminAccountCreationEmail, sendAccountDeactivationEmail, sendAccountReactivationEmail, sendAccountPermanentDeletionEmail, sendAccountBlockedEmail, sendAccountUnblockedEmail } from '../utils/mailer';
+import { sendVerificationOtp, sendResetPasswordOtp, sendAdminAccountCreationEmail, sendAccountDeactivationEmail, sendAccountReactivationEmail, sendAccountPermanentDeletionEmail, sendAccountBlockedEmail, sendAccountUnblockedEmail, sendPhoneChangeOtp } from '../utils/mailer';
 import { sendSmsOtp } from '../utils/twilio';
 import { uploadToCloudinary, uploadDocumentToCloudinary } from '../utils/cloudinary';
 import { AuthRequest } from '../middleware/authMiddleware';
@@ -140,6 +140,7 @@ export async function register(req: Request, res: Response) {
       email: email.toLowerCase(),
       password,
       profilePicture: profilePicUrl,
+      coverPicture: user.coverPicture,
       isVerified: !isCreatedByAdmin, // Self-registered users are verified via OTP inline, Admin-created must verify on first login
       role,
       designation,
@@ -205,6 +206,7 @@ export async function register(req: Request, res: Response) {
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
+          coverPicture: user.coverPicture,
           isVerified: user.isVerified,
         },
       },
@@ -337,6 +339,7 @@ export async function login(req: Request, res: Response) {
           role: user.role,
           designation: user.designation,
           profilePicture: user.profilePicture,
+          coverPicture: user.coverPicture,
           qualification: user.qualification,
           country: user.country,
           permanentAddress: user.permanentAddress,
@@ -889,6 +892,7 @@ export async function loginWithOtp(req: Request, res: Response) {
           email: user.email,
           role: user.role,
           profilePicture: user.profilePicture,
+          coverPicture: user.coverPicture,
           qualification: user.qualification,
           country: user.country,
           permanentAddress: user.permanentAddress,
@@ -934,6 +938,7 @@ export async function profile(req: Request, res: Response) {
         role: user.role,
         designation: user.designation || 'Employee',
         profilePicture: user.profilePicture,
+        coverPicture: user.coverPicture,
         qualification: user.qualification,
         country: user.country,
         permanentAddress: user.permanentAddress,
@@ -1000,11 +1005,12 @@ export async function logout(req: Request, res: Response) {
 
 export async function updateUser(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  const { role, designation, name, profilePicture, firstName, lastName, gender, mobileNumber, countryCode, qualification, country, permanentAddress, currentAddress, alternateNumber, state, district, documents, termsAndConditions } = req.body as {
+  const { role, designation, name, profilePicture, coverPicture, firstName, lastName, gender, mobileNumber, countryCode, qualification, country, permanentAddress, currentAddress, alternateNumber, state, district, documents, termsAndConditions } = req.body as {
     role?: string;
     designation?: string;
     name?: string;
     profilePicture?: string;
+    coverPicture?: string;
     firstName?: string;
     lastName?: string;
     gender?: string;
@@ -1180,6 +1186,15 @@ export async function updateUser(req: Request, res: Response) {
       }
     }
 
+    if (coverPicture !== undefined) {
+      if (coverPicture.startsWith('data:image')) {
+        const computedName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.name;
+        user.coverPicture = await uploadToCloudinary(coverPicture, `${computedName}_cover`);
+      } else {
+        user.coverPicture = coverPicture;
+      }
+    }
+
     await user.save();
 
     return res.status(200).json({
@@ -1198,6 +1213,7 @@ export async function updateUser(req: Request, res: Response) {
           role: user.role,
           designation: user.designation || 'Employee',
           profilePicture: user.profilePicture,
+          coverPicture: user.coverPicture,
           qualification: user.qualification,
           country: user.country,
           permanentAddress: user.permanentAddress,
@@ -1625,14 +1641,14 @@ export async function requestPhoneChangeOtp(req: Request, res: Response) {
 
     console.log(`\n🔑 [PHONE CHANGE OTP] OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
 
-    // We can simulate sending an SMS (or send it via Twilio if active)
-    sendSmsOtp(user.pendingCountryCode, user.pendingMobileNumber, otpPlain, 'Phone Change Verification').catch((smsErr) => {
-      console.error('authController.ts: Failed to send SMS for phone change:', smsErr);
+    // Send OTP to email
+    sendPhoneChangeOtp(user.email, user.name, otpPlain).catch((err) => {
+      console.error('authController.ts: Failed to send email for phone change:', err);
     });
 
     return res.status(200).json({
       success: true,
-      message: 'Verification code sent to your new mobile number.',
+      message: 'Verification code sent to your email address.',
     });
   } catch (error) {
     console.error('authController.ts: requestPhoneChangeOtp error:', error);
@@ -1887,3 +1903,98 @@ export async function verifyRegistrationEmailOtp(req: Request, res: Response) {
   }
 }
 
+
+export async function requestEmailChangeOtp(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const userId = authReq.user?._id;
+
+  const { email } = req.body as { email: string };
+
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'New email address is required.' });
+  }
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    // Check if another user already has this email
+    const existing = await User.findOne({ email: email.toLowerCase(), _id: { $ne: userId } });
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'This email is already in use by another account.' });
+    }
+
+    // Generate 6-digit OTP
+    const otpPlain = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 2 * 60 * 1000); // 2 minutes
+
+    user.emailChangeOtp = encrypt(otpPlain);
+    user.emailChangeOtpExpires = otpExpires;
+    user.pendingEmail = email.toLowerCase();
+
+    await user.save();
+
+    console.log(`\n🔑 [EMAIL CHANGE OTP] OTP for ${user.mobileNumber}: ${otpPlain} (expires in 2 min)\n`);
+
+    // Send OTP to user's existing mobile number
+    const targetCountryCode = user.country === 'India' ? '+91' : '+1'; // Adjust as needed based on logic
+    sendSmsOtp(targetCountryCode, user.mobileNumber || '', otpPlain, 'Email Change Verification').catch((smsErr) => {
+      console.error('authController.ts: Failed to send SMS for email change:', smsErr);
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Verification code sent to your mobile number.',
+    });
+  } catch (error) {
+    console.error('authController.ts: requestEmailChangeOtp error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to request OTP.' });
+  }
+}
+
+export async function verifyEmailChangeOtp(req: Request, res: Response) {
+  const authReq = req as AuthRequest;
+  const userId = authReq.user?._id;
+  const { otp } = req.body;
+
+  if (!otp) {
+    return res.status(400).json({ success: false, message: 'OTP is required.' });
+  }
+
+  try {
+    const user = await User.findById(userId).select('+emailChangeOtp +emailChangeOtpExpires');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (!user.emailChangeOtp || !user.emailChangeOtpExpires || user.emailChangeOtpExpires < new Date()) {
+      return res.status(400).json({ success: false, message: 'OTP is expired or invalid.' });
+    }
+
+    const decryptedOtp = decrypt(user.emailChangeOtp);
+    if (decryptedOtp !== otp) {
+      return res.status(400).json({ success: false, message: 'Invalid OTP.' });
+    }
+
+    // Update email
+    if (user.pendingEmail) {
+      user.email = user.pendingEmail;
+    }
+
+    user.emailChangeOtp = undefined;
+    user.emailChangeOtpExpires = undefined;
+    user.pendingEmail = undefined;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email updated successfully!',
+    });
+  } catch (error) {
+    console.error('authController.ts: verifyEmailChangeOtp error:', error);
+    return res.status(500).json({ success: false, message: 'An error occurred during verification.' });
+  }
+}

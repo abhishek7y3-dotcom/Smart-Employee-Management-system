@@ -52,8 +52,8 @@ app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000', credentials: true }));
 
 // Body Parsers: Frontend se jo data JSON ya URL form me aata hai, usko samajhne (parse) ke liye.
-app.use(json()); // Agar req.body me JSON data hai, toh usko object banata hai.
-app.use(urlencoded({ extended: true })); // Form submissions (URL encoded) ko padhne ke liye.
+app.use(json({ limit: '50mb' })); // Agar req.body me JSON data hai, toh usko object banata hai. Limit badhayi taaki image upload crash na ho.
+app.use(urlencoded({ limit: '50mb', extended: true })); // Form submissions (URL encoded) ko padhne ke liye.
 
 // Cookie Parser: Jo naya security feature humne lagaya hai, jisse req.cookies me token milta hai.
 app.use(cookieParser());

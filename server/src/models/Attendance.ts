@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+
 export interface IAttendance extends Document {
   employeeId: mongoose.Types.ObjectId;
   employeeName: string;
@@ -68,4 +69,7 @@ const AttendanceSchema: Schema = new Schema(
 // Ensure one record per employee per day
 AttendanceSchema.index({ employeeId: 1, attendanceDate: 1 }, { unique: true });
 
-export default mongoose.models.Attendance || mongoose.model<IAttendance>('Attendance', AttendanceSchema);
+const Attendance = mongoose.models.Attendance || mongoose.model<IAttendance>('Attendance', AttendanceSchema);
+
+
+export default Attendance;

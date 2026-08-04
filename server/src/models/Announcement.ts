@@ -1,5 +1,6 @@
 import { Schema, model, Document } from 'mongoose';
 
+
 export interface IAnnouncement extends Document {
   title: string;
   description: string;
@@ -74,5 +75,7 @@ const announcementSchema = new Schema<IAnnouncement>(
 );
 
 const Announcement = model<IAnnouncement>('Announcement', announcementSchema);
+
+
 
 export default Announcement;

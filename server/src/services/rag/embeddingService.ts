@@ -30,3 +30,20 @@ export const generateEmbedding = async (text: string): Promise<number[]> => {
     throw new Error('Failed to generate text embedding');
   }
 };
+
+/**
+ * Batches embedding calls to reduce Gemini API round trips.
+ * Note: gemini-embedding-2 returns exactly 768-dimensional vectors.
+ */
+export const generateEmbeddingsBatch = async (texts: string[]): Promise<number[][]> => {
+  try {
+    const requests = texts.map(t => ({ content: { role: 'user', parts: [{ text: t }] } }));
+    const result = await embeddingModel.batchEmbedContents({
+      requests
+    });
+    return result.embeddings.map(e => e.values);
+  } catch (error) {
+    console.error('Error generating batch embeddings:', error);
+    throw new Error('Failed to generate batch embeddings');
+  }
+};

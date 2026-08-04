@@ -49,7 +49,8 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskUrlStatus>(initialStatus);
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState<string>('');
+  const [startDateFilter, setStartDateFilter] = useState<string>('');
+  const [endDateFilter, setEndDateFilter] = useState<string>('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<Task | null>(null);
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null);
@@ -67,7 +68,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, statusFilter, priorityFilter, dateFilter]);
+  }, [searchTerm, statusFilter, priorityFilter, startDateFilter, endDateFilter]);
 
   // Field validation errors
   const [titleError, setTitleError] = useState<string | null>(null);
@@ -86,11 +87,20 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           task.title.toLowerCase().includes(query) ||
           task.description.toLowerCase().includes(query) ||
           employee?.name.toLowerCase().includes(query);
-        const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-        const matchesDate = !dateFilter || task.dueDate === dateFilter;
+        const matchesPriority = priorityFilter === 'all' || priorityFilter === 'a-z' || task.priority === priorityFilter;
+        let matchesDate = true;
+        if (startDateFilter) {
+          matchesDate = matchesDate && task.dueDate >= startDateFilter;
+        }
+        if (endDateFilter) {
+          matchesDate = matchesDate && task.dueDate <= endDateFilter;
+        }
         return matchesSearch && matchesPriority && matchesDate;
       })
       .sort((a, b) => {
+        if (priorityFilter === 'a-z') {
+          return a.title.localeCompare(b.title);
+        }
         // When viewing 'all' priorities, prioritize newest tasks first
         if (priorityFilter === 'all') {
           return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
@@ -103,7 +113,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
         }
         return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
       });
-  }, [employees, priorityFilter, searchTerm, statusFilter, tasks, dateFilter]);
+  }, [employees, priorityFilter, searchTerm, statusFilter, tasks, startDateFilter, endDateFilter]);
 
 
 
@@ -260,7 +270,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
   };
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 pb-12">
+    <div className="w-full space-y-6 pb-12">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-zinc-950 dark:text-zinc-50 font-outfit">Tasks</h2>
@@ -384,6 +394,7 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
                     min={getTodayString()}
                     type="date"
                     value={newDueDate}
+                    onClick={(e) => 'showPicker' in HTMLInputElement.prototype && (e.target as HTMLInputElement).showPicker()}
                     onChange={(e) => setNewDueDate(e.target.value)}
                     className={`mt-1.5 w-full rounded-xl border bg-white px-3.5 py-2.5 text-xs text-zinc-950 outline-none transition duration-200 focus:ring-2 focus:ring-blue-500/10 dark:bg-zinc-950 dark:text-zinc-50 ${dueDateError
                         ? 'border-red-500 focus:border-red-500'
@@ -408,26 +419,37 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
           <input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search tasks..." className="w-full rounded-xl border border-zinc-200 bg-white py-2.5 pl-11 pr-4 text-sm text-zinc-900 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-50" />
         </div>
         <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
-            title="Filter by due date"
-          />
-          {dateFilter && (
-            <button
-              onClick={() => setDateFilter('')}
-              className="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
-            >
-              Clear Date
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              value={startDateFilter}
+              onChange={(e) => setStartDateFilter(e.target.value)}
+              className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+              title="Start Date"
+            />
+            <span className="text-zinc-500 text-sm">to</span>
+            <input
+              type="date"
+              value={endDateFilter}
+              onChange={(e) => setEndDateFilter(e.target.value)}
+              className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+              title="End Date"
+            />
+            {(startDateFilter || endDateFilter) && (
+              <button
+                onClick={() => { setStartDateFilter(''); setEndDateFilter(''); }}
+                className="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+              >
+                Clear Dates
+              </button>
+            )}
+          </div>
           <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value as TaskUrlStatus)} className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
             {statusOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
           <select value={priorityFilter} onChange={(e) => setPriorityFilter(e.target.value)} className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer">
             <option value="all">All Priorities</option>
+            <option value="a-z">A-Z (Title)</option>
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>

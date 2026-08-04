@@ -1,5 +1,6 @@
 import mongoose, { Document, Schema } from 'mongoose';
 
+
 export interface ILeave extends Document {
   employeeId: mongoose.Types.ObjectId;
   employeeName: string;
@@ -62,4 +63,7 @@ const LeaveSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Leave || mongoose.model<ILeave>('Leave', LeaveSchema);
+const Leave = mongoose.models.Leave || mongoose.model<ILeave>('Leave', LeaveSchema);
+
+
+export default Leave;

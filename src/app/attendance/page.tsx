@@ -30,7 +30,7 @@ const AttendanceContent = () => {
   }, [filters, fetchRecords]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="w-full space-y-6">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-zinc-900 p-6 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
         <div>
           <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">Attendance Management</h1>

@@ -40,17 +40,19 @@ const floatingLabelDisabled = "absolute left-3 px-1 transition-all duration-200 
   "peer-focus:-top-2.5 peer-focus:text-xs peer-focus:font-semibold";
 
 export default function SettingsPage() {
-  const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp, updateUser } = useAuth();
+  const { user, forgotPassword, resetPassword, deleteAccount, verifyResetOtp, updateUser, requestPhoneChangeOtp, verifyPhoneChangeOtp, requestEmailChangeOtp, verifyEmailChangeOtp } = useAuth();
   const router = useRouter();
 
   // Change password states
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'danger'>('profile');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [showPasswordSection, setShowPasswordSection] = useState(false);
   const [isOtpSent, setIsOtpSent] = useState(false);
   const [isRequestingOtp, setIsRequestingOtp] = useState(false);
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
-  const [savedOtp, setSavedOtp] = useState(''); 
+  const [savedOtp, setSavedOtp] = useState('');
   const [passwordTimer, setPasswordTimer] = useState(0); // 120s countdown
 
   const [newPassword, setNewPassword] = useState('');
@@ -126,7 +128,7 @@ export default function SettingsPage() {
         setSelectedCountryName(foundCountry.name);
       }
     }
-    
+
     if (user?.state && currentCountryCode) {
       const states = State.getStatesOfCountry(currentCountryCode);
       const foundState = states.find(s => s.name === user.state);
@@ -135,11 +137,11 @@ export default function SettingsPage() {
         setSelectedStateName(foundState.name);
       }
     }
-    
+
     if (user?.district) {
       setSelectedDistrictName(user.district);
     }
-    
+
     if (user?.mobileNumber) {
       const match = countries.find(c => user.mobileNumber.startsWith(c.code));
       if (match) {
@@ -332,7 +334,7 @@ export default function SettingsPage() {
         password: newPassword,
       });
       toast.success('Password changed successfully!');
-      
+
       // Reset password change UI
       setNewPassword('');
       setConfirmPassword('');
@@ -388,7 +390,7 @@ export default function SettingsPage() {
     try {
       // First verify OTP
       await verifyResetOtp(fullOtp);
-      
+
       // Then delete account
       setIsDeleting(true);
       await deleteAccount();
@@ -411,638 +413,695 @@ export default function SettingsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-4xl mx-auto">
-        <div className="space-y-1">
+
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
+        <div className="space-y-1 mb-6">
           <h1 className="text-xl font-bold text-zinc-950 dark:text-white md:text-2xl font-outfit">Account Settings</h1>
-          <p className="text-xs text-zinc-500 dark:text-zinc-500">Manage your system credentials and security options.</p>
+          <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">Manage your system credentials and security options.</p>
         </div>
-
-        <div className="grid grid-cols-1 gap-6">
-          
-          {/* Profile Edit Tab */}
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
-            <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">
-              <UserIcon className="h-4.5 w-4.5 text-blue-500" />
+        <div className="flex flex-col md:flex-row gap-6 w-full">
+          {/* Left Sidebar Menu */}
+          <div className="w-full md:w-64 shrink-0 space-y-2 rounded-2xl border border-zinc-200/80 bg-white p-4 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 h-fit">
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'profile' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-900'}`}
+            >
+              <UserIcon className="h-4.5 w-4.5" />
               Profile Details
-            </h2>
-            {/* Profile Banner & Avatar Section */}
-            <div className="relative w-full mb-16 md:mb-6">
-              {/* Cover Picture */}
-              <div className="h-32 sm:h-48 w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-xl overflow-hidden relative group">
-                <img 
-                  src={user?.coverPicture || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200'} 
-                  alt="Cover" 
-                  className="w-full h-full object-cover"
-                />
-                <label htmlFor="settings-cover-upload" className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                  <Camera className="h-5 w-5" />
-                </label>
-                <input
-                  id="settings-cover-upload"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleCoverPicChange}
-                  className="hidden"
-                />
-              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('security')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'security' ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400' : 'text-zinc-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:bg-zinc-900'}`}
+            >
+              <Key className="h-4.5 w-4.5" />
+              Security
+            </button>
+            {user?.role !== 'admin' && user?.role !== 'superadmin' && (
+              <button
+                onClick={() => setActiveTab('danger')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'danger' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'text-zinc-600 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-900/10 dark:hover:text-red-400'}`}
+              >
+                <Trash2 className="h-4.5 w-4.5" />
+                Delete Account
+              </button>
+            )}
+          </div>
 
-              {/* Profile Avatar */}
-              <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0">
-                <div className="relative group cursor-pointer">
-                  <label htmlFor="settings-photo-upload" className="cursor-pointer">
-                    <img 
-                      src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'} 
-                      alt={user?.name || 'Profile'}
-                      className="h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-zinc-950 shadow-md transition-transform group-hover:scale-105 bg-white dark:bg-zinc-950"
-                    />
-                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="h-7 w-7 text-white" />
+          {/* Right Content Area */}
+          <div className="flex-1 min-w-0">
+            {activeTab === 'profile' && (
+              <>
+
+
+                {/* Profile Edit Tab */}
+                <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
+                  <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-900 pb-3">
+                    <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
+                      <UserIcon className="h-4.5 w-4.5 text-blue-500" />
+                      Profile Details
+                    </h2>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingProfile(!isEditingProfile)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors border ${isEditingProfile ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/30' : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/30'}`}
+                    >
+                      {isEditingProfile ? 'Cancel' : (<><Edit2 className="h-3.5 w-3.5" /> Edit Profile</>)}
+                    </button>
+                  </div>
+                  {/* Profile Banner & Avatar Section */}
+                  <div className={`relative w-full mb-16 md:mb-6 ${!isEditingProfile ? 'pointer-events-none' : ''}`}>
+                    {/* Cover Picture */}
+                    <div className="h-32 sm:h-48 w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-xl overflow-hidden relative group">
+                      <img
+                        src={user?.coverPicture || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200'}
+                        alt="Cover"
+                        className="w-full h-full object-cover"
+                      />
+                      <label htmlFor="settings-cover-upload" className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                        <Camera className="h-5 w-5" />
+                      </label>
+                      <input
+                        id="settings-cover-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleCoverPicChange}
+                        className="hidden"
+                      />
                     </div>
-                  </label>
-                  <input
-                    id="settings-photo-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleProfilePicChange}
-                    className="hidden"
-                  />
-                  <div className="absolute bottom-1 right-1 h-6 w-6 rounded-full bg-green-500 border-4 border-white dark:border-zinc-950" title="Online" />
-                </div>
-              </div>
-            </div>
 
-            {/* Name and Role */}
-            <div className="flex flex-col items-center md:items-start md:pl-[160px] pb-6 mt-16 md:mt-2">
-              <h2 className="text-2xl font-bold text-zinc-900 dark:text-white font-outfit">{user?.name}</h2>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
-                {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}
-              </p>
-            </div>
-
-            <div className="w-full space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="relative mt-2">
-                  <input
-                    id="settings-first-name"
-                    type="text"
-                    placeholder=" "
-                    maxLength={50}
-                    defaultValue={user?.firstName}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/[^A-Za-z]/g, '');
-                      if (val.length > 0) {
-                        val = val.charAt(0).toUpperCase() + val.slice(1);
-                      }
-                      e.target.value = val;
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditFirstName = val;
-                      }
-                    }}
-                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
-                  />
-                  <label htmlFor="settings-first-name" className={floatingLabelNormal}>First Name <span className="text-red-500">*</span></label>
-                </div>
-                <div className="relative mt-2">
-                  <input
-                    id="settings-last-name"
-                    type="text"
-                    placeholder=" "
-                    maxLength={50}
-                    defaultValue={user?.lastName}
-                    onChange={(e) => {
-                      let val = e.target.value.replace(/[^A-Za-z ]/g, '');
-                      val = val.replace(/^\s+/, ''); // Remove leading spaces
-                      val = val.replace(/\s{2,}/g, ' '); // Allow max one space consecutively
-                      
-                      if (val.length > 0) {
-                        val = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-                      }
-                      e.target.value = val;
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditLastName = val;
-                      }
-                    }}
-                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
-                  />
-                  <label htmlFor="settings-last-name" className={floatingLabelNormal}>Last Name <span className="text-red-500">*</span></label>
-                </div>
-                <div className="relative mt-2">
-                  <Select
-                    instanceId="country-select"
-                    options={Country.getAllCountries().map(c => ({
-                      value: c.name,
-                      label: (
-                        <div className="flex items-center gap-2">
-                          <img src={`https://flagcdn.com/w20/${c.isoCode.toLowerCase()}.png`} alt={c.name} className="w-5" />
-                          <span>{c.name}</span>
-                        </div>
-                      ),
-                      country: c
-                    }))}
-                    value={
-                      selectedCountryCode ? {
-                        value: selectedCountryName,
-                        label: (
-                          <div className="flex items-center gap-2">
-                            <img src={`https://flagcdn.com/w20/${selectedCountryCode.toLowerCase()}.png`} alt={selectedCountryName} className="w-5" />
-                            <span>{selectedCountryName}</span>
-                          </div>
-                        )
-                      } : null
-                    }
-                    onChange={(selectedOption: any) => {
-                      if (!selectedOption) return;
-                      const newCode = selectedOption.country.isoCode;
-                      const newName = selectedOption.country.name;
-                      setSelectedCountryCode(newCode);
-                      setSelectedCountryName(newName);
-                      
-                      // Reset state and district when country changes
-                      setSelectedStateCode('');
-                      setSelectedStateName('');
-                      setSelectedDistrictName('');
-                      
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditCountry = newName;
-                        (window as any)._tempEditState = '';
-                        (window as any)._tempEditDistrict = '';
-                      }
-                    }}
-                    placeholder="Select Country"
-                    classNames={reactSelectClassNames}
-                    className="text-sm peer"
-                    onInputChange={(inputValue, { action }) => {
-                      if (action === 'input-change') {
-                        let val = inputValue.replace(/[^a-zA-Z]/g, '');
-                        if (val.length > 0) {
-                          val = val.charAt(0).toUpperCase() + val.slice(1);
-                        }
-                        return val;
-                      }
-                      return inputValue;
-                    }}
-                  />
-                  <label htmlFor="settings-country" className="absolute left-3 px-1 pointer-events-none bg-white dark:bg-zinc-900 -top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 z-10 transition-all peer-focus:text-blue-600 dark:peer-focus:text-blue-500">Country <span className="text-red-500">*</span></label>
-                </div>
-                <div className="relative mt-2">
-                  <input
-                    id="settings-email"
-                    type="email"
-                    placeholder=" "
-                    defaultValue={user?.email}
-                    readOnly
-                    className={`${inputBase} ${inputDisabled} px-3.5 py-3`}
-                  />
-                  <label htmlFor="settings-email" className={floatingLabelDisabled}>Email Address (Read-only) <span className="text-red-500">*</span></label>
-                </div>
-                <div className="flex gap-2 mt-2">
-                  <div
-                    ref={countryDropdownRef}
-                    className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-600 shadow-sm hover:border-zinc-700 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 shrink-0 w-[105px] cursor-pointer transition-colors"
-                    onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                  >
-                    <div className="flex items-center gap-2 pointer-events-none w-full">
-                      {(() => {
-                        const selected = countries.find(c => c.code === countryCode);
-                        return selected ? (
+                    {/* Profile Avatar */}
+                    <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0">
+                      <div className="relative group cursor-pointer">
+                        <label htmlFor="settings-photo-upload" className="cursor-pointer">
                           <img
-                            src={`https://flagcdn.com/w20/${selected.iso}.png`}
-                            srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
-                            width="20"
-                            alt={selected.name}
-                            className="rounded-[2px] shadow-sm shrink-0"
+                            src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
+                            alt={user?.name || 'Profile'}
+                            className="h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-zinc-950 shadow-md transition-transform group-hover:scale-105 bg-white dark:bg-zinc-950"
                           />
-                        ) : null;
-                      })()}
-                      <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Camera className="h-7 w-7 text-white" />
+                          </div>
+                        </label>
+                        <input
+                          id="settings-photo-upload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePicChange}
+                          className="hidden"
+                        />
+                        <div className="absolute bottom-1 right-1 h-6 w-6 rounded-full bg-green-500 border-4 border-white dark:border-zinc-950" title="Online" />
+                      </div>
                     </div>
+                  </div>
 
-                    {isCountryDropdownOpen && (
-                      <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2">
-                        <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
-                          <input
-                            type="text"
-                            autoFocus
-                            placeholder="Search country..."
-                            value={countrySearchQuery}
-                            onChange={(e) => {
-                              let val = e.target.value.replace(/[^a-zA-Z]/g, '');
+                  {/* Name and Role */}
+                  <div className="flex flex-col items-center md:items-start md:pl-[160px] pb-6 mt-16 md:mt-2">
+                    <h2 className="text-2xl font-bold text-zinc-900 dark:text-white font-outfit">{user?.name}</h2>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-0.5">
+                      {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Employee'}
+                    </p>
+                  </div>
+
+                  <div className={`w-full space-y-4 ${!isEditingProfile ? 'pointer-events-none opacity-80 select-none' : ''}`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="relative mt-2">
+                        <input
+                          id="settings-first-name"
+                          type="text"
+                          placeholder=" "
+                          maxLength={50}
+                          defaultValue={user?.firstName}
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/[^A-Za-z]/g, '');
+                            if (val.length > 0) {
+                              val = val.charAt(0).toUpperCase() + val.slice(1);
+                            }
+                            e.target.value = val;
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditFirstName = val;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                        />
+                        <label htmlFor="settings-first-name" className={floatingLabelNormal}>First Name <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="relative mt-2">
+                        <input
+                          id="settings-last-name"
+                          type="text"
+                          placeholder=" "
+                          maxLength={50}
+                          defaultValue={user?.lastName}
+                          onChange={(e) => {
+                            let val = e.target.value.replace(/[^A-Za-z ]/g, '');
+                            val = val.replace(/^\s+/, ''); // Remove leading spaces
+                            val = val.replace(/\s{2,}/g, ' '); // Allow max one space consecutively
+
+                            if (val.length > 0) {
+                              val = val.split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+                            }
+                            e.target.value = val;
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditLastName = val;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                        />
+                        <label htmlFor="settings-last-name" className={floatingLabelNormal}>Last Name <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="relative mt-2">
+                        <Select
+                          instanceId="country-select"
+                          options={Country.getAllCountries().map(c => ({
+                            value: c.name,
+                            label: (
+                              <div className="flex items-center gap-2">
+                                <img src={`https://flagcdn.com/w20/${c.isoCode.toLowerCase()}.png`} alt={c.name} className="w-5" />
+                                <span>{c.name}</span>
+                              </div>
+                            ),
+                            country: c
+                          }))}
+                          value={
+                            selectedCountryCode ? {
+                              value: selectedCountryName,
+                              label: (
+                                <div className="flex items-center gap-2">
+                                  <img src={`https://flagcdn.com/w20/${selectedCountryCode.toLowerCase()}.png`} alt={selectedCountryName} className="w-5" />
+                                  <span>{selectedCountryName}</span>
+                                </div>
+                              )
+                            } : null
+                          }
+                          onChange={(selectedOption: any) => {
+                            if (!selectedOption) return;
+                            const newCode = selectedOption.country.isoCode;
+                            const newName = selectedOption.country.name;
+                            setSelectedCountryCode(newCode);
+                            setSelectedCountryName(newName);
+
+                            // Reset state and district when country changes
+                            setSelectedStateCode('');
+                            setSelectedStateName('');
+                            setSelectedDistrictName('');
+
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditCountry = newName;
+                              (window as any)._tempEditState = '';
+                              (window as any)._tempEditDistrict = '';
+                            }
+                          }}
+                          placeholder="Select Country"
+                          classNames={reactSelectClassNames}
+                          className="text-sm peer"
+                          onInputChange={(inputValue, { action }) => {
+                            if (action === 'input-change') {
+                              let val = inputValue.replace(/[^a-zA-Z]/g, '');
                               if (val.length > 0) {
                                 val = val.charAt(0).toUpperCase() + val.slice(1);
                               }
-                              setCountrySearchQuery(val);
-                            }}
-                            onClick={(e) => e.stopPropagation()}
-                            className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
-                          />
-                        </div>
-                        <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
-                          {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
-                            <li
-                              key={`${c.name}-${idx}`}
-                              className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setCountryCode(c.code);
-                                if (mobilePhoneValue.length > c.maxLength) {
-                                  handleMobileChange(mobilePhoneValue.slice(0, c.maxLength), c.code);
-                                } else {
-                                  handleMobileChange(mobilePhoneValue, c.code);
-                                }
-                                setIsCountryDropdownOpen(false);
-                                setCountrySearchQuery('');
-                              }}
-                            >
-                              <img
-                                src={`https://flagcdn.com/w20/${c.iso}.png`}
-                                srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
-                                width="20"
-                                alt={c.name}
-                                className="rounded-[2px] shadow-sm shrink-0"
-                              />
-                              <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
-                              <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
-                            </li>
-                          ))}
-                          {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
-                            <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
+                              return val;
+                            }
+                            return inputValue;
+                          }}
+                        />
+                        <label htmlFor="settings-country" className="absolute left-3 px-1 pointer-events-none bg-white dark:bg-zinc-900 -top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 z-10 transition-all peer-focus:text-blue-600 dark:peer-focus:text-blue-500">Country <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="relative mt-2">
+                        <input
+                          id="settings-email"
+                          type="email"
+                          placeholder=" "
+                          defaultValue={user?.email}
+                          readOnly
+                          className={`${inputBase} ${inputDisabled} px-3.5 py-3`}
+                        />
+                        <label htmlFor="settings-email" className={floatingLabelDisabled}>Email Address (Read-only) <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <div
+                          ref={countryDropdownRef}
+                          className="relative flex items-center bg-white dark:bg-zinc-900 rounded-xl border-2 border-zinc-500 dark:border-zinc-600 shadow-sm hover:border-zinc-700 dark:hover:border-zinc-500 px-3 py-3 text-sm font-semibold focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 shrink-0 w-[105px] cursor-pointer transition-colors"
+                          onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                        >
+                          <div className="flex items-center gap-2 pointer-events-none w-full">
+                            {(() => {
+                              const selected = countries.find(c => c.code === countryCode);
+                              return selected ? (
+                                <img
+                                  src={`https://flagcdn.com/w20/${selected.iso}.png`}
+                                  srcSet={`https://flagcdn.com/w40/${selected.iso}.png 2x`}
+                                  width="20"
+                                  alt={selected.name}
+                                  className="rounded-[2px] shadow-sm shrink-0"
+                                />
+                              ) : null;
+                            })()}
+                            <span className="text-zinc-700 dark:text-zinc-300 truncate">{countryCode}</span>
+                          </div>
+
+                          {isCountryDropdownOpen && (
+                            <div className="absolute top-full left-0 mt-2 w-[280px] bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-lg z-50 flex flex-col overflow-hidden animate-in fade-in slide-in-from-top-2">
+                              <div className="p-2 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  placeholder="Search country..."
+                                  value={countrySearchQuery}
+                                  onChange={(e) => {
+                                    let val = e.target.value.replace(/[^a-zA-Z]/g, '');
+                                    if (val.length > 0) {
+                                      val = val.charAt(0).toUpperCase() + val.slice(1);
+                                    }
+                                    setCountrySearchQuery(val);
+                                  }}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="w-full bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700/50 rounded-lg px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-zinc-500 dark:placeholder:text-zinc-600"
+                                />
+                              </div>
+                              <ul className="max-h-[250px] overflow-y-auto py-1 flex flex-col gap-0.5">
+                                {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).map((c, idx) => (
+                                  <li
+                                    key={`${c.name}-${idx}`}
+                                    className="px-3 py-2.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer flex items-center gap-3 transition-colors"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setCountryCode(c.code);
+                                      if (mobilePhoneValue.length > c.maxLength) {
+                                        handleMobileChange(mobilePhoneValue.slice(0, c.maxLength), c.code);
+                                      } else {
+                                        handleMobileChange(mobilePhoneValue, c.code);
+                                      }
+                                      setIsCountryDropdownOpen(false);
+                                      setCountrySearchQuery('');
+                                    }}
+                                  >
+                                    <img
+                                      src={`https://flagcdn.com/w20/${c.iso}.png`}
+                                      srcSet={`https://flagcdn.com/w40/${c.iso}.png 2x`}
+                                      width="20"
+                                      alt={c.name}
+                                      className="rounded-[2px] shadow-sm shrink-0"
+                                    />
+                                    <span className="flex-1 truncate text-zinc-700 dark:text-zinc-300 font-medium">{c.name}</span>
+                                    <span className="text-zinc-600 dark:text-zinc-400 font-semibold shrink-0">{c.code}</span>
+                                  </li>
+                                ))}
+                                {countries.filter(c => c.name.toLowerCase().includes(countrySearchQuery.toLowerCase()) || c.code.includes(countrySearchQuery)).length === 0 && (
+                                  <li className="px-3 py-6 text-center text-sm font-medium text-zinc-600 dark:text-zinc-400">No countries found</li>
+                                )}
+                              </ul>
+                            </div>
                           )}
-                        </ul>
+                        </div>
+
+                        <div className="relative flex-1">
+                          <input
+                            id="settings-mobile"
+                            type="text"
+                            inputMode="numeric"
+                            value={mobilePhoneValue}
+                            onChange={(e) => handleMobileChange(e.target.value, countryCode)}
+                            placeholder=" "
+                            className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                          />
+                          <label htmlFor="settings-mobile" className={floatingLabelNormal}>
+                            Mobile Number <span className="text-red-500">*</span>
+                          </label>
+                        </div>
+                      </div>
+                      <div className="relative mt-2">
+                        <select
+                          id="settings-gender"
+                          defaultValue={user?.gender || ''}
+                          onChange={(e) => {
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditGender = e.target.value;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} px-3.5 py-3 appearance-none`}
+                        >
+                          <option value="" disabled hidden>Select Gender</option>
+                          <option value="Male">Male</option>
+                          <option value="Female">Female</option>
+                          <option value="Other">Other</option>
+                        </select>
+                        <label htmlFor="settings-gender" className="absolute left-3 px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 -top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 peer-focus:text-blue-600 dark:peer-focus:text-blue-500">Gender <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="relative mt-2">
+                        <input
+                          id="settings-qualification"
+                          type="text"
+                          placeholder=" "
+                          defaultValue={user?.qualification}
+                          onChange={(e) => {
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditQualification = e.target.value;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                        />
+                        <label htmlFor="settings-qualification" className={floatingLabelNormal}>Qualification <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="relative mt-2">
+                        <input
+                          id="settings-role"
+                          type="text"
+                          placeholder=" "
+                          defaultValue={user?.role}
+                          readOnly
+                          className={`${inputBase} ${inputDisabled} px-3.5 py-3 capitalize`}
+                        />
+                        <label htmlFor="settings-role" className={floatingLabelDisabled}>Role (Read-only) <span className="text-red-500">*</span></label>
+                      </div>
+                      <div className="relative mt-2 sm:col-span-2">
+                        <input
+                          id="settings-address"
+                          type="text"
+                          placeholder=" "
+                          defaultValue={user?.permanentAddress}
+                          onChange={(e) => {
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditPermanentAddress = e.target.value;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                        />
+                        <label htmlFor="settings-address" className={floatingLabelNormal}>Address <span className="text-red-500">*</span></label>
+                      </div>
+
+
+                      <div className="sm:col-span-2 mt-4">
+                        <label htmlFor="settings-terms" className="flex items-start gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 transition-colors hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer">
+                          <div className="flex items-center h-5 mt-0.5">
+                            <input
+                              id="settings-terms"
+                              type="checkbox"
+                              defaultChecked={user?.termsAndConditions}
+                              onChange={(e) => {
+                                if (typeof window !== 'undefined') {
+                                  (window as any)._tempEditTerms = e.target.checked;
+                                }
+                              }}
+                              className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 focus:ring-offset-zinc-50 dark:focus:ring-offset-zinc-900 transition-colors cursor-pointer"
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                              Terms of Service & Privacy Policy <span className="text-red-500">*</span>
+                            </span>
+                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
+                              By checking this box, you acknowledge that you have read, understood, and agree to our{' '}
+                              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsTermsModalOpen(true); }} className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-sm">
+                                Terms and Conditions
+                              </button>
+                              {' '}and consent to our data processing practices. This action is required to maintain your workspace access.
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    {isEditingProfile && (
+                      <button
+                        type="button"
+                        onClick={async (e) => {
+                          const btn = e.currentTarget;
+                          const prevText = btn.innerHTML;
+                          btn.innerHTML = 'Saving...';
+                          btn.disabled = true;
+                          try {
+                            const updates: any = {};
+                            if ((window as any)._tempEditFirstName !== undefined) updates.firstName = (window as any)._tempEditFirstName;
+                            if ((window as any)._tempEditLastName !== undefined) updates.lastName = (window as any)._tempEditLastName;
+
+                            // Also derive 'name' if either firstName or lastName is updated
+                            if ((window as any)._tempEditFirstName !== undefined || (window as any)._tempEditLastName !== undefined) {
+                              const fName = (window as any)._tempEditFirstName !== undefined ? (window as any)._tempEditFirstName : (user?.firstName || '');
+                              const lName = (window as any)._tempEditLastName !== undefined ? (window as any)._tempEditLastName : (user?.lastName || '');
+                              updates.name = `${fName} ${lName}`.trim();
+                            }
+
+                            if ((window as any)._tempEditCountry !== undefined) updates.country = (window as any)._tempEditCountry;
+                            if ((window as any)._tempEditMobile !== undefined) {
+                              const sanitized = sanitizePhoneNumber((window as any)._tempEditMobile);
+                              if (sanitized) {
+                                const validation = validatePhoneNumber(sanitized);
+                                if (!validation.isValid) {
+                                  toast.error(`Mobile Number: ${validation.error}`);
+                                  btn.innerHTML = prevText;
+                                  btn.disabled = false;
+                                  return;
+                                }
+                              }
+                              updates.mobileNumber = sanitized;
+                            }
+                            if ((window as any)._tempEditGender) updates.gender = (window as any)._tempEditGender;
+                            if ((window as any)._tempEditQualification) updates.qualification = (window as any)._tempEditQualification;
+                            if ((window as any)._tempEditPermanentAddress !== undefined) updates.permanentAddress = (window as any)._tempEditPermanentAddress;
+                            if ((window as any)._tempEditCurrentAddress !== undefined) updates.currentAddress = (window as any)._tempEditCurrentAddress;
+
+                            if ((window as any)._tempEditAlternateNumber !== undefined) {
+                              const sanitizedAlt = sanitizePhoneNumber((window as any)._tempEditAlternateNumber);
+                              if (sanitizedAlt) {
+                                const validationAlt = validatePhoneNumber(sanitizedAlt);
+                                if (!validationAlt.isValid) {
+                                  toast.error(`Alternate Number: ${validationAlt.error}`);
+                                  btn.innerHTML = prevText;
+                                  btn.disabled = false;
+                                  return;
+                                }
+                              }
+                              updates.alternateNumber = sanitizedAlt;
+                            }
+
+                            if ((window as any)._tempEditState !== undefined) updates.state = (window as any)._tempEditState;
+                            if ((window as any)._tempEditDistrict !== undefined) updates.district = (window as any)._tempEditDistrict;
+
+
+
+                            if ((window as any)._tempEditTerms !== undefined) updates.termsAndConditions = (window as any)._tempEditTerms;
+
+                            if (Object.keys(updates).length > 0) {
+                              await updateUser(updates);
+                              toast.success('Profile updated successfully!');
+                              setIsEditingProfile(false);
+                            }
+                          } catch (err: any) {
+                            toast.error(err?.message || 'Failed to update profile');
+                          } finally {
+                            btn.innerHTML = prevText;
+                            btn.disabled = false;
+                          }
+                        }}
+                        className="flex items-center gap-1.5 py-2 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                      >
+                        Save Changes
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+              </>
+            )}
+
+            {activeTab === 'security' && (
+              <>
+                {/* Security Tab */}
+                <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
+                  <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">
+                    <Key className="h-4.5 w-4.5 text-blue-500" />
+                    Security (Change Credentials)
+                  </h2>
+
+                  {passwordError && (
+                    <div className="p-3.5 text-xs text-red-650 bg-red-50 dark:bg-red-950/10 border border-red-150 dark:border-red-900/55 rounded-xl max-w-xl animate-in slide-in-from-top-1.5 duration-200">
+                      {passwordError}
+                    </div>
+                  )}
+
+                  <div className="max-w-xl space-y-4">
+                    {!showPasswordSection ? (
+                      <div className="space-y-3">
+                        <p className="text-xs text-zinc-600 dark:text-zinc-400">Update your account login password periodically to keep your workspace secure.</p>
+                        <button
+                          type="button"
+                          onClick={() => setShowPasswordSection(true)}
+                          className="flex items-center gap-1.5 py-2 px-5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
+                        >
+                          🔑 Request Password Change
+                        </button>
+                      </div>
+                    ) : !isOtpVerified ? (
+                      <div className="space-y-4 p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/20 border border-zinc-200/65 dark:border-zinc-800/65 animate-in fade-in duration-200">
+                        <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
+                          For security, we must verify your identity. Let us send a 6-digit verification code to your registered email: <span className="font-bold text-zinc-900 dark:text-white">{user?.email}</span>.
+                        </p>
+
+                        {!isOtpSent ? (
+                          <button
+                            type="button"
+                            onClick={handleRequestOtp}
+                            disabled={isRequestingOtp}
+                            className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                          >
+                            {isRequestingOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                            Send Verification OTP
+                          </button>
+                        ) : (
+                          <div className="space-y-4 animate-in fade-in duration-150">
+
+                            {/* Box OTP & Expiry countdown section */}
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center">
+                                <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Verification OTP Code</label>
+                                {passwordTimer > 0 ? (
+                                  <span className="text-xs text-blue-650 dark:text-blue-450 font-bold flex items-center gap-1">
+                                    <Clock className="h-3.5 w-3.5 animate-pulse" /> Expires in: {formatTimer(passwordTimer)}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-red-550 dark:text-red-450 font-bold">Code Expired!</span>
+                                )}
+                              </div>
+
+                              {/* Separate OTP Digit Inputs */}
+                              <div className="flex gap-2.5 justify-center py-2">
+                                {otpDigits.map((digit, idx) => (
+                                  <input
+                                    key={idx}
+                                    id={`pass-otp-${idx}`}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    disabled={passwordTimer <= 0}
+                                    onChange={(e) => handleBoxChange(idx, e.target.value, otpDigits, setOtpDigits, 'pass-otp')}
+                                    onKeyDown={(e) => handleBoxKeyDown(idx, e, otpDigits, 'pass-otp')}
+                                    className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
+                                  />
+                                ))}
+                              </div>
+                              {passwordTimer <= 0 && (
+                                <p className="text-[10px] text-red-550 dark:text-red-450 font-medium">OTP has expired. Please click "Back" and request a new verification code.</p>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsOtpSent(false);
+                                  setOtpDigits(['', '', '', '', '', '']);
+                                  setPasswordTimer(0);
+                                }}
+                                className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-150 dark:hover:bg-zinc-900 transition cursor-pointer"
+                              >
+                                Back
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleVerifyOtp}
+                                disabled={isVerifyingOtp || otpDigits.some(d => !d) || passwordTimer <= 0}
+                                className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                              >
+                                {isVerifyingOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                                Verify OTP Code
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      // Final Step: Password Change inputs
+                      <div className="space-y-4 p-4 rounded-xl bg-blue-50/20 dark:bg-blue-950/10 border border-blue-100/20 dark:border-blue-900/20 animate-in zoom-in-95 duration-200">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-1.5">
+                            <label htmlFor="settings-password" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">New Password</label>
+                            <div className="relative">
+                              <input
+                                id="settings-password"
+                                type={showPassword ? 'text' : 'password'}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                                placeholder="At least 8 characters"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
+                              >
+                                {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <label htmlFor="settings-confirm-password" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Confirm Password</label>
+                            <input
+                              id="settings-confirm-password"
+                              type={showPassword ? 'text' : 'password'}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                              placeholder="Repeat password"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2.5">
+                          <button
+                            type="button"
+                            onClick={() => setIsOtpVerified(false)}
+                            className="py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                          >
+                            Back
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleUpdatePassword}
+                            disabled={isResettingPassword || !newPassword || !confirmPassword}
+                            className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                          >
+                            {isResettingPassword && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                            Save New Password
+                          </button>
+                        </div>
                       </div>
                     )}
                   </div>
-
-                  <div className="relative flex-1">
-                    <input
-                      id="settings-mobile"
-                      type="text"
-                      inputMode="numeric"
-                      value={mobilePhoneValue}
-                      onChange={(e) => handleMobileChange(e.target.value, countryCode)}
-                      placeholder=" "
-                      className={`${inputBase} ${inputNormal} px-3.5 py-3`}
-                    />
-                    <label htmlFor="settings-mobile" className={floatingLabelNormal}>
-                      Mobile Number <span className="text-red-500">*</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="relative mt-2">
-                  <select
-                    id="settings-gender"
-                    defaultValue={user?.gender || ''}
-                    onChange={(e) => {
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditGender = e.target.value;
-                      }
-                    }}
-                    className={`${inputBase} ${inputNormal} px-3.5 py-3 appearance-none`}
-                  >
-                    <option value="" disabled hidden>Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
-                  </select>
-                  <label htmlFor="settings-gender" className="absolute left-3 px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 -top-2.5 text-xs font-semibold text-zinc-700 dark:text-zinc-500 peer-focus:text-blue-600 dark:peer-focus:text-blue-500">Gender <span className="text-red-500">*</span></label>
-                </div>
-                <div className="relative mt-2">
-                  <input
-                    id="settings-qualification"
-                    type="text"
-                    placeholder=" "
-                    defaultValue={user?.qualification}
-                    onChange={(e) => {
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditQualification = e.target.value;
-                      }
-                    }}
-                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
-                  />
-                  <label htmlFor="settings-qualification" className={floatingLabelNormal}>Qualification <span className="text-red-500">*</span></label>
-                </div>
-                <div className="relative mt-2">
-                  <input
-                    id="settings-role"
-                    type="text"
-                    placeholder=" "
-                    defaultValue={user?.role}
-                    readOnly
-                    className={`${inputBase} ${inputDisabled} px-3.5 py-3 capitalize`}
-                  />
-                  <label htmlFor="settings-role" className={floatingLabelDisabled}>Role (Read-only) <span className="text-red-500">*</span></label>
-                </div>
-                <div className="relative mt-2 sm:col-span-2">
-                  <input
-                    id="settings-address"
-                    type="text"
-                    placeholder=" "
-                    defaultValue={user?.permanentAddress}
-                    onChange={(e) => {
-                      if (typeof window !== 'undefined') {
-                        (window as any)._tempEditPermanentAddress = e.target.value;
-                      }
-                    }}
-                    className={`${inputBase} ${inputNormal} px-3.5 py-3`}
-                  />
-                  <label htmlFor="settings-address" className={floatingLabelNormal}>Address <span className="text-red-500">*</span></label>
                 </div>
 
-
-                <div className="sm:col-span-2 mt-4">
-                  <label htmlFor="settings-terms" className="flex items-start gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 transition-colors hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer">
-                    <div className="flex items-center h-5 mt-0.5">
-                      <input
-                        id="settings-terms"
-                        type="checkbox"
-                        defaultChecked={user?.termsAndConditions}
-                        onChange={(e) => {
-                          if (typeof window !== 'undefined') {
-                            (window as any)._tempEditTerms = e.target.checked;
-                          }
-                        }}
-                        className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 focus:ring-offset-zinc-50 dark:focus:ring-offset-zinc-900 transition-colors cursor-pointer"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                        Terms of Service & Privacy Policy <span className="text-red-500">*</span>
-                      </span>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                        By checking this box, you acknowledge that you have read, understood, and agree to our{' '}
-                        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsTermsModalOpen(true); }} className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-sm">
-                          Terms and Conditions
-                        </button>
-                        {' '}and consent to our data processing practices. This action is required to maintain your workspace access.
-                      </p>
-                    </div>
-                  </label>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={async (e) => {
-                  const btn = e.currentTarget;
-                  const prevText = btn.innerHTML;
-                  btn.innerHTML = 'Saving...';
-                  btn.disabled = true;
-                  try {
-                    const updates: any = {};
-                    if ((window as any)._tempEditFirstName !== undefined) updates.firstName = (window as any)._tempEditFirstName;
-                    if ((window as any)._tempEditLastName !== undefined) updates.lastName = (window as any)._tempEditLastName;
-                    
-                    // Also derive 'name' if either firstName or lastName is updated
-                    if ((window as any)._tempEditFirstName !== undefined || (window as any)._tempEditLastName !== undefined) {
-                      const fName = (window as any)._tempEditFirstName !== undefined ? (window as any)._tempEditFirstName : (user?.firstName || '');
-                      const lName = (window as any)._tempEditLastName !== undefined ? (window as any)._tempEditLastName : (user?.lastName || '');
-                      updates.name = `${fName} ${lName}`.trim();
-                    }
-                    
-                    if ((window as any)._tempEditCountry !== undefined) updates.country = (window as any)._tempEditCountry;
-                    if ((window as any)._tempEditMobile !== undefined) {
-                      const sanitized = sanitizePhoneNumber((window as any)._tempEditMobile);
-                      if (sanitized) {
-                        const validation = validatePhoneNumber(sanitized);
-                        if (!validation.isValid) {
-                          toast.error(`Mobile Number: ${validation.error}`);
-                          btn.innerHTML = prevText;
-                          btn.disabled = false;
-                          return;
-                        }
-                      }
-                      updates.mobileNumber = sanitized;
-                    }
-                    if ((window as any)._tempEditGender) updates.gender = (window as any)._tempEditGender;
-                    if ((window as any)._tempEditQualification) updates.qualification = (window as any)._tempEditQualification;
-                    if ((window as any)._tempEditPermanentAddress !== undefined) updates.permanentAddress = (window as any)._tempEditPermanentAddress;
-                    if ((window as any)._tempEditCurrentAddress !== undefined) updates.currentAddress = (window as any)._tempEditCurrentAddress;
-                    
-                    if ((window as any)._tempEditAlternateNumber !== undefined) {
-                      const sanitizedAlt = sanitizePhoneNumber((window as any)._tempEditAlternateNumber);
-                      if (sanitizedAlt) {
-                        const validationAlt = validatePhoneNumber(sanitizedAlt);
-                        if (!validationAlt.isValid) {
-                          toast.error(`Alternate Number: ${validationAlt.error}`);
-                          btn.innerHTML = prevText;
-                          btn.disabled = false;
-                          return;
-                        }
-                      }
-                      updates.alternateNumber = sanitizedAlt;
-                    }
-                    
-                    if ((window as any)._tempEditState !== undefined) updates.state = (window as any)._tempEditState;
-                    if ((window as any)._tempEditDistrict !== undefined) updates.district = (window as any)._tempEditDistrict;
-                    
-
-
-                    if ((window as any)._tempEditTerms !== undefined) updates.termsAndConditions = (window as any)._tempEditTerms;
-                    
-                    if (Object.keys(updates).length > 0) {
-                      await updateUser(updates);
-                      toast.success('Profile updated successfully!');
-                    }
-                  } catch (err: any) {
-                    toast.error(err?.message || 'Failed to update profile');
-                  } finally {
-                    btn.innerHTML = prevText;
-                    btn.disabled = false;
-                  }
-                }}
-                className="flex items-center gap-1.5 py-2 px-5 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
-              >
-                Save Changes
-              </button>
-            </div>
-          </div>
-
-          {/* Security Tab */}
-          <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
-            <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">
-              <Key className="h-4.5 w-4.5 text-blue-500" />
-              Security (Change Credentials)
-            </h2>
-
-            {passwordError && (
-              <div className="p-3.5 text-xs text-red-650 bg-red-50 dark:bg-red-950/10 border border-red-150 dark:border-red-900/55 rounded-xl max-w-xl animate-in slide-in-from-top-1.5 duration-200">
-                {passwordError}
-              </div>
+              </>
             )}
 
-            <div className="max-w-xl space-y-4">
-              {!showPasswordSection ? (
-                <div className="space-y-3">
-                  <p className="text-xs text-zinc-600 dark:text-zinc-400">Update your account login password periodically to keep your workspace secure.</p>
-                  <button
-                    type="button"
-                    onClick={() => setShowPasswordSection(true)}
-                    className="flex items-center gap-1.5 py-2 px-5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 hover:bg-zinc-50 dark:hover:bg-zinc-900 text-xs font-bold text-zinc-700 dark:text-zinc-300 transition cursor-pointer"
-                  >
-                    🔑 Request Password Change
-                  </button>
-                </div>
-              ) : !isOtpVerified ? (
-                <div className="space-y-4 p-4 rounded-xl bg-zinc-50/50 dark:bg-zinc-900/20 border border-zinc-200/65 dark:border-zinc-800/65 animate-in fade-in duration-200">
-                  <p className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
-                    For security, we must verify your identity. Let us send a 6-digit verification code to your registered email: <span className="font-bold text-zinc-900 dark:text-white">{user?.email}</span>.
-                  </p>
+            {activeTab === 'danger' && user?.role !== 'admin' && user?.role !== 'superadmin' && (
+              <>
+                {/* Danger Zone */}
+                <div className="rounded-2xl border border-red-200/60 bg-red-50/20 p-6 shadow-sm dark:border-red-950/5 space-y-5">
+                  <h2 className="text-sm font-bold text-red-700 dark:text-red-400 flex items-center gap-2 border-b border-red-100/40 dark:border-red-950/20 pb-3">
+                    <ShieldAlert className="h-4.5 w-4.5" />
+                    Profile Deletion
+                  </h2>
 
-                  {!isOtpSent ? (
-                    <button
-                      type="button"
-                      onClick={handleRequestOtp}
-                      disabled={isRequestingOtp}
-                      className="flex items-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
-                    >
-                      {isRequestingOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-                      Send Verification OTP
-                    </button>
-                  ) : (
-                    <div className="space-y-4 animate-in fade-in duration-150">
-                      
-                      {/* Box OTP & Expiry countdown section */}
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">Verification OTP Code</label>
-                          {passwordTimer > 0 ? (
-                            <span className="text-xs text-blue-650 dark:text-blue-450 font-bold flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5 animate-pulse" /> Expires in: {formatTimer(passwordTimer)}
-                            </span>
-                          ) : (
-                            <span className="text-xs text-red-550 dark:text-red-450 font-bold">Code Expired!</span>
-                          )}
-                        </div>
-
-                        {/* Separate OTP Digit Inputs */}
-                        <div className="flex gap-2.5 justify-center py-2">
-                          {otpDigits.map((digit, idx) => (
-                            <input
-                              key={idx}
-                              id={`pass-otp-${idx}`}
-                              type="text"
-                              inputMode="numeric"
-                              maxLength={1}
-                              value={digit}
-                              disabled={passwordTimer <= 0}
-                              onChange={(e) => handleBoxChange(idx, e.target.value, otpDigits, setOtpDigits, 'pass-otp')}
-                              onKeyDown={(e) => handleBoxKeyDown(idx, e, otpDigits, 'pass-otp')}
-                              className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
-                            />
-                          ))}
-                        </div>
-                        {passwordTimer <= 0 && (
-                          <p className="text-[10px] text-red-550 dark:text-red-450 font-medium">OTP has expired. Please click "Back" and request a new verification code.</p>
-                        )}
-                      </div>
-
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsOtpSent(false);
-                            setOtpDigits(['', '', '', '', '', '']);
-                            setPasswordTimer(0);
-                          }}
-                          className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-150 dark:hover:bg-zinc-900 transition cursor-pointer"
-                        >
-                          Back
-                        </button>
-                        <button
-                          type="button"
-                          onClick={handleVerifyOtp}
-                          disabled={isVerifyingOtp || otpDigits.some(d => !d) || passwordTimer <= 0}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
-                        >
-                          {isVerifyingOtp ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-                          Verify OTP Code
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                // Final Step: Password Change inputs
-                <div className="space-y-4 p-4 rounded-xl bg-blue-50/20 dark:bg-blue-950/10 border border-blue-100/20 dark:border-blue-900/20 animate-in zoom-in-95 duration-200">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <label htmlFor="settings-password" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">New Password</label>
-                      <div className="relative">
-                        <input
-                          id="settings-password"
-                          type={showPassword ? 'text' : 'password'}
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="w-full pl-3.5 pr-10 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                          placeholder="At least 8 characters"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-650 cursor-pointer"
-                        >
-                          {showPassword ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        </button>
-                      </div>
+                  <div className="space-y-4">
+                    <div className="max-w-xl text-xs text-red-650/80 dark:text-red-400/80 leading-relaxed">
+                      Deleting your account is permanent. This will erase all your personal data, logs, task assignations, and profile records from the database. You will not be able to log back in.
                     </div>
 
-                    <div className="space-y-1.5">
-                      <label htmlFor="settings-confirm-password" className="text-xs font-semibold text-zinc-700 dark:text-zinc-300">Confirm Password</label>
-                      <input
-                        id="settings-confirm-password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-3.5 py-2.5 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-sm text-zinc-950 dark:text-zinc-50 outline-none transition focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                        placeholder="Repeat password"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2.5">
                     <button
                       type="button"
-                      onClick={() => setIsOtpVerified(false)}
-                      className="py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className="flex items-center gap-1.5 py-2 px-5 rounded-xl border border-red-200/80 bg-white hover:bg-red-50 text-xs font-bold text-red-600 dark:bg-zinc-950/60 dark:border-red-950/40 dark:text-red-400 dark:hover:bg-red-950/20 transition cursor-pointer"
                     >
-                      Back
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleUpdatePassword}
-                      disabled={isResettingPassword || !newPassword || !confirmPassword}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
-                    >
-                      {isResettingPassword && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                      Save New Password
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete My Profile permanently
                     </button>
                   </div>
                 </div>
-              )}
-            </div>
+
+              </>
+            )}
           </div>
-
-          {/* Danger Zone */}
-          <div className="rounded-2xl border border-red-200/60 bg-red-50/20 p-6 shadow-sm dark:border-red-950/5 space-y-5">
-            <h2 className="text-sm font-bold text-red-700 dark:text-red-400 flex items-center gap-2 border-b border-red-100/40 dark:border-red-950/20 pb-3">
-              <ShieldAlert className="h-4.5 w-4.5" />
-              Profile Deletion
-            </h2>
-
-            <div className="space-y-4">
-              <div className="max-w-xl text-xs text-red-650/80 dark:text-red-400/80 leading-relaxed">
-                Deleting your account is permanent. This will erase all your personal data, logs, task assignations, and profile records from the database. You will not be able to log back in.
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsDeleteModalOpen(true)}
-                className="flex items-center gap-1.5 py-2 px-5 rounded-xl border border-red-200/80 bg-white hover:bg-red-50 text-xs font-bold text-red-600 dark:bg-zinc-950/60 dark:border-red-950/40 dark:text-red-400 dark:hover:bg-red-950/20 transition cursor-pointer"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete My Profile permanently
-              </button>
-            </div>
-          </div>
-
         </div>
 
         {/* Delete Account Confirmation Modal (OTP & Timer) */}
@@ -1179,27 +1238,27 @@ export default function SettingsPage() {
             </div>
             <div className="p-6 overflow-y-auto space-y-4 text-sm text-zinc-600 dark:text-zinc-400">
               <p>By registering an account or updating your profile in the Employee Management System (&quot;EMS&quot;), you agree to the following terms:</p>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Accurate Information</strong><br/>You agree to provide accurate, complete, and up-to-date personal and professional information during registration and profile updates. Providing false or misleading information may result in account suspension or termination.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Account Responsibility</strong><br/>You are responsible for maintaining the confidentiality of your login credentials. You must not share your username, password, or verification codes with anyone. Any activity performed using your account is your responsibility.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Profile Updates</strong><br/>You may update your personal information whenever necessary. Certain fields, such as Employee ID, Company Email, Role, Department, or other official records, may only be modified by authorized administrators.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Data Privacy</strong><br/>Your personal information will be collected, stored, and processed only for employment-related purposes, including account management, communication, attendance, payroll, and other HR operations. Your information will be handled securely and in accordance with the organization&apos;s Privacy Policy.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Acceptable Use</strong><br/>You agree to use the system only for legitimate business purposes. You must not upload harmful, offensive, misleading, or illegal content, attempt unauthorized access, interfere with system security, or misuse the platform in any way.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Security Monitoring</strong><br/>For security, compliance, and audit purposes, the system may record login history, profile updates, password changes, and other account activities. These records may be reviewed by authorized personnel when necessary.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Account Suspension</strong><br/>The organization reserves the right to suspend, restrict, or terminate your account if you violate these Terms & Conditions, provide false information, misuse the system, or engage in unauthorized activities.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">System Availability</strong><br/>While every effort is made to ensure uninterrupted access, the system may occasionally be unavailable due to maintenance, updates, or technical issues. The organization is not responsible for temporary service interruptions.</div>
-              
-              <div><strong className="text-zinc-900 dark:text-white">Changes to Terms</strong><br/>These Terms & Conditions may be updated from time to time. Continued use of the Employee Management System after any changes indicates your acceptance of the revised terms.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Accurate Information</strong><br />You agree to provide accurate, complete, and up-to-date personal and professional information during registration and profile updates. Providing false or misleading information may result in account suspension or termination.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Account Responsibility</strong><br />You are responsible for maintaining the confidentiality of your login credentials. You must not share your username, password, or verification codes with anyone. Any activity performed using your account is your responsibility.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Profile Updates</strong><br />You may update your personal information whenever necessary. Certain fields, such as Employee ID, Company Email, Role, Department, or other official records, may only be modified by authorized administrators.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Data Privacy</strong><br />Your personal information will be collected, stored, and processed only for employment-related purposes, including account management, communication, attendance, payroll, and other HR operations. Your information will be handled securely and in accordance with the organization&apos;s Privacy Policy.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Acceptable Use</strong><br />You agree to use the system only for legitimate business purposes. You must not upload harmful, offensive, misleading, or illegal content, attempt unauthorized access, interfere with system security, or misuse the platform in any way.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Security Monitoring</strong><br />For security, compliance, and audit purposes, the system may record login history, profile updates, password changes, and other account activities. These records may be reviewed by authorized personnel when necessary.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Account Suspension</strong><br />The organization reserves the right to suspend, restrict, or terminate your account if you violate these Terms & Conditions, provide false information, misuse the system, or engage in unauthorized activities.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">System Availability</strong><br />While every effort is made to ensure uninterrupted access, the system may occasionally be unavailable due to maintenance, updates, or technical issues. The organization is not responsible for temporary service interruptions.</div>
+
+              <div><strong className="text-zinc-900 dark:text-white">Changes to Terms</strong><br />These Terms & Conditions may be updated from time to time. Continued use of the Employee Management System after any changes indicates your acceptance of the revised terms.</div>
             </div>
             <div className="p-4 border-t border-zinc-100 dark:border-zinc-900 flex justify-end">
-              <button 
+              <button
                 onClick={() => setIsTermsModalOpen(false)}
                 className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition"
               >

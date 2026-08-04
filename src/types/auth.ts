@@ -9,6 +9,7 @@ export interface AuthUser {
   email: string;
   role?: string;
   profilePicture?: string;
+  coverPicture?: string;
   designation?: string;
   department?: string;
   qualification?: string;

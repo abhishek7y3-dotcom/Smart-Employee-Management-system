@@ -338,23 +338,6 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
       timestamp: new Date().toISOString(),
     };
 
-    // 1. LOCAL GREETINGS FASTPATH (Frontend Only)
-    // If it's a simple greeting without an attachment, handle it locally instantly
-    const lowerText = messageText.toLowerCase().trim();
-    const greetings = ['hi', 'hello', 'hey', 'good', 'morning', 'good morning', 'good afternoon', 'good evening', 'hola', 'namaste'];
-    if (!attachmentData && greetings.includes(lowerText)) {
-      setMessages((prev) => [...prev, userMessage]);
-      setTimeout(() => {
-        const aiMessage: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          role: 'assistant',
-          content: 'Hello! 👋 How can I help you manage your workspace today?',
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, aiMessage]);
-      }, 500); // 500ms delay for natural feel
-      return; // Stop here, do not hit the backend
-    }
 
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
@@ -407,12 +390,21 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
             setIsLoading(false);
           },
           onError: (error) => {
-            console.error('Chat Stream Error:', error);
-            const fallbackError = 'Sorry, an error occurred processing the request.';
+            // Use console.warn instead of console.error to avoid Next.js dev overlay
+            console.warn('Chat Stream Warning:', error);
+            
+            let professionalMessage = 'I am currently experiencing some technical difficulties. Please try again later.';
+            
+            if (typeof error === 'string' && error.includes('Quota Exceeded')) {
+              professionalMessage = 'I am currently receiving a high volume of requests. To ensure quality service, please wait about a minute before sending your next message. Thank you for your patience! ⏳';
+            } else if (typeof error === 'string') {
+              professionalMessage = `An error occurred: ${error}`;
+            }
+
             setMessages((prev) => 
               prev.map((msg) => 
                 msg.id === aiMessageId 
-                  ? { ...msg, content: msg.content + '\n\n**[Error]** ' + (error || fallbackError) } 
+                  ? { ...msg, content: msg.content + '\n\n*Note: ' + professionalMessage + '*' } 
                   : msg
               )
             );

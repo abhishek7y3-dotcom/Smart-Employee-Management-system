@@ -7,6 +7,7 @@ import { CreateProjectModal } from './CreateProjectModal';
 export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects, onOpenChatsList, onOpenArchive, onOpenProjectDetail }: { onClose?: () => void, onOpenLibrary?: () => void, onOpenChat?: () => void, onOpenProjects?: () => void, onOpenChatsList?: () => void, onOpenArchive?: () => void, onOpenProjectDetail?: () => void }) => {
   const { chatHistory, loadConversation, startNewChat, conversationId, projects, addChatToProjectAction, setActiveProject } = useChat();
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [visibleChatsCount, setVisibleChatsCount] = useState(6);
 
   return (
     <>
@@ -92,9 +93,20 @@ export const ChatSidebar = ({ onClose, onOpenLibrary, onOpenChat, onOpenProjects
               {chatHistory.length === 0 ? (
                 <div className="px-3 py-2 text-xs text-zinc-500">No recent chats</div>
               ) : (
-                chatHistory.map((chat) => (
-                  <ChatItem key={chat._id} chat={chat} onClose={onClose} onOpenChat={onOpenChat} />
-                ))
+                <>
+                  {chatHistory.slice(0, visibleChatsCount).map((chat) => (
+                    <ChatItem key={chat._id} chat={chat} onClose={onClose} onOpenChat={onOpenChat} />
+                  ))}
+                  {chatHistory.length > visibleChatsCount && (
+                    <button 
+                      onClick={() => setVisibleChatsCount(prev => prev + 6)}
+                      className="text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 px-3 py-1.5 text-left transition-colors cursor-pointer flex items-center justify-between group"
+                    >
+                      View More
+                      <span className="text-zinc-400 group-hover:text-blue-500 transition-colors">↓</span>
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
