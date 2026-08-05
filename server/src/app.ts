@@ -31,6 +31,7 @@ import noteRoutes from './routes/noteRoutes';
 // 3. Error Handling Middleware Imports
 import { notFoundHandler } from './middleware/notFoundHandler'; // Agar user galat URL type kare, toh ye chalega.
 import { errorHandler } from './middleware/errorHandler';       // Agar server me kahin bhi crash ho, toh ye error handle karega taaki server band na ho.
+import { xssSanitizer } from './middleware/xssSanitizer';
 
 // 4. Environment Variables Initialize karna
 dotenv.config(); // Ye line `.env` file ko padhti hai aur process.env me variables dal deti hai.
@@ -54,6 +55,9 @@ app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000', creden
 // Body Parsers: Frontend se jo data JSON ya URL form me aata hai, usko samajhne (parse) ke liye.
 app.use(json({ limit: '50mb' })); // Agar req.body me JSON data hai, toh usko object banata hai. Limit badhayi taaki image upload crash na ho.
 app.use(urlencoded({ limit: '50mb', extended: true })); // Form submissions (URL encoded) ko padhne ke liye.
+
+// XSS Sanitizer: Incoming request body, query, aur params me se HTML aur script tags strip karne ke liye.
+app.use(xssSanitizer);
 
 // Cookie Parser: Jo naya security feature humne lagaya hai, jisse req.cookies me token milta hai.
 app.use(cookieParser());

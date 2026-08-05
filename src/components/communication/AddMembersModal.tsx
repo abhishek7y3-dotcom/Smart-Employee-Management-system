@@ -111,7 +111,7 @@ export const AddMembersModal: React.FC<AddMembersModalProps> = ({
                 >
                   <div className="flex items-center gap-3">
                     <img
-                      src={emp.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=random`}
+                      src={emp.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(emp.name)}&background=random`}
                       alt={emp.name}
                       className="h-8 w-8 rounded-full object-cover ring-2 ring-white dark:ring-zinc-900"
                     />

@@ -74,6 +74,17 @@ export default function RegisterPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Prefill email from query parameters if present
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const emailParam = params.get('email');
+      if (emailParam) {
+        setEmail(emailParam);
+      }
+    }
+  }, []);
+
   // Phone OTP States
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [showPhoneOtpInput, setShowPhoneOtpInput] = useState(false);

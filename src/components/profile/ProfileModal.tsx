@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { X, User, Mail, Camera, FileCheck, Phone, Briefcase, Loader2, Edit2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'sonner';
+import ImageCropperModal from './ImageCropperModal';
 
 interface ProfileModalProps {
   isOpen: boolean;
@@ -34,6 +35,18 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
 
   const [editingField, setEditingField] = useState<'phone' | 'type' | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Cropper State
+  const [cropperState, setCropperState] = useState<{
+    isOpen: boolean;
+    imageSrc: string | null;
+    type: 'profile' | 'cover';
+  }>({
+    isOpen: false,
+    imageSrc: null,
+    type: 'profile',
+  });
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [otp, setOtp] = useState('');
 
@@ -109,44 +122,33 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('File is too large. Max size is 2MB.');
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File is too large. Maximum size is 5MB.');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        setProfilePicture(base64);
-        try {
-          await updateUser({ profilePicture: base64 });
-          toast.success('Profile picture updated!');
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to update picture');
-        }
+      reader.onloadend = () => {
+        setCropperState({ isOpen: true, imageSrc: reader.result as string, type: 'profile' });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCoverPicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const handleCoverPicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       if (file.size > 5 * 1024 * 1024) {
-        toast.error('File is too large. Max size is 5MB.');
+        toast.error('File is too large. Maximum size is 5MB.');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        try {
-          await updateUser({ coverPicture: base64 });
-          toast.success('Cover picture updated!');
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to update cover picture');
-        }
+      reader.onloadend = () => {
+        setCropperState({ isOpen: true, imageSrc: reader.result as string, type: 'cover' });
       };
       reader.readAsDataURL(file);
     }
@@ -176,10 +178,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               <label htmlFor="modal-cover-upload" className="absolute top-4 right-14 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-10">
                 <Camera className="h-4 w-4" />
               </label>
+              {user?.coverPicture && (
+                <button
+                  type="button"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    try {
+                      await updateUser({ coverPicture: '' });
+                      toast.success('Cover picture removed');
+                    } catch (err) {
+                      toast.error('Failed to remove cover picture');
+                    }
+                  }}
+                  className="absolute top-4 right-24 bg-red-500 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm z-10 cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
               <input
                 id="modal-cover-upload"
                 type="file"
                 accept="image/*"
+                onClick={(e) => { (e.target as any).value = '' }}
                 onChange={handleCoverPicChange}
                 className="hidden"
               />
@@ -197,20 +218,40 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
               {/* Profile Avatar */}
               <div className="relative -mt-14 mb-3">
                 <div className="relative group cursor-pointer">
-                  <label htmlFor="quick-photo-upload" className="cursor-pointer">
+                  <label htmlFor="quick-photo-upload" className="cursor-pointer block relative">
                     <img
                       src={profilePicture || user.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
                       alt={user.name}
                       className="h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-zinc-950 shadow-md transition-transform group-hover:scale-105 bg-white dark:bg-zinc-950"
                     />
-                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
                       <Camera className="h-7 w-7 text-white" />
                     </div>
                   </label>
+                  {(profilePicture || user?.profilePicture) && (
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        try {
+                          await updateUser({ profilePicture: '' });
+                          if (setProfilePicture) setProfilePicture('');
+                          toast.success('Profile picture removed');
+                        } catch (err) {
+                          toast.error('Failed to remove profile picture');
+                        }
+                      }}
+                      className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <input
                     id="quick-photo-upload"
                     type="file"
                     accept="image/*"
+                    onClick={(e) => { (e.target as any).value = '' }}
                     onChange={handleFileChange}
                     className="hidden"
                   />
@@ -245,7 +286,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Email Address</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Email Address</p>
+                    {user.isVerified && (
+                      <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-600 dark:text-emerald-400 select-none mb-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Verified
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{user.email}</p>
                   <p className="text-[10px] text-zinc-400 mt-0.5">Email is tied to your account and cannot be edited.</p>
                 </div>
@@ -261,7 +310,15 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                 </div>
                 <div className="flex-1" onClick={(e) => { if (editingField === 'phone') e.stopPropagation(); }}>
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Phone Number</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-1">Phone Number</p>
+                      {user.isVerified && (
+                        <div className="flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-600 dark:text-emerald-400 select-none mb-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                          Verified
+                        </div>
+                      )}
+                    </div>
                     {editingField !== 'phone' && (
                       <button onClick={(e) => { e.stopPropagation(); setEditingField('phone'); }} className="text-blue-600 dark:text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md">
                         <Edit2 className="h-3.5 w-3.5" />
@@ -427,6 +484,23 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
           </div>
         </div>
       </div>
+      <ImageCropperModal
+        isOpen={cropperState.isOpen}
+        imageSrc={cropperState.imageSrc}
+        onClose={() => setCropperState(prev => ({ ...prev, isOpen: false }))}
+        cropShape={cropperState.type === 'profile' ? 'round' : 'rect'}
+        aspectRatio={cropperState.type === 'profile' ? 1 : 16 / 9}
+        onSave={async (croppedBase64) => {
+          if (cropperState.type === 'profile') {
+            await updateUser({ profilePicture: croppedBase64 });
+            setProfilePicture(croppedBase64);
+            toast.success('Profile picture updated!');
+          } else {
+            await updateUser({ coverPicture: croppedBase64 });
+            toast.success('Cover picture updated!');
+          }
+        }}
+      />
     </>
   );
 };

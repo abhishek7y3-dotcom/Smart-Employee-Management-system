@@ -424,7 +424,11 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               type="date"
               value={startDateFilter}
               onChange={(e) => setStartDateFilter(e.target.value)}
-              className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+              onClick={(e) => {
+                const target = e.target as HTMLInputElement;
+                if (target.showPicker) target.showPicker();
+              }}
+              className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer"
               title="Start Date"
             />
             <span className="text-zinc-500 text-sm">to</span>
@@ -432,7 +436,11 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
               type="date"
               value={endDateFilter}
               onChange={(e) => setEndDateFilter(e.target.value)}
-              className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300"
+              onClick={(e) => {
+                const target = e.target as HTMLInputElement;
+                if (target.showPicker) target.showPicker();
+              }}
+              className="rounded-xl border border-zinc-200 bg-white px-3.5 py-2.5 text-sm font-bold text-zinc-700 outline-none transition duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-300 cursor-pointer"
               title="End Date"
             />
             {(startDateFilter || endDateFilter) && (
@@ -454,6 +462,14 @@ export const TasksClient: React.FC<TasksClientProps> = ({ initialStatus }) => {
             <option value="medium">Medium</option>
             <option value="high">High</option>
           </select>
+          {(statusFilter !== 'all' || priorityFilter !== 'all') && (
+            <button
+              onClick={() => { setStatusFilter('all'); setPriorityFilter('all'); }}
+              className="text-sm font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 cursor-pointer"
+            >
+              Reset Filters
+            </button>
+          )}
         </div>
       </div>
 

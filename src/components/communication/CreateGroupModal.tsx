@@ -34,7 +34,7 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({ isOpen, onCl
     const task = tasks.find(t => t.id === selectedTaskId);
     if (task && task.assignedTo) {
       const newSet = new Set(selectedMembers);
-      const assignedId = typeof task.assignedTo === 'string' ? task.assignedTo : task.assignedTo.id;
+      const assignedId = task.assignedTo;
       if (assignedId && assignedId !== user?._id?.toString()) {
         newSet.add(assignedId);
       }

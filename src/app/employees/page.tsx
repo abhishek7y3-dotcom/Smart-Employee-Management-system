@@ -16,10 +16,10 @@ const getFloatingLabelClass = (value: string, hasError: boolean, leftInset: stri
   `absolute px-1 transition-all duration-200 pointer-events-none bg-white dark:bg-zinc-900 ` +
   `${!value ? `top-3 ${leftInset} text-sm text-zinc-600` : '-top-2.5 left-3 text-xs font-semibold text-zinc-700 dark:text-zinc-500'} ` +
   `peer-focus:-top-2.5 peer-focus:left-3 peer-focus:text-xs peer-focus:font-semibold ` +
-  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-teal-700 dark:peer-focus:text-teal-500'}`;
+  `${hasError ? 'text-red-500 peer-focus:text-red-500' : 'peer-focus:text-blue-600 dark:peer-focus:text-blue-500'}`;
 
 const inputNormal =
-  'border-zinc-500 dark:border-zinc-700 focus:border-teal-700 focus:ring-teal-700/20 hover:border-zinc-700 dark:hover:border-zinc-600';
+  'border-zinc-500 dark:border-zinc-700 focus:border-blue-600 focus:ring-blue-600/20 hover:border-zinc-700 dark:hover:border-zinc-600';
 const inputError =
   'border-red-400 focus:border-red-400 focus:ring-red-400/20';
 
@@ -205,21 +205,27 @@ export default function EmployeesPage() {
           </div>
         </div>
 
-        <div className="space-y-0 relative z-10">
-          {filteredEmployees.length > 0 && (
-            <div className="hidden sm:grid grid-cols-[2fr_1fr_1fr_auto] gap-4 px-4 py-3 text-[10px] font-extrabold uppercase tracking-widest text-zinc-600 dark:text-zinc-400 bg-zinc-100/80 dark:bg-zinc-800/50 border border-zinc-200/80 dark:border-zinc-700/80 rounded-xl mb-3 shadow-sm">
-              <div className="pl-14">Employee Profile</div>
-              <div>Designation</div>
-              <div>Role Type</div>
-              <div className="text-right pr-6">Actions</div>
-            </div>
-          )}
+        <div className="relative z-10 enterprise-card overflow-hidden rounded-2xl shadow-sm">
           {filteredEmployees.length > 0 ? (
-            filteredEmployees.map((employee) => (
-              <EmployeeCard key={employee.id} employee={employee} />
-            ))
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-base text-zinc-800 dark:text-zinc-200">
+                <thead className="bg-zinc-50/50 text-[13px] font-bold uppercase tracking-[0.1em] text-zinc-950 border-b border-zinc-200/60 dark:bg-zinc-900/20 dark:text-zinc-50 dark:border-zinc-800/60">
+                  <tr>
+                    <th className="pl-6 pr-2 py-4 text-blue-700 dark:text-blue-400">Employee Profile</th>
+                    <th className="px-6 py-4 text-purple-700 dark:text-purple-400">Designation</th>
+                    <th className="px-6 py-4 text-amber-700 dark:text-amber-400">Role Type</th>
+                    <th className="px-6 py-4 text-right text-slate-700 dark:text-slate-400">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
+                  {filteredEmployees.map((employee) => (
+                    <EmployeeCard key={employee.id} employee={employee} />
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-zinc-200 bg-white p-12 text-center transition-all duration-300 dark:border-dashed dark:border-zinc-800 dark:bg-zinc-950/40">
+            <div className="flex flex-col items-center justify-center border-dashed border-zinc-200 bg-white p-12 text-center transition-all duration-300 dark:border-dashed dark:border-zinc-800 dark:bg-zinc-950/40">
               <p className="text-sm font-semibold text-zinc-600 dark:text-zinc-400">No team members found</p>
             </div>
           )}

@@ -140,10 +140,12 @@ export async function register(req: Request, res: Response) {
       email: email.toLowerCase(),
       password,
       profilePicture: profilePicUrl,
-      coverPicture: user.coverPicture,
       isVerified: !isCreatedByAdmin, // Self-registered users are verified via OTP inline, Admin-created must verify on first login
       role,
       designation,
+      consentTimestamp: new Date(),
+      termsVersion: '1.0.0',
+      privacyPolicyVersion: '1.0.0',
     });
 
     if (isCreatedByAdmin) {
@@ -238,7 +240,7 @@ export async function login(req: Request, res: Response) {
     if (email) {
       user = await User.findOne({ email: email.toLowerCase() }).select('+password');
     } else if (mobileNumber) {
-      user = await User.findOne({ mobileNumber, countryCode }).select('+password');
+      user = (await User.findOne({ mobileNumber, countryCode }).select('+password')) || (await User.findOne({ mobileNumber }).select('+password'));
     }
 
     if (!user) {
@@ -349,6 +351,8 @@ export async function login(req: Request, res: Response) {
           district: user.district,
           documents: user.documents,
           termsAndConditions: user.termsAndConditions,
+          // Sending verification status so the frontend shows the Verified badge.
+          isVerified: user.isVerified,
         },
         token,
       },
@@ -443,7 +447,7 @@ export async function forgotPassword(req: Request, res: Response) {
     if (email) {
       user = await User.findOne({ email: email.toLowerCase() });
     } else if (mobileNumber) {
-      user = await User.findOne({ mobileNumber, countryCode });
+      user = (await User.findOne({ mobileNumber, countryCode })) || (await User.findOne({ mobileNumber }));
     }
 
     if (!user) {
@@ -522,10 +526,7 @@ export async function resetPassword(req: Request, res: Response) {
         email: email.toLowerCase(),
       }).select('+resetPasswordOtp +resetPasswordOtpExpires');
     } else if (mobileNumber) {
-      user = await User.findOne({
-        mobileNumber,
-        countryCode,
-      }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+      user = (await User.findOne({ mobileNumber, countryCode }).select('+resetPasswordOtp +resetPasswordOtpExpires')) || (await User.findOne({ mobileNumber }).select('+resetPasswordOtp +resetPasswordOtpExpires'));
     }
 
     if (!user) {
@@ -698,7 +699,7 @@ export async function resendResetOtp(req: Request, res: Response) {
     if (email) {
       user = await User.findOne({ email: email.toLowerCase() }).select('+resetPasswordOtp +resetPasswordOtpExpires');
     } else if (mobileNumber) {
-      user = await User.findOne({ mobileNumber, countryCode }).select('+resetPasswordOtp +resetPasswordOtpExpires');
+      user = (await User.findOne({ mobileNumber, countryCode }).select('+resetPasswordOtp +resetPasswordOtpExpires')) || (await User.findOne({ mobileNumber }).select('+resetPasswordOtp +resetPasswordOtpExpires'));
     }
 
     if (!user) {
@@ -765,7 +766,7 @@ export async function requestLoginOtp(req: Request, res: Response) {
     if (email) {
       user = await User.findOne({ email: email.toLowerCase() });
     } else if (mobileNumber) {
-      user = await User.findOne({ mobileNumber, countryCode });
+      user = (await User.findOne({ mobileNumber, countryCode })) || (await User.findOne({ mobileNumber }));
     }
 
     if (!user) {
@@ -821,7 +822,7 @@ export async function loginWithOtp(req: Request, res: Response) {
     if (email) {
       user = await User.findOne({ email: email.toLowerCase() }).select('+loginOtp +loginOtpExpires');
     } else if (mobileNumber) {
-      user = await User.findOne({ mobileNumber, countryCode }).select('+loginOtp +loginOtpExpires');
+      user = (await User.findOne({ mobileNumber, countryCode }).select('+loginOtp +loginOtpExpires')) || (await User.findOne({ mobileNumber }).select('+loginOtp +loginOtpExpires'));
     }
 
     if (!user) {
@@ -902,6 +903,8 @@ export async function loginWithOtp(req: Request, res: Response) {
           district: user.district,
           documents: user.documents,
           termsAndConditions: user.termsAndConditions,
+          // Sending verification status so the frontend shows the Verified badge.
+          isVerified: user.isVerified,
         },
         token,
       },
@@ -948,6 +951,8 @@ export async function profile(req: Request, res: Response) {
         district: user.district,
         documents: user.documents,
         termsAndConditions: user.termsAndConditions,
+        // Sending verification status so the frontend shows the Verified badge.
+        isVerified: user.isVerified,
       },
     },
   });
@@ -1005,7 +1010,7 @@ export async function logout(req: Request, res: Response) {
 
 export async function updateUser(req: Request, res: Response) {
   const authReq = req as AuthRequest;
-  const { role, designation, name, profilePicture, coverPicture, firstName, lastName, gender, mobileNumber, countryCode, qualification, country, permanentAddress, currentAddress, alternateNumber, state, district, documents, termsAndConditions } = req.body as {
+  const { role, designation, name, profilePicture, coverPicture, firstName, lastName, gender, mobileNumber, countryCode, qualification, country, permanentAddress, currentAddress, alternateNumber, state, district, documents, termsAndConditions, biography } = req.body as {
     role?: string;
     designation?: string;
     name?: string;
@@ -1025,6 +1030,7 @@ export async function updateUser(req: Request, res: Response) {
     district?: string;
     documents?: string[];
     termsAndConditions?: boolean;
+    biography?: string;
   };
   const { id } = req.params;
 
@@ -1077,6 +1083,10 @@ export async function updateUser(req: Request, res: Response) {
 
     if (firstName !== undefined) {
       user.firstName = firstName;
+    }
+
+    if (biography !== undefined) {
+      user.biography = biography;
     }
 
     if (lastName !== undefined) {
@@ -1223,6 +1233,9 @@ export async function updateUser(req: Request, res: Response) {
           district: user.district,
           documents: user.documents,
           termsAndConditions: user.termsAndConditions,
+          biography: user.biography,
+          // Sending verification status so the frontend shows the Verified badge.
+          isVerified: user.isVerified,
         }
       },
     });
@@ -1641,7 +1654,7 @@ export async function requestPhoneChangeOtp(req: Request, res: Response) {
 
     console.log(`\n🔑 [PHONE CHANGE OTP] OTP for ${user.email}: ${otpPlain} (expires in 2 min)\n`);
 
-    // Send OTP to email
+    // Send OTP to email because SMS might fail without credits in local testing
     sendPhoneChangeOtp(user.email, user.name, otpPlain).catch((err) => {
       console.error('authController.ts: Failed to send email for phone change:', err);
     });
@@ -1938,9 +1951,9 @@ export async function requestEmailChangeOtp(req: Request, res: Response) {
 
     console.log(`\n🔑 [EMAIL CHANGE OTP] OTP for ${user.mobileNumber}: ${otpPlain} (expires in 2 min)\n`);
 
-    // Send OTP to user's existing mobile number
-    const targetCountryCode = user.country === 'India' ? '+91' : '+1'; // Adjust as needed based on logic
-    sendSmsOtp(targetCountryCode, user.mobileNumber || '', otpPlain, 'Email Change Verification').catch((smsErr) => {
+    // Send OTP to user's existing mobile number via SMS
+    // Note: user.mobileNumber already contains the country code in the database (e.g. +917309715478)
+    sendSmsOtp('', user.mobileNumber || '', otpPlain, 'Email Change Verification').catch((smsErr) => {
       console.error('authController.ts: Failed to send SMS for email change:', smsErr);
     });
 
@@ -1996,5 +2009,59 @@ export async function verifyEmailChangeOtp(req: Request, res: Response) {
   } catch (error) {
     console.error('authController.ts: verifyEmailChangeOtp error:', error);
     return res.status(500).json({ success: false, message: 'An error occurred during verification.' });
+  }
+}
+
+export async function getCsrfToken(req: Request, res: Response) {
+  const { setCsrfCookie } = require('../middleware/csrfMiddleware');
+  const token = setCsrfCookie(res);
+  return res.status(200).json({ success: true, csrfToken: token });
+}
+
+/**
+ * @description DPDP Act 2023 Compliance: Permanent PII Purge (Right to Erasure).
+ */
+export async function purgeAccountData(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?._id;
+    const { password } = req.body;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized.' });
+    }
+
+    const user = await User.findById(userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    if (password) {
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        return res.status(400).json({ success: false, message: 'Incorrect password provided for erasure confirmation.' });
+      }
+    }
+
+    // Perform hard deletion of User PII
+    await User.findByIdAndDelete(userId);
+
+    // Delete associated non-essential historical records
+    await Promise.all([
+      Attendance.deleteMany({ employeeId: userId }),
+      Leave.deleteMany({ employeeId: userId }),
+      Notification.deleteMany({ recipientId: userId }),
+    ]);
+
+    // Clear session cookies
+    res.clearCookie('token');
+    res.clearCookie('_csrf_token');
+
+    return res.status(200).json({
+      success: true,
+      message: 'Account and personal data permanently purged in compliance with DPDP Act 2023.',
+    });
+  } catch (error) {
+    console.error('authController.ts: purgeAccountData error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to purge account data.' });
   }
 }

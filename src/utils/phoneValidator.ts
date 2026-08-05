@@ -1,5 +1,4 @@
-import { isValidPhoneNumber } from 'libphonenumber-js/max';
-import { CountryCode } from 'libphonenumber-js/types';
+import { isValidPhoneNumber, CountryCode } from 'libphonenumber-js/max';
 
 /**
  * Validates a mobile number dynamically against a specific country's rules.

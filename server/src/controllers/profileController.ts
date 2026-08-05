@@ -102,3 +102,44 @@ export async function getAdminTeam(req: AuthRequest, res: Response) {
     return res.status(500).json({ success: false, message: 'Server error' });
   }
 }
+
+/**
+ * @description DPDP Act 2023 Compliance: Exports all personal data, tasks, leaves, and attendance associated with the user.
+ */
+export async function exportUserData(req: AuthRequest, res: Response) {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' });
+    }
+
+    const user = await User.findById(userId).select('-password -verificationOtp -resetPasswordOtp -loginOtp -phoneChangeOtp -emailChangeOtp');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const [tasks, leaves, attendance] = await Promise.all([
+      Task.find({ $or: [{ assignedTo: userId }, { assignedBy: userId }] }),
+      Leave.find({ employeeId: userId }),
+      Attendance.find({ employeeId: userId }),
+    ]);
+
+    const exportPayload = {
+      exportTimestamp: new Date().toISOString(),
+      complianceStandard: 'DPDP Act 2023 (India)',
+      profile: user,
+      activity: {
+        tasks,
+        leaves,
+        attendance,
+      },
+    };
+
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename=my-personal-data-${userId}.json`);
+    return res.status(200).json({ success: true, data: exportPayload });
+  } catch (error) {
+    console.error('profileController.ts: exportUserData error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to export user data' });
+  }
+}

@@ -60,6 +60,8 @@ export default function LoginPage() {
   const [otpCodeError, setOtpCodeError] = useState<string | null>(null);
   const [otpSuccessMsg, setOtpSuccessMsg] = useState<string | null>(null);
   const [otpTimer, setOtpTimer] = useState(0); // 120s countdown
+  const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
 
   const emailRegex = /^(?!\.)(?!.*\.\.)[a-zA-Z0-9._%+-]+(?<!\.)@[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)*\.[a-zA-Z]{2,4}$/;
 
@@ -140,7 +142,8 @@ export default function LoginPage() {
       const returnedEmail = err.response?.data?.email || email;
 
       if (requiresVerification) {
-        router.push(`/register`);
+        setUnverifiedEmail(returnedEmail);
+        setShowRegisterPrompt(true);
         return;
       }
 
@@ -795,6 +798,51 @@ export default function LoginPage() {
         </div>
       </div>
 
+      {/* Account Created by Admin / Verification Prompt Modal */}
+      {showRegisterPrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-zinc-950/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-6 shadow-2xl dark:border-zinc-800 dark:bg-zinc-950 font-sans animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3 border-b border-zinc-100 dark:border-zinc-800/60 pb-3.5 mb-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-50 dark:bg-teal-950/30 text-teal-600 dark:text-teal-400">
+                <ClipboardCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white font-outfit">Account Verification Required</h3>
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Action needed to active your account</p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+                Your account was created by the administrator, but it requires you to complete registration and verify your details before logging in.
+              </p>
+              <div className="rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-150 dark:border-zinc-800/40 p-3.5 text-xs text-zinc-650 dark:text-zinc-400 font-medium">
+                Registered email: <span className="font-bold text-zinc-900 dark:text-zinc-100">{unverifiedEmail}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 mt-6 border-t border-zinc-100 dark:border-zinc-800/60 pt-4">
+              <button
+                type="button"
+                onClick={() => setShowRegisterPrompt(false)}
+                className="rounded-xl border border-zinc-200 dark:border-zinc-800 px-4 py-2.5 text-xs font-bold text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRegisterPrompt(false);
+                  router.push(`/register?email=${encodeURIComponent(unverifiedEmail)}`);
+                }}
+                className="rounded-xl bg-[#0f3f33] hover:bg-[#0c3128] px-4 py-2.5 text-xs font-bold text-white transition-all shadow-md shadow-teal-950/10 cursor-pointer"
+              >
+                Complete Registration
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

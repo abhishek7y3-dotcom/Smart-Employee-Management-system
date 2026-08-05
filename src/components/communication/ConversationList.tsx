@@ -65,7 +65,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
     type: 'direct',
     subject: `Chat with ${emp.name}`,
     priority: 'medium',
-    status: 'in_progress',
+    status: 'sent',
     participants: [currentUserId, emp.id],
     participantNames: [user?.name || 'You', emp.name],
     participantAvatars: [user?.profilePicture || '', emp.profilePicture],

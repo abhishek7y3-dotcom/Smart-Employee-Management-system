@@ -6,10 +6,11 @@ export interface Employee {
   avatarUrl?: string;
   designation?: string;
   isBlocked?: boolean;
+  mobileNumber?: string;
 }
 
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'overdue';
-export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskPriority = 'low' | 'medium' | 'high' | 'critical';
 export type ActivityAction = 'created' | 'updated' | 'status_changed' | 'deleted';
 
 export interface TaskInput {

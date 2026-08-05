@@ -50,6 +50,7 @@ export interface Conversation {
   status: MessageStatus;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
 }
 
 export interface Announcement {

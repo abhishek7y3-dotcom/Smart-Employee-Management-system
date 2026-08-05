@@ -15,7 +15,8 @@ import {
   blockUser, unblockUser, requestPhoneChangeOtp, verifyPhoneChangeOtp,
   requestRegistrationOtp, verifyRegistrationOtp,
   requestRegistrationEmailOtp, verifyRegistrationEmailOtp,
-  requestEmailChangeOtp, verifyEmailChangeOtp
+  requestEmailChangeOtp, verifyEmailChangeOtp, getCsrfToken,
+  purgeAccountData
 } from '../controllers/authController';
 
 // Ye Middlewares hain (Checkers). Controller me jaane se pehle data check hoga.
@@ -41,6 +42,9 @@ router.post('/register', registerValidation, validateRequest, register);
 router.post('/login', loginValidation, validateRequest, login);
 // User ko logout karne ke liye
 router.post('/logout', logout);
+// CSRF Token issuance
+router.get('/csrf-token', getCsrfToken);
+
 // Refresh token endpoint to get new access token
 router.post('/refresh', refreshToken);
 // Account verify karne ke liye OTP submit karna
@@ -82,6 +86,7 @@ router.delete('/users/:id', authenticate, deleteUser);
 router.put('/users/:id/restore', authenticate, restoreUser);
 router.delete('/users/:id/permanent', authenticate, permanentDeleteUser);
 router.post('/users/:id/block', authenticate, blockUser);
-router.post('/users/:id/unblock', authenticate, unblockUser);
+// DPDP Act 2023 Right to Erasure account purge
+router.delete('/me/purge', authenticate, purgeAccountData);
 
 export default router;

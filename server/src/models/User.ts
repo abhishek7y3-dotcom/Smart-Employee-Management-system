@@ -39,6 +39,9 @@ export interface IUser extends Document {
   emailChangeOtp?: string;
   emailChangeOtpExpires?: Date;
   pendingEmail?: string;
+  consentTimestamp?: Date;
+  termsVersion?: string;
+  privacyPolicyVersion?: string;
   designation?: string;
   department?: string;
   permanentAddress?: string;
@@ -47,6 +50,7 @@ export interface IUser extends Document {
   alternateNumber?: string;
   state?: string;
   district?: string;
+  biography?: string;
   documents?: string[];
   termsAndConditions?: boolean;
   lastLogin?: Date;
@@ -95,6 +99,11 @@ const userSchema = new Schema<IUser>(
       default: '',
     },
     qualification: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    biography: {
       type: String,
       trim: true,
       default: '',
@@ -191,6 +200,18 @@ const userSchema = new Schema<IUser>(
     isVerified: {
       type: Boolean,
       default: false,
+    },
+    consentTimestamp: {
+      type: Date,
+      default: Date.now,
+    },
+    termsVersion: {
+      type: String,
+      default: '1.0.0',
+    },
+    privacyPolicyVersion: {
+      type: String,
+      default: '1.0.0',
     },
     verificationOtp: {
       type: String,

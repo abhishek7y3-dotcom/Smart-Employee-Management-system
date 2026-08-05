@@ -95,6 +95,9 @@ export const CommunicationHub: React.FC = () => {
           subject: 'Direct Message', // Backend still requires a subject
           priority: 'medium',
           content: replyText,
+          project: '',
+          relatedTaskId: '',
+          attachments: [],
         });
         if (newConv) {
           selectConversation(newConv);

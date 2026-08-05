@@ -20,6 +20,8 @@ import {
   verifyResetOtp as verifyResetOtpApi,
   requestPhoneChangeOtpApi,
   verifyPhoneChangeOtpApi,
+  requestEmailChangeOtpApi,
+  verifyEmailChangeOtpApi,
 } from '../api/auth';
 import {
   AuthUser,
@@ -43,7 +45,7 @@ interface AuthState {
 interface AuthContextType extends AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
   logout: () => void;
-  register: (data: RegisterRequest) => Promise<string>;
+  register: (data: RegisterRequest) => Promise<RegisterResponse>;
   forgotPassword: (payload: ForgotPasswordRequest) => Promise<string>;
   resetPassword: (payload: ResetPasswordRequest) => Promise<string>;
   persistAuth: (authUser: AuthUser, authToken: string) => void;
@@ -52,6 +54,8 @@ interface AuthContextType extends AuthState {
   verifyResetOtp: (otp: string) => Promise<void>;
   requestPhoneChangeOtp: (mobileNumber: string, countryCode: string) => Promise<string>;
   verifyPhoneChangeOtp: (otp: string) => Promise<void>;
+  requestEmailChangeOtp: (email: string) => Promise<string>;
+  verifyEmailChangeOtp: (otp: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -271,7 +275,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const response = await requestEmailChangeOtpApi(email);
       return response.message;
     } catch (apiError) {
-      setError(apiError?.message || 'Failed to request email change OTP');
+      setError((apiError as any)?.message || 'Failed to request email change OTP');
       throw apiError;
     } finally {
       setLoading(false);
@@ -286,7 +290,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       await verifyEmailChangeOtpApi(otp);
       // We can also trigger a profile fetch here if we had one, but typically updateUser handles state sync if we manually update it
     } catch (apiError) {
-      setError(apiError?.message || 'Failed to verify email change OTP');
+      setError((apiError as any)?.message || 'Failed to verify email change OTP');
       throw apiError;
     } finally {
       setLoading(false);

@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../../context/AuthContext';
+import axiosInstance from '../../services/axios';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock, User as UserIcon, Edit2, Camera } from 'lucide-react';
+import { Key, Eye, EyeOff, Loader2, Trash2, ShieldAlert, AlertTriangle, Send, CheckCircle2, Clock, User as UserIcon, Edit2, Camera, X, Download, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
@@ -12,6 +13,8 @@ import { Country, State, City } from 'country-state-city';
 import { countries } from '@/constants/countries';
 import Select from 'react-select';
 import { sanitizePhoneNumber, validatePhoneNumber } from '../../utils/phoneValidation';
+import ProfileCompletionCard from '../../components/profile/ProfileCompletionCard';
+import ImageCropperModal from '../../components/profile/ImageCropperModal';
 
 const reactSelectClassNames = {
   control: () => '!bg-transparent !border-2 !border-zinc-600 dark:!border-zinc-600 !rounded-xl !shadow-none !py-0.5',
@@ -61,6 +64,17 @@ export default function SettingsPage() {
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState('');
 
+  // Cropper State
+  const [cropperState, setCropperState] = useState<{
+    isOpen: boolean;
+    imageSrc: string | null;
+    type: 'profile' | 'cover';
+  }>({
+    isOpen: false,
+    imageSrc: null,
+    type: 'profile',
+  });
+
   // Delete account states
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleteOtpSent, setIsDeleteOtpSent] = useState(false);
@@ -70,6 +84,20 @@ export default function SettingsPage() {
   const [isVerifyingDeleteOtp, setIsVerifyingDeleteOtp] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteTimer, setDeleteTimer] = useState(0); // 120s countdown
+
+  // Phone Change OTP states
+  const [isPhoneOtpModalOpen, setIsPhoneOtpModalOpen] = useState(false);
+  const [phoneOtpDigits, setPhoneOtpDigits] = useState(['', '', '', '', '', '']);
+  const [isRequestingPhoneOtp, setIsRequestingPhoneOtp] = useState(false);
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+  const [phoneTimer, setPhoneTimer] = useState(0);
+
+  // Email Change OTP states
+  const [isEmailOtpModalOpen, setIsEmailOtpModalOpen] = useState(false);
+  const [emailOtpDigits, setEmailOtpDigits] = useState(['', '', '', '', '', '']);
+  const [isRequestingEmailOtp, setIsRequestingEmailOtp] = useState(false);
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
+  const [emailTimer, setEmailTimer] = useState(0);
 
   // Country, State & District handling
   const [selectedCountryCode, setSelectedCountryCode] = useState('');
@@ -142,13 +170,14 @@ export default function SettingsPage() {
       setSelectedDistrictName(user.district);
     }
 
-    if (user?.mobileNumber) {
-      const match = countries.find(c => user.mobileNumber.startsWith(c.code));
+    const mobile = user?.mobileNumber;
+    if (mobile) {
+      const match = countries.find(c => mobile.startsWith(c.code));
       if (match) {
         setCountryCode(match.code);
-        setMobilePhoneValue(user.mobileNumber.slice(match.code.length));
+        setMobilePhoneValue(mobile.slice(match.code.length));
       } else {
-        setMobilePhoneValue(user.mobileNumber);
+        setMobilePhoneValue(mobile);
       }
     }
     if (user?.alternateNumber) setAlternatePhoneValue(user.alternateNumber);
@@ -171,6 +200,36 @@ export default function SettingsPage() {
     }, 1000);
     return () => clearInterval(interval);
   }, [deleteTimer]);
+
+  useEffect(() => {
+    if (phoneTimer <= 0) return;
+    const interval = setInterval(() => {
+      setPhoneTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [phoneTimer]);
+
+  useEffect(() => {
+    if (emailTimer <= 0) return;
+    const interval = setInterval(() => {
+      setEmailTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [emailTimer]);
+
+  // ─── Unsaved Changes Warning ─────────────────────────────────────────────
+
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isEditingProfile) {
+        e.preventDefault();
+        e.returnValue = ''; // Standard way to trigger the browser warning dialog
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isEditingProfile]);
 
   const formatTimer = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -220,43 +279,35 @@ export default function SettingsPage() {
     }
   };
 
-  const handleProfilePicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 2 * 1024 * 1024) {
-        toast.error('File is too large. Max size is 2MB.');
+  // ─── Picture Upload Handlers ───────────────────────────────────────────────
+
+  const handleProfilePicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error('File is too large. Maximum size is 20MB.');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        try {
-          await updateUser({ profilePicture: base64 });
-          toast.success('Profile picture updated!');
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to update picture');
-        }
+      reader.onloadend = () => {
+        setCropperState({ isOpen: true, imageSrc: reader.result as string, type: 'profile' });
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCoverPicChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File is too large. Max size is 5MB.');
+  const handleCoverPicChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error('File is too large. Maximum size is 20MB.');
         return;
       }
+      
       const reader = new FileReader();
-      reader.onloadend = async () => {
-        const base64 = reader.result as string;
-        try {
-          await updateUser({ coverPicture: base64 });
-          toast.success('Cover picture updated!');
-        } catch (error: any) {
-          toast.error(error.message || 'Failed to update cover picture');
-        }
+      reader.onloadend = () => {
+        setCropperState({ isOpen: true, imageSrc: reader.result as string, type: 'cover' });
       };
       reader.readAsDataURL(file);
     }
@@ -411,10 +462,50 @@ export default function SettingsPage() {
     setDeleteTimer(0);
   };
 
+  const handleVerifyPhoneChange = async () => {
+    const fullOtp = phoneOtpDigits.join('');
+    if (fullOtp.length < 6) return;
+    if (phoneTimer <= 0) return;
+
+    setIsVerifyingPhoneOtp(true);
+    try {
+      await verifyPhoneChangeOtp(fullOtp);
+      toast.success('Mobile number updated successfully!');
+      setIsPhoneOtpModalOpen(false);
+      setIsEditingProfile(false);
+      setPhoneOtpDigits(['', '', '', '', '', '']);
+      delete (window as any)._tempEditMobile;
+    } catch (err: any) {
+      toast.error(err?.message || 'Verification failed. Incorrect OTP.');
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+    }
+  };
+
+  const handleVerifyEmailChange = async () => {
+    const fullOtp = emailOtpDigits.join('');
+    if (fullOtp.length < 6) return;
+    if (emailTimer <= 0) return;
+
+    setIsVerifyingEmailOtp(true);
+    try {
+      await verifyEmailChangeOtp(fullOtp);
+      toast.success('Email updated successfully!');
+      setIsEmailOtpModalOpen(false);
+      setIsEditingProfile(false);
+      setEmailOtpDigits(['', '', '', '', '', '']);
+      delete (window as any)._tempEditEmail;
+    } catch (err: any) {
+      toast.error(err?.message || 'Verification failed. Incorrect OTP.');
+    } finally {
+      setIsVerifyingEmailOtp(false);
+    }
+  };
+
   return (
     <ProtectedRoute>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-6xl mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 w-full max-w-[1600px] mx-auto">
         <div className="space-y-1 mb-6">
           <h1 className="text-xl font-bold text-zinc-950 dark:text-white md:text-2xl font-outfit">Account Settings</h1>
           <p className="text-xs text-zinc-500 dark:text-zinc-500 mt-1">Manage your system credentials and security options.</p>
@@ -439,7 +530,7 @@ export default function SettingsPage() {
             {user?.role !== 'admin' && user?.role !== 'superadmin' && (
               <button
                 onClick={() => setActiveTab('danger')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'danger' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400' : 'text-zinc-600 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-900/10 dark:hover:text-red-400'}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-colors ${activeTab === 'danger' ? 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:red-400' : 'text-zinc-600 hover:bg-red-50 hover:text-red-600 dark:text-zinc-400 dark:hover:bg-red-900/10 dark:hover:text-red-400'}`}
               >
                 <Trash2 className="h-4.5 w-4.5" />
                 Delete Account
@@ -450,11 +541,11 @@ export default function SettingsPage() {
           {/* Right Content Area */}
           <div className="flex-1 min-w-0">
             {activeTab === 'profile' && (
-              <>
+              <div className="flex flex-col xl:flex-row gap-6 items-start">
 
 
                 {/* Profile Edit Tab */}
-                <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
+                <div className="flex-1 w-full rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
                   <div className="flex items-center justify-between border-b border-zinc-100 dark:border-zinc-900 pb-3">
                     <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2">
                       <UserIcon className="h-4.5 w-4.5 text-blue-500" />
@@ -472,18 +563,39 @@ export default function SettingsPage() {
                   <div className={`relative w-full mb-16 md:mb-6 ${!isEditingProfile ? 'pointer-events-none' : ''}`}>
                     {/* Cover Picture */}
                     <div className="h-32 sm:h-48 w-full bg-zinc-200 dark:bg-zinc-800 rounded-t-xl overflow-hidden relative group">
-                      <img
-                        src={user?.coverPicture || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200'}
-                        alt="Cover"
-                        className="w-full h-full object-cover"
-                      />
-                      <label htmlFor="settings-cover-upload" className="absolute top-4 right-4 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
-                        <Camera className="h-5 w-5" />
+                      <label htmlFor="settings-cover-upload" className="block w-full h-full cursor-pointer">
+                        <img
+                          src={user?.coverPicture || 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1200'}
+                          alt="Cover"
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
+                          <Camera className="h-8 w-8 text-white" />
+                        </div>
                       </label>
+                      {isEditingProfile && user?.coverPicture && (
+                        <button
+                          type="button"
+                          onClick={async (e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            try {
+                              await updateUser({ coverPicture: '' });
+                              toast.success('Cover picture removed');
+                            } catch (err) {
+                              toast.error('Failed to remove cover picture');
+                            }
+                          }}
+                          className="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm cursor-pointer"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                       <input
                         id="settings-cover-upload"
                         type="file"
                         accept="image/*"
+                        onClick={(e) => { (e.target as any).value = '' }}
                         onChange={handleCoverPicChange}
                         className="hidden"
                       />
@@ -491,21 +603,40 @@ export default function SettingsPage() {
 
                     {/* Profile Avatar */}
                     <div className="absolute -bottom-14 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0">
-                      <div className="relative group cursor-pointer">
-                        <label htmlFor="settings-photo-upload" className="cursor-pointer">
+                      <div className="relative group">
+                        <label htmlFor="settings-photo-upload" className="cursor-pointer block relative">
                           <img
                             src={user?.profilePicture || 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150'}
                             alt={user?.name || 'Profile'}
                             className="h-28 w-28 rounded-full object-cover ring-4 ring-white dark:ring-zinc-950 shadow-md transition-transform group-hover:scale-105 bg-white dark:bg-zinc-950"
                           />
-                          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-[1px]">
                             <Camera className="h-7 w-7 text-white" />
                           </div>
                         </label>
+                        {isEditingProfile && user?.profilePicture && (
+                          <button
+                            type="button"
+                            onClick={async (e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              try {
+                                await updateUser({ profilePicture: '' });
+                                toast.success('Profile picture removed');
+                              } catch (err) {
+                                toast.error('Failed to remove profile picture');
+                              }
+                            }}
+                            className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10 shadow-sm cursor-pointer"
+                          >
+                            <X className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <input
                           id="settings-photo-upload"
                           type="file"
                           accept="image/*"
+                          onClick={(e) => { (e.target as any).value = '' }}
                           onChange={handleProfilePicChange}
                           className="hidden"
                         />
@@ -633,10 +764,20 @@ export default function SettingsPage() {
                           type="email"
                           placeholder=" "
                           defaultValue={user?.email}
-                          readOnly
-                          className={`${inputBase} ${inputDisabled} px-3.5 py-3`}
+                          onChange={(e) => {
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditEmail = e.target.value;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} pl-3.5 pr-24 py-3`}
                         />
-                        <label htmlFor="settings-email" className={floatingLabelDisabled}>Email Address (Read-only) <span className="text-red-500">*</span></label>
+                        <label htmlFor="settings-email" className={floatingLabelNormal}>Email Address <span className="text-red-500">*</span></label>
+                        {user?.isVerified && (
+                          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-600 dark:text-emerald-400 select-none">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Verified
+                          </div>
+                        )}
                       </div>
                       <div className="flex gap-2 mt-2">
                         <div
@@ -723,11 +864,17 @@ export default function SettingsPage() {
                             value={mobilePhoneValue}
                             onChange={(e) => handleMobileChange(e.target.value, countryCode)}
                             placeholder=" "
-                            className={`${inputBase} ${inputNormal} px-3.5 py-3`}
+                            className={`${inputBase} ${inputNormal} pl-3.5 pr-24 py-3`}
                           />
                           <label htmlFor="settings-mobile" className={floatingLabelNormal}>
                             Mobile Number <span className="text-red-500">*</span>
                           </label>
+                          {user?.isVerified && (
+                            <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full text-[10px] font-bold text-emerald-600 dark:text-emerald-400 select-none">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                              Verified
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="relative mt-2">
@@ -772,7 +919,7 @@ export default function SettingsPage() {
                           readOnly
                           className={`${inputBase} ${inputDisabled} px-3.5 py-3 capitalize`}
                         />
-                        <label htmlFor="settings-role" className={floatingLabelDisabled}>Role (Read-only) <span className="text-red-500">*</span></label>
+                        <label htmlFor="settings-role" className={floatingLabelDisabled}>Role <span className="text-red-500">*</span></label>
                       </div>
                       <div className="relative mt-2 sm:col-span-2">
                         <input
@@ -791,34 +938,20 @@ export default function SettingsPage() {
                       </div>
 
 
-                      <div className="sm:col-span-2 mt-4">
-                        <label htmlFor="settings-terms" className="flex items-start gap-3 p-4 rounded-xl border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 transition-colors hover:border-zinc-300 dark:hover:border-zinc-700 cursor-pointer">
-                          <div className="flex items-center h-5 mt-0.5">
-                            <input
-                              id="settings-terms"
-                              type="checkbox"
-                              defaultChecked={user?.termsAndConditions}
-                              onChange={(e) => {
-                                if (typeof window !== 'undefined') {
-                                  (window as any)._tempEditTerms = e.target.checked;
-                                }
-                              }}
-                              className="w-5 h-5 rounded border-zinc-300 dark:border-zinc-600 text-blue-600 focus:ring-blue-500 dark:bg-zinc-800 focus:ring-offset-zinc-50 dark:focus:ring-offset-zinc-900 transition-colors cursor-pointer"
-                            />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-                              Terms of Service & Privacy Policy <span className="text-red-500">*</span>
-                            </span>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1 leading-relaxed">
-                              By checking this box, you acknowledge that you have read, understood, and agree to our{' '}
-                              <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsTermsModalOpen(true); }} className="text-blue-600 hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 hover:underline font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-sm">
-                                Terms and Conditions
-                              </button>
-                              {' '}and consent to our data processing practices. This action is required to maintain your workspace access.
-                            </p>
-                          </div>
-                        </label>
+                      <div className="relative mt-4 sm:col-span-2">
+                        <textarea
+                          id="settings-biography"
+                          placeholder=" "
+                          defaultValue={user?.biography || ''}
+                          rows={4}
+                          onChange={(e) => {
+                            if (typeof window !== 'undefined') {
+                              (window as any)._tempEditBiography = e.target.value;
+                            }
+                          }}
+                          className={`${inputBase} ${inputNormal} px-3.5 py-3 resize-none`}
+                        />
+                        <label htmlFor="settings-biography" className={floatingLabelNormal}>Biography</label>
                       </div>
                     </div>
                     {isEditingProfile && (
@@ -842,7 +975,17 @@ export default function SettingsPage() {
                             }
 
                             if ((window as any)._tempEditCountry !== undefined) updates.country = (window as any)._tempEditCountry;
-                            if ((window as any)._tempEditMobile !== undefined) {
+                            let requiresPhoneVerification = false;
+                            let pendingPhone = '';
+                            let requiresEmailVerification = false;
+                            let pendingEmail = '';
+
+                            if ((window as any)._tempEditEmail !== undefined && (window as any)._tempEditEmail !== user?.email) {
+                               requiresEmailVerification = true;
+                               pendingEmail = (window as any)._tempEditEmail;
+                            }
+
+                            if ((window as any)._tempEditMobile !== undefined && (window as any)._tempEditMobile !== user?.mobileNumber) {
                               const sanitized = sanitizePhoneNumber((window as any)._tempEditMobile);
                               if (sanitized) {
                                 const validation = validatePhoneNumber(sanitized);
@@ -852,8 +995,9 @@ export default function SettingsPage() {
                                   btn.disabled = false;
                                   return;
                                 }
+                                requiresPhoneVerification = true;
+                                pendingPhone = sanitized;
                               }
-                              updates.mobileNumber = sanitized;
                             }
                             if ((window as any)._tempEditGender) updates.gender = (window as any)._tempEditGender;
                             if ((window as any)._tempEditQualification) updates.qualification = (window as any)._tempEditQualification;
@@ -876,15 +1020,41 @@ export default function SettingsPage() {
 
                             if ((window as any)._tempEditState !== undefined) updates.state = (window as any)._tempEditState;
                             if ((window as any)._tempEditDistrict !== undefined) updates.district = (window as any)._tempEditDistrict;
-
-
-
-                            if ((window as any)._tempEditTerms !== undefined) updates.termsAndConditions = (window as any)._tempEditTerms;
+                            if ((window as any)._tempEditBiography !== undefined) updates.biography = (window as any)._tempEditBiography;
 
                             if (Object.keys(updates).length > 0) {
                               await updateUser(updates);
                               toast.success('Profile updated successfully!');
-                              setIsEditingProfile(false);
+                            }
+                            
+                            if (requiresPhoneVerification) {
+                               setIsRequestingPhoneOtp(true);
+                               try {
+                                 await requestPhoneChangeOtp(pendingPhone, countryCode);
+                                 setIsPhoneOtpModalOpen(true);
+                                 setPhoneOtpDigits(['', '', '', '', '', '']);
+                                 setPhoneTimer(120);
+                                 toast.success('Verification code sent to your email.');
+                               } catch (err: any) {
+                                 toast.error(err?.message || 'Failed to send OTP for mobile number.');
+                               } finally {
+                                 setIsRequestingPhoneOtp(false);
+                               }
+                            } else if (requiresEmailVerification) {
+                               setIsRequestingEmailOtp(true);
+                               try {
+                                 await requestEmailChangeOtp(pendingEmail);
+                                 setIsEmailOtpModalOpen(true);
+                                 setEmailOtpDigits(['', '', '', '', '', '']);
+                                 setEmailTimer(120);
+                                 toast.success('Verification code sent to your new email address.');
+                               } catch (err: any) {
+                                 toast.error(err?.message || 'Failed to send OTP for email change.');
+                               } finally {
+                                 setIsRequestingEmailOtp(false);
+                               }
+                            } else {
+                               setIsEditingProfile(false);
                             }
                           } catch (err: any) {
                             toast.error(err?.message || 'Failed to update profile');
@@ -901,11 +1071,77 @@ export default function SettingsPage() {
                   </div>
                 </div>
 
-              </>
+                {/* Right side profile completion card */}
+                <div className="w-full xl:w-[280px] shrink-0">
+                  <ProfileCompletionCard user={user} />
+                </div>
+              </div>
             )}
 
             {activeTab === 'security' && (
               <>
+                {/* DPDP Act 2023 Compliance & Data Rights */}
+                <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-4 mb-5">
+                  <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">
+                    <ShieldCheck className="h-4.5 w-4.5 text-emerald-500" />
+                    DPDP Act 2023 Compliance & Privacy Rights
+                  </h2>
+                  <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                    Under the Digital Personal Data Protection Act (2023), you have the right to data portability (exporting a digital copy of all personal records) and the right to erasure.
+                  </p>
+                  <div className="flex flex-wrap gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        try {
+                          toast.info('Preparing your personal data export file...');
+                          const response = await axiosInstance.get('/profile/export-data', { responseType: 'blob' });
+                          const url = window.URL.createObjectURL(new Blob([response.data]));
+                          const link = document.createElement('a');
+                          link.href = url;
+                          link.setAttribute('download', `my-personal-data-${user?.id || 'export'}.json`);
+                          document.body.appendChild(link);
+                          link.click();
+                          link.remove();
+                          toast.success('Personal data exported successfully!');
+                        } catch (err) {
+                          toast.error('Failed to export personal data.');
+                        }
+                      }}
+                      className="flex items-center gap-2 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-xs font-bold text-white shadow-sm transition cursor-pointer"
+                    >
+                      <Download className="h-4 w-4" />
+                      Export My Personal Data (DPDP)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const confirmPurge = window.confirm('DPDP Right to Erasure: Are you sure you want to PERMANENTLY purge your account and personal data? This action cannot be undone.');
+                        if (!confirmPurge) return;
+
+                        const passPrompt = window.prompt('Please enter your password to confirm permanent account purge:');
+                        if (!passPrompt) return;
+
+                        try {
+                          toast.info('Purging account data...');
+                          const response = await axiosInstance.delete('/auth/me/purge', { data: { password: passPrompt } });
+                          if (response.data?.success) {
+                            toast.success('Your account data has been permanently purged.');
+                            window.localStorage.removeItem('auth_user');
+                            window.location.href = '/login';
+                          }
+                        } catch (err: any) {
+                          toast.error(err.response?.data?.message || 'Failed to purge account data.');
+                        }
+                      }}
+                      className="flex items-center gap-2 py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-xs font-bold text-white shadow-sm transition cursor-pointer"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Purge My Account & PII (Right to Erasure)
+                    </button>
+                  </div>
+                </div>
+
                 {/* Security Tab */}
                 <div className="rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-sm dark:border-zinc-800/80 dark:bg-zinc-950/60 space-y-5">
                   <h2 className="text-sm font-bold text-zinc-900 dark:text-white flex items-center gap-2 border-b border-zinc-100 dark:border-zinc-900 pb-3">
@@ -1268,6 +1504,267 @@ export default function SettingsPage() {
           </div>
         </div>
       )}
+
+      {isPhoneOtpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-950 border-2 border-zinc-600 dark:border-zinc-600 rounded-2xl shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3 text-blue-600">
+              <div className="bg-blue-100 dark:bg-blue-950/50 p-2 rounded-xl shrink-0">
+                <AlertTriangle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white">Verify Mobile Number Change</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-normal">
+                  We've sent a 6-digit OTP code to your registered email: <span className="font-bold text-zinc-900 dark:text-white">{user?.email}</span>. Please enter it below to confirm your new mobile number.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-blue-700 dark:text-blue-400">Verification OTP Code</label>
+                  {phoneTimer > 0 ? (
+                    <span className="text-xs text-blue-650 dark:text-blue-450 font-bold flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 animate-pulse" /> Expires in: {formatTimer(phoneTimer)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-red-550 dark:text-red-450 font-bold">Code Expired!</span>
+                  )}
+                </div>
+
+                <div className="flex gap-2.5 justify-center py-2">
+                  {phoneOtpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`phone-otp-${idx}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      disabled={phoneTimer <= 0}
+                      onChange={(e) => handleBoxChange(idx, e.target.value, phoneOtpDigits, setPhoneOtpDigits, 'phone-otp')}
+                      onKeyDown={(e) => handleBoxKeyDown(idx, e, phoneOtpDigits, 'phone-otp')}
+                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {phoneTimer <= 0 && (
+                <p className="text-[10px] text-red-550 dark:text-red-450 font-medium">OTP has expired. Please cancel and request a new code.</p>
+              )}
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                     setIsPhoneOtpModalOpen(false);
+                     setPhoneTimer(0);
+                     setPhoneOtpDigits(['', '', '', '', '', '']);
+                     delete (window as any)._tempEditMobile;
+                  }}
+                  className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyPhoneChange}
+                  disabled={isVerifyingPhoneOtp || phoneOtpDigits.some(d => !d) || phoneTimer <= 0}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isVerifyingPhoneOtp ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  Verify Change
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEmailOtpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-950 border-2 border-zinc-600 dark:border-zinc-600 rounded-2xl shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3 text-blue-600">
+              <div className="bg-blue-100 dark:bg-blue-950/50 p-2 rounded-xl shrink-0">
+                <AlertTriangle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white">Verify Email Address Change</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-normal">
+                  We've sent a 6-digit OTP code to your new email address. Please enter it below to confirm your new email address.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-blue-700 dark:text-blue-400">Verification OTP Code</label>
+                  {emailTimer > 0 ? (
+                    <span className="text-xs text-blue-650 dark:text-blue-450 font-bold flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 animate-pulse" /> Expires in: {formatTimer(emailTimer)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-red-550 dark:text-red-450 font-bold">Code Expired!</span>
+                  )}
+                </div>
+
+                <div className="flex gap-2.5 justify-center py-2">
+                  {emailOtpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`email-otp-${idx}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      disabled={emailTimer <= 0}
+                      onChange={(e) => handleBoxChange(idx, e.target.value, emailOtpDigits, setEmailOtpDigits, 'email-otp')}
+                      onKeyDown={(e) => handleBoxKeyDown(idx, e, emailOtpDigits, 'email-otp')}
+                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {emailTimer <= 0 && (
+                <p className="text-[10px] text-red-550 dark:text-red-450 font-medium">OTP has expired. Please cancel and request a new code.</p>
+              )}
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                     setIsEmailOtpModalOpen(false);
+                     setEmailTimer(0);
+                     setEmailOtpDigits(['', '', '', '', '', '']);
+                  }}
+                  className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyEmailChange}
+                  disabled={isVerifyingEmailOtp || emailOtpDigits.some(d => !d) || emailTimer <= 0}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isVerifyingEmailOtp ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  Verify Change
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isEmailOtpModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-950 border-2 border-zinc-600 dark:border-zinc-600 rounded-2xl shadow-2xl p-6 space-y-5 animate-in zoom-in-95 duration-200">
+            <div className="flex items-start gap-3 text-blue-600">
+              <div className="bg-blue-100 dark:bg-blue-950/50 p-2 rounded-xl shrink-0">
+                <AlertTriangle className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-zinc-900 dark:text-white">Verify Email Address Change</h3>
+                <p className="text-xs text-zinc-600 dark:text-zinc-400 mt-1 leading-normal">
+                  We've sent a 6-digit OTP code to your registered mobile number: <span className="font-bold text-zinc-900 dark:text-white">{user?.mobileNumber}</span>. Please enter it below to confirm your new email address.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-blue-700 dark:text-blue-400">Verification OTP Code</label>
+                  {emailTimer > 0 ? (
+                    <span className="text-xs text-blue-650 dark:text-blue-450 font-bold flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 animate-pulse" /> Expires in: {formatTimer(emailTimer)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-red-550 dark:text-red-450 font-bold">Code Expired!</span>
+                  )}
+                </div>
+
+                <div className="flex gap-2.5 justify-center py-2">
+                  {emailOtpDigits.map((digit, idx) => (
+                    <input
+                      key={idx}
+                      id={`email-otp-${idx}`}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      disabled={emailTimer <= 0}
+                      onChange={(e) => handleBoxChange(idx, e.target.value, emailOtpDigits, setEmailOtpDigits, 'email-otp')}
+                      onKeyDown={(e) => handleBoxKeyDown(idx, e, emailOtpDigits, 'email-otp')}
+                      className="w-12 h-12 text-center text-xl font-bold bg-white dark:bg-zinc-900 border-2 border-zinc-600 dark:border-zinc-600 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 disabled:opacity-50 text-zinc-950 dark:text-zinc-50"
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {emailTimer <= 0 && (
+                <p className="text-[10px] text-red-550 dark:text-red-450 font-medium">OTP has expired. Please cancel and request a new code.</p>
+              )}
+
+              <div className="flex gap-2.5 pt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                     setIsEmailOtpModalOpen(false);
+                     setEmailTimer(0);
+                     setEmailOtpDigits(['', '', '', '', '', '']);
+                     delete (window as any)._tempEditEmail;
+                  }}
+                  className="flex-1 py-2 px-4 rounded-xl border-2 border-zinc-600 dark:border-zinc-600 text-xs font-bold text-zinc-650 dark:text-zinc-400 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyEmailChange}
+                  disabled={isVerifyingEmailOtp || emailOtpDigits.some(d => !d) || emailTimer <= 0}
+                  className="flex-1 flex items-center justify-center gap-1.5 py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-xs font-bold text-white transition disabled:opacity-50 cursor-pointer"
+                >
+                  {isVerifyingEmailOtp ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                  )}
+                  Verify Change
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      <ImageCropperModal
+        isOpen={cropperState.isOpen}
+        imageSrc={cropperState.imageSrc}
+        onClose={() => setCropperState(prev => ({ ...prev, isOpen: false }))}
+        cropShape={cropperState.type === 'profile' ? 'round' : 'rect'}
+        aspectRatio={cropperState.type === 'profile' ? 1 : 16 / 9}
+        onSave={async (croppedBase64) => {
+          if (cropperState.type === 'profile') {
+            await updateUser({ profilePicture: croppedBase64 });
+            toast.success('Profile picture updated!');
+          } else {
+            await updateUser({ coverPicture: croppedBase64 });
+            toast.success('Cover picture updated!');
+          }
+        }}
+      />
     </ProtectedRoute>
   );
 }

@@ -23,7 +23,13 @@ const axiosInstance: AxiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Token is now managed by HttpOnly cookies automatically attached by the browser
+    // Attach Anti-CSRF Token header if cookie exists
+    if (typeof document !== 'undefined') {
+      const match = document.cookie.match(new RegExp('(^| )_csrf_token=([^;]+)'));
+      if (match && match[2]) {
+        config.headers['x-csrf-token'] = match[2];
+      }
+    }
     return config;
   },
   (error) => {

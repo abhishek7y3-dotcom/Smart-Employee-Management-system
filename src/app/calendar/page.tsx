@@ -60,7 +60,7 @@ export default function CalendarPage() {
     queryFn: fetchHolidaysQuery,
   });
 
-  const holidays = data?.holidays || [];
+  const holidays: Holiday[] = data?.holidays || [];
   const stats = data?.stats || null;
 
   // Form Handlers
@@ -217,7 +217,7 @@ export default function CalendarPage() {
                   const todayObj = new Date();
                   const todayStr = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
 
-                  const dayHolidays = holidays.filter(h => h.holidayDate.split('T')[0] === dateStr);
+                  const dayHolidays = holidays.filter((h: Holiday) => h.holidayDate.split('T')[0] === dateStr);
                   const dayTasks = tasks.filter(t => t.dueDate.split('T')[0] === dateStr);
 
                   const isToday = todayStr === dateStr;

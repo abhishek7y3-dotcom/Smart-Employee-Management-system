@@ -371,7 +371,7 @@ export const ChatProvider = ({ children }: { children: ReactNode }) => {
               )
             );
           },
-          onMetadata: async (data) => {
+          onMetadata: async (data: any) => {
             if (!conversationId && data.conversationId) {
               setConversationId(data.conversationId);
               if (activeProjectId) {

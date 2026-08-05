@@ -1,5 +1,6 @@
 export interface AuthUser {
   id: string;
+  _id?: string;
   name: string;
   firstName?: string;
   lastName?: string;
@@ -25,6 +26,9 @@ export interface AuthUser {
     email: boolean;
     inApp: boolean;
   };
+  // isVerified indicates if the employee's email/phone has been verified.
+  isVerified?: boolean;
+  biography?: string;
   createdAt?: string;
 }
 

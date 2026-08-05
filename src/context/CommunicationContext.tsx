@@ -153,7 +153,7 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
       // Fetch the details for the new participants
       const newEmployees = employees.filter(e => newParticipantIds.includes(e.id));
       const newNames = newEmployees.map(e => e.name);
-      const newAvatars = newEmployees.map(e => e.avatar || '');
+      const newAvatars = newEmployees.map(e => e.profilePicture || '');
 
       const updatedParticipants = [...new Set([...conversation.participants, ...newParticipantIds])];
       const updatedParticipantNames = [...conversation.participantNames, ...newNames];
@@ -378,7 +378,7 @@ export const CommunicationProvider: React.FC<{ children: React.ReactNode }> = ({
       subject: `Chat with ${emp.name}`,
       type: 'direct',
       priority: 'medium',
-      status: 'in_progress',
+      status: 'sent',
       participants: [userId, employeeId],
       participantNames: [user?.name || 'You', emp.name],
       participantAvatars: [user?.profilePicture || '', emp.profilePicture],

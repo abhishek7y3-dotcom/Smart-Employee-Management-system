@@ -157,6 +157,7 @@ export async function getTasks(): Promise<{ tasks: Task[]; employees: Employee[]
     role: user.role ?? 'user',
     designation: user.designation || 'Employee',
     avatarUrl: user.profilePicture,
+    mobileNumber: user.mobileNumber,
   }));
 
   return {

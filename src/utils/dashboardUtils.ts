@@ -1,7 +1,7 @@
 import { ActivityLog, Employee, Task, TaskStatus } from '../types';
 import { formatDate } from './format';
 
-export type TaskUrlStatus = 'all' | 'pending' | 'in-progress' | 'completed';
+export type TaskUrlStatus = 'all' | 'pending' | 'in-progress' | 'completed' | 'overdue';
 
 const todayStart = () => {
   const now = new Date();

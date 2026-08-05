@@ -26,7 +26,7 @@ export const handleError = (error: unknown, fallbackMessage: string = 'An unexpe
   toast.error(errorMessage);
   
   // Optionally, log to an external service like Sentry here
-  console.error('[AppError]:', error);
+  console.warn('[AppError]:', error);
   
   return errorMessage;
 };

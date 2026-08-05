@@ -13,7 +13,7 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isMock, setIsMock] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
 
@@ -211,6 +211,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
       </div>
 
       <div className="border-t border-zinc-200/60 pt-4 dark:border-zinc-800/65">
+        <button
+          onClick={logout}
+          title={isCollapsed ? "Log Out" : undefined}
+          className={`group flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-3.5 px-3.5'} w-full rounded-lg py-2.5 text-xs font-semibold transition-all duration-200 border-l-2 border-transparent text-red-600 hover:bg-red-50 dark:hover:bg-red-950/10 hover:text-red-700 dark:hover:text-red-400 mb-2.5 cursor-pointer`}
+        >
+          <span className="shrink-0 text-red-500 group-hover:text-red-650 dark:group-hover:text-red-400">
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </span>
+          {!isCollapsed && <span className="whitespace-nowrap overflow-hidden">Log Out</span>}
+        </button>
         {isCollapsed ? (
           <div className="flex justify-center" title={`Mode: ${isMock ? 'Local Mock' : 'Server API'}`}>
             <div className="p-2 rounded-lg bg-zinc-50/50 dark:bg-zinc-900/20 text-zinc-500 border border-zinc-200/60 dark:border-zinc-800/40">
